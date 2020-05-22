@@ -9,6 +9,9 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// APIRevision defines the whole-number version of the API, used for the /api/v{version} route.
+const APIRevision = 1
+
 // App represents a servable app.
 type App struct {
 	config *Config
@@ -28,6 +31,9 @@ func (app *App) Serve() error {
 	if app.config.DevMode {
 		router.Use(middleware.Logger)
 	}
+
+	// Mount the API router at /api/v1
+	router.Mount(fmt.Sprintf("/api/v%d", APIRevision), app.Router())
 
 	return http.ListenAndServe(fmt.Sprintf(":%d", app.config.Port), router)
 }
