@@ -13,17 +13,27 @@ const defaultPort = 3000
 
 // Config stores configuration values such as API keys, secrets, and more.
 type Config struct {
-	DevMode   bool   // enables/disables certain debugging features for development
-	JWTSecret string // secret for signing JWTs for authorization
-	Port      int64  // the HTTP port to serve the application on
+	DevMode          bool   // enables/disables certain debugging features for development
+	JWTSecret        string // secret for signing JWTs for authorization
+	Port             int    // the HTTP port to serve the application on
+	DatabaseHost     string // the host of the postgres database
+	DatabasePort     int    // the port of the postgres database
+	DatabaseUser     string // the user of the postgres database
+	DatabaseName     string // the dbname of the postgres database
+	DatabasePassword string // the password to the postgres database
 }
 
 // NewConfig generates a new config from environment variables and returns a Config struct.
 func NewConfig() *Config {
 	return &Config{
-		DevMode:   envBool("IMPACT_DEV_MODE", true),
-		JWTSecret: envString("IMPACT_JWT_SECRET", defaultJWTSecret),
-		Port:      envInt64("PORT", defaultPort),
+		DevMode:          envBool("IMPACT_DEV_MODE", true),
+		JWTSecret:        envString("IMPACT_JWT_SECRET", defaultJWTSecret),
+		Port:             envInt("PORT", defaultPort),
+		DatabaseHost:     envString("IMPACT_DATABASE_HOST", "localhost"),
+		DatabasePort:     envInt("IMPACT_DATABASE_POST", 5432),
+		DatabaseUser:     envString("IMPACT_DATABASE_USER", "postgres"),
+		DatabaseName:     envString("IMPACT_DATABASE_NAME", "impact"),
+		DatabasePassword: envString("IMPACT_DATABASE_PASSWORD", ""),
 	}
 }
 
@@ -37,8 +47,8 @@ func envString(name, fallback string) string {
 	return fallback
 }
 
-// envInt64 gets an environment variable by the name provided as an int64, and defaults to the second value if no environment variable is found.
-func envInt64(name string, fallback int64) int64 {
+// envInt gets an environment variable by the name provided as an int64, and defaults to the second value if no environment variable is found.
+func envInt(name string, fallback int) int {
 	if value := os.Getenv(name); value != "" {
 		// Environment variable valid, attempt to convert to int64.
 		i, err := strconv.ParseInt(value, 10, 64)
@@ -46,7 +56,7 @@ func envInt64(name string, fallback int64) int64 {
 			return fallback
 		}
 		// No error, return converted int64.
-		return i
+		return int(i)
 	}
 	// Fallback
 	return fallback
