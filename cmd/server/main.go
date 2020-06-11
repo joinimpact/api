@@ -32,16 +32,24 @@ func main() {
 		// Error connecting to the database, panic.
 		log.Panic().Err(err).Msg("Error connecting to the database")
 	}
+	// Close the database on program exit.
+	defer db.Close()
+
 	// Create a new MigrationService to handle automatic migrations.
 	migrationService := migrations.NewMigrationService(db)
 	// Auto migrate models into the database.
-	migrationService.Migrate(
+	err = migrationService.Migrate(
 		&models.User{},
 		&models.UserProfileField{},
 		&models.Organization{},
 		&models.OrganizationProfileField{},
 		&models.OrganizationMembership{},
 	)
+	if err != nil {
+		// Error migrating the database, panic.
+		log.Panic().Err(err).Msg("Error migrating the database")
+	}
+
 	// Create a new app using the new config.
 	app := core.NewApp(config, &log.Logger)
 

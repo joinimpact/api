@@ -22,7 +22,7 @@ func NewDatabaseService(config *Config, logger *zerolog.Logger) *DatabaseService
 // returns a gorm.DB pointer.
 func (s *DatabaseService) DatabaseConnect() (*gorm.DB, error) {
 	return gorm.Open("postgres", fmt.Sprintf(
-		"host=%s port=%d user=%s dbname=%s password=%s",
+		"sslmode=disable host=%s port=%d user=%s dbname=%s password=%s",
 		s.config.DatabaseHost,
 		s.config.DatabasePort,
 		s.config.DatabaseUser,

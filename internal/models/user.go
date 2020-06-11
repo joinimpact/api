@@ -2,14 +2,11 @@ package models
 
 import (
 	"time"
-
-	"github.com/jinzhu/gorm"
 )
 
 // User represents a single user in the Impact application.
 type User struct {
-	gorm.Model
-	ID             int64              `gorm:"primary_key" json:"id"` // the user's unique int64 ID
+	Model
 	Active         bool               `json:"-"`                     // controls whether or not the account is active (false if the account is suspended)
 	Email          string             `json:"email" level:"1"`       // the user's email address
 	EmailVerified  bool               `json:"emailVerified"`         // whether or not the user has verified their email
