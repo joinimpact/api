@@ -30,7 +30,7 @@ func NewConfig() *Config {
 		JWTSecret:        envString("IMPACT_JWT_SECRET", defaultJWTSecret),
 		Port:             envInt("PORT", defaultPort),
 		DatabaseHost:     envString("IMPACT_DATABASE_HOST", "localhost"),
-		DatabasePort:     envInt("IMPACT_DATABASE_POST", 5432),
+		DatabasePort:     envInt("IMPACT_DATABASE_PORT", 5432),
 		DatabaseUser:     envString("IMPACT_DATABASE_USER", "postgres"),
 		DatabaseName:     envString("IMPACT_DATABASE_NAME", "impact"),
 		DatabasePassword: envString("IMPACT_DATABASE_PASSWORD", ""),
