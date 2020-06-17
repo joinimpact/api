@@ -18,3 +18,15 @@ type User struct {
 	ProfileFields  []UserProfileField `json:"profile"`               // fields of the user's profile
 	ZIPCode        string             `json:"zipCode" level:"1"`     // the user's zip code, used to find nearby opportunities
 }
+
+// UserRepository represents a repository of users.
+type UserRepository interface {
+	// FindByID finds a single User by ID.
+	FindByID(id int64) (*User, error)
+	// Create creates a new User.
+	Create(user User) error
+	// Update updates a User with the ID in the provided User.
+	Update(user User) error
+	// DeleteByID deletes a User by ID.
+	DeleteByID(id int64) error
+}
