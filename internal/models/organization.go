@@ -3,8 +3,9 @@ package models
 // Organization represents a single volunteering organization.
 type Organization struct {
 	Model
-	Active         bool                       `json:"-"`              // controls whether or not the organization is active
-	CreatorID      int64                      `json:"creatorId"`      // the organization's creator's ID (User)
+	Active         bool                       `json:"-"`         // controls whether or not the organization is active
+	CreatorID      int64                      `json:"creatorId"` // the organization's creator's ID (User)
+	Creator        User                       `gorm:"foreignkey:CreatorID"`
 	Name           string                     `json:"name"`           // the organization's name
 	ProfilePicture string                     `json:"profilePicture"` // the organization's profile picture/logo
 	WebsiteURL     string                     `json:"websiteUrl"`     // the organization's website's URL

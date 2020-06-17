@@ -7,7 +7,8 @@ import (
 // UserProfileField represents a single field in a user's profile.
 type UserProfileField struct {
 	Model
-	UserID int64  `json:"userId"`
+	UserID int64 `json:"userId"`
+	User   User
 	Name   string `json:"name"`            // the key/name of the profile field
 	Value  string `json:"value,omitempty"` // the value of the profile field (if it is a string)
 	// School School

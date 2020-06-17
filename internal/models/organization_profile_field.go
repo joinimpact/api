@@ -7,7 +7,8 @@ import (
 // OrganizationProfileField represents a single field in an organization's profile.
 type OrganizationProfileField struct {
 	Model
-	OrganizationID int64          `json:"organizationId"`  // the ID of the organization the field applies to
+	OrganizationID int64 `json:"organizationId"` // the ID of the organization the field applies to
+	Organization   Organization
 	Name           string         `json:"name"`            // the key/name of the profile field
 	Value          string         `json:"value,omitempty"` // the value of the profile field (if it is a string)
 	ValueInt       int            `json:"value,omitempty"` // the value of the profile field (if it is an int)

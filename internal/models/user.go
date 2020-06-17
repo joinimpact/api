@@ -15,6 +15,6 @@ type User struct {
 	FirstName      string             `json:"firstName"`             // the user's first name
 	LastName       string             `json:"lastName"`              // the user's last name
 	DateOfBirth    time.Time          `json:"dateOfBirth" level:"1"` // the user's date of birth, used for calculating age
-	ProfileFields  []UserProfileField `json:"profile"`               // fields of the user's profile
 	ZIPCode        string             `json:"zipCode" level:"1"`     // the user's zip code, used to find nearby opportunities
+	ProfileFields  []UserProfileField `json:"profile"`               // fields of the user's profile
 }
