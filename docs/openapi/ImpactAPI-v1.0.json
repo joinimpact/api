@@ -1,0 +1,292 @@
+{
+	"openapi": "3.0.2",
+	"info": {
+		"title": "Impact API",
+		"version": "1.0"
+	},
+	"servers": [
+		{
+			"url": "https://joinimpact.org/api/v1"
+		}
+	],
+	"components": {
+		"schemas": {
+			"user": {
+				"type": "object",
+				"description": "Represents a user, whether they are a volunteer or organization manager.",
+				"required": [
+					"firstName",
+					"lastName",
+					"email",
+					"password",
+					"dateOfBirth",
+					"zipCode"
+				],
+				"properties": {
+					"firstName": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 48,
+						"example": "Yury"
+					},
+					"lastName": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 48,
+						"example": "Orlovskiy"
+					},
+					"email": {
+						"type": "string",
+						"format": "email"
+					},
+					"password": {
+						"type": "string",
+						"minLength": 8,
+						"maxLength": 512,
+						"example": "hunter2"
+					},
+					"dateOfBirth": {
+						"type": "string",
+						"format": "date",
+						"example": "2003-07-28T00:00:00Z"
+					},
+					"zipCode": {
+						"type": "string",
+						"minLength": 5,
+						"maxLength": 7,
+						"description": "Subject to change, I'm looking into how to submit location data."
+					}
+				}
+			},
+			"tokenPairResponse": {
+				"type": "object",
+				"properties": {
+					"userId": {
+						"type": "string",
+						"description": "The user's ID (for redundancy). This can also be found in the body of the JWT. All ID's are sent as strings to avoid rounding issues.",
+						"example": "112751457261385472"
+					},
+					"issuedAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "The time at which the tokens were issued (measured by the server). Used to calculate token expiration time, if necessary.",
+						"example": "2018-01-18T01:30:22Z"
+					},
+					"tokenPair": {
+						"type": "object",
+						"properties": {
+							"authToken": {
+								"type": "string",
+								"description": "The newly generated JSON Web Token. Will be used in most API requests under the Authorization header. Good for 3 days.",
+								"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTkyNjEzMjE3fQ.YMQ9Fjpr0uWUcvH0lx2w1BVNttEbeVVzwMFkqADO8y4"
+							},
+							"refreshToken": {
+								"type": "string",
+								"description": "The user's refresh token. Will be used to get a new token pair after the auth token expires. Good for 21 days.",
+								"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"paths": {
+		"/auth/register": {
+			"post": {
+				"summary": "Creates a new user and returns a token pair on success.",
+				"tags": [
+					"Authentication"
+				],
+				"requestBody": {
+					"description": "Contains information about the user.",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/user"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success! A user was created, and the response contains a token pair and the user ID to use for authentication.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/tokenPairResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "One or more fields are wrong, or a user with the email already exists.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"invalidFields": {
+											"type": "array",
+											"items": {
+												"type": "string"
+											},
+											"example": [
+												"password"
+											]
+										},
+										"errors": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"code": {
+														"type": "number"
+													},
+													"message": {
+														"type": "string"
+													}
+												}
+											},
+											"example": [
+												{
+													"code": 10,
+													"message": "email already exists"
+												}
+											]
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/auth/login": {
+			"post": {
+				"summary": "Attempts to login using the credentials provided. Returns a token pair on success.",
+				"tags": [
+					"Authentication"
+				],
+				"requestBody": {
+					"description": "Contains a username and password used to authenticate the user.",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": [
+									"email",
+									"password"
+								],
+								"properties": {
+									"email": {
+										"type": "string",
+										"minLength": 4,
+										"maxLength": 56,
+										"example": "tyler@joinimpact.org"
+									},
+									"password": {
+										"type": "string",
+										"minLength": 8,
+										"maxLength": 512,
+										"example": "hunter2"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success! The body of this response will contain a token pair that should be stored in order to make authenticated API requests.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"userId": {
+											"type": "string",
+											"description": "The user's ID (for redundancy). This can also be found in the body of the JWT. All ID's are sent as strings to avoid rounding issues.",
+											"example": "112751457261385472"
+										},
+										"issuedAt": {
+											"type": "string",
+											"format": "date-time",
+											"description": "The time at which the tokens were issued (measured by the server). Used to calculate token expiration time, if necessary.",
+											"example": "2018-01-18T01:30:22Z"
+										},
+										"tokenPair": {
+											"type": "object",
+											"properties": {
+												"authToken": {
+													"type": "string",
+													"description": "The newly generated JSON Web Token. Will be used in most API requests under the Authorization header. Good for 3 days.",
+													"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTkyNjEzMjE3fQ.YMQ9Fjpr0uWUcvH0lx2w1BVNttEbeVVzwMFkqADO8y4"
+												},
+												"refreshToken": {
+													"type": "string",
+													"description": "The user's refresh token. Will be used to get a new token pair after the auth token expires. Good for 21 days.",
+													"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Either the email or password was incorrect."
+					}
+				}
+			}
+		},
+		"/auth/tokens/refresh": {
+			"post": {
+				"tags": [
+					"Authentication"
+				],
+				"summary": "Generates a new token pair from a refresh token.",
+				"requestBody": {
+					"description": "Contains a refresh token.",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": [
+									"refreshToken"
+								],
+								"properties": {
+									"refreshToken": {
+										"type": "string",
+										"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success! The body of this response will contain a token pair that should be stored in order to make authenticated API requests.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/tokenPairResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid refresh token. Please require the user to log in again.",
+						"content": {}
+					}
+				}
+			}
+		}
+	}
+}
