@@ -5,7 +5,7 @@ services:
   api:
     build:
       context: ./
-    image: ${CI_REGISTRY_IMAGE:-joinimpact/api}:${CI_COMMIT_REF_NAME:-dev}
+    image: ${CI_REGISTRY_IMAGE:-api}:${CI_COMMIT_REF:-local}
     container_name: api
     hostname: api
     env_file:
@@ -15,8 +15,6 @@ services:
     ports:
       - "127.0.0.1:3000:3000/tcp"
     restart: unless-stopped
-    depends_on:
-      - postgres
 #    healthcheck:
 #      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/healthcheck"]
 #      interval: 30s
@@ -41,7 +39,7 @@ services:
 #  frontend:
 #    build:
 #      context: ../impact-frontend
-#    image: ${CI_REGISTRY_IMAGE:-joinimpact/frontend}:${CI_COMMIT_REF_NAME:-dev}
+#    image: ${CI_REGISTRY_IMAGE:-frontend}:${CI_COMMIT_REF:-local}
 #    container_name: frontend
 #    hostname: frontend
 #    expose:

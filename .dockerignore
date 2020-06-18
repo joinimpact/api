@@ -15,5 +15,4 @@ docker-compose.*
 bitbucket-pipelines.yml
 docs
 envvars.conf*
-.env
-server
+.env*

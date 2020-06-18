@@ -19,4 +19,4 @@ vendor/
 # custom
 .env
 docker-compose.override.yml
-envvars.conf*
+envvars.conf.*
