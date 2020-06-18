@@ -100,7 +100,7 @@ jobs:
           printf "bash -x -c 'cd $CI_DEV_API_PATH \
             && docker-compose stop \
               $CI_IMAGE_NAME \
-            && docker-compose pull \
+            && docker-compose pull -q \
               $CI_IMAGE_NAME \
             && docker-compose up --no-start --force-recreate \
               $CI_IMAGE_NAME \
