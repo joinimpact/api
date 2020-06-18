@@ -15,3 +15,8 @@
 
 # Dependency directories (remove the comment below to include it)
 vendor/
+
+# custom
+.env
+docker-compose.override.yml
+envvars.conf.*

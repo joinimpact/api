@@ -1,0 +1,12 @@
+version: "3.5"
+
+services:
+
+  api:
+    ports:
+      - "3000:3000/tcp"
+      - "8080:3000/tcp"
+
+  postgres:
+    ports
+      - "5432:5432/tcp"
