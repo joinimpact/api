@@ -26,6 +26,15 @@ func (r *repository) FindByID(id int64) (*models.User, error) {
 	return &user, nil
 }
 
+// FindByEmail finds a single User by Email.
+func (r *repository) FindByEmail(email string) (*models.User, error) {
+	var user models.User
+	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil {
+		return &user, err
+	}
+	return &user, nil
+}
+
 // Create creates a new User.
 func (r *repository) Create(user models.User) error {
 	return r.db.Create(&user).Error

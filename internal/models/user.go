@@ -23,6 +23,8 @@ type User struct {
 type UserRepository interface {
 	// FindByID finds a single User by ID.
 	FindByID(id int64) (*User, error)
+	// FindByEmail finds a single User by Email.
+	FindByEmail(email string) (*User, error)
 	// Create creates a new User.
 	Create(user User) error
 	// Update updates a User with the ID in the provided User.
