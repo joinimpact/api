@@ -37,6 +37,12 @@ services:
     volumes:
       - ${DATA_PATH:-/tmp}/joinimpact/postgresql:/var/lib/postgresql/data:rw
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U postgres || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   frontend:
     image: ${CI_REGISTRY_IMAGE:-docker.pkg.github.com/joinimpact/impact-frontend/frontend}:${CI_COMMIT_REF:-local}
