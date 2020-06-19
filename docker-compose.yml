@@ -3,7 +3,7 @@ version: "3.5"
 services:
 
   api:
-    image: ${CI_REGISTRY_IMAGE:-docker.pkg.github.com/joinimpact/api/api}:${CI_COMMIT_REF:-local}
+    image: ${CI_REGISTRY_IMAGE:-docker.pkg.github.com/joinimpact/api/api}:${CI_COMMIT_REF:-master}
     build:
       context: ./
     container_name: api
@@ -17,12 +17,12 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres
-#    healthcheck:
-#      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/healthcheck"]
-#      interval: 30s
-#      timeout: 10s
-#      retries: 3
-#      start_period: 10s
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   postgres:
     image: postgres:11-alpine
@@ -45,7 +45,7 @@ services:
       start_period: 10s
 
   frontend:
-    image: ${CI_REGISTRY_IMAGE:-docker.pkg.github.com/joinimpact/impact-frontend/frontend}:${CI_COMMIT_REF:-local}
+    image: ${CI_REGISTRY_IMAGE:-docker.pkg.github.com/joinimpact/impact-frontend/frontend}:${CI_COMMIT_REF:-master}
     build:
       context: ../impact-frontend
       args:
