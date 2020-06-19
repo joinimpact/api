@@ -30,7 +30,8 @@ jobs:
     if:
       contains('
         refs/heads/master
-        refs/heads/develop'
+        refs/heads/develop
+        refs/heads/devops'
       , github.ref)
 
     steps:
@@ -61,12 +62,11 @@ jobs:
     needs: build-push
     if:
       contains('
-        refs/heads/master'
+        refs/heads/master
+        refs/heads/devops'
       , github.ref)
 
     steps:
-      - uses: actions/checkout@v2
-
       - name: add ssh key
         run: |
           printf ${{ secrets.DEV_SSH_KEY }} | base64 -d > /tmp/dev_ssh_key
@@ -100,9 +100,11 @@ jobs:
           printf "bash -x -c 'cd $CI_DEV_API_PATH \
             && docker-compose stop \
               $CI_IMAGE_NAME \
+            && docker-compose rm -f \
+              $CI_IMAGE_NAME \
             && docker-compose pull -q \
               $CI_IMAGE_NAME \
-            && docker-compose up --no-start --force-recreate \
+            && docker-compose up --no-start \
               $CI_IMAGE_NAME \
             && docker-compose start \
               $CI_IMAGE_NAME'" \
