@@ -51,6 +51,8 @@ func (r *repository) Update(user models.User) error {
 // DeleteByID deletes a User by ID.
 func (r *repository) DeleteByID(id int64) error {
 	return r.db.Delete(&models.User{
-		ID: id,
+		Model: models.Model{
+			ID: id,
+		},
 	}).Error
 }
