@@ -3,9 +3,9 @@ version: "3.5"
 services:
 
   api:
+    image: ${CI_REGISTRY_IMAGE:-docker.pkg.github.com/joinimpact/api/api}:${CI_COMMIT_REF:-master}
     build:
       context: ./
-    image: ${CI_REGISTRY_IMAGE:-api}:${CI_COMMIT_REF:-local}
     container_name: api
     hostname: api
     env_file:
@@ -15,12 +15,14 @@ services:
     ports:
       - "127.0.0.1:3000:3000/tcp"
     restart: unless-stopped
-#    healthcheck:
-#      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/healthcheck"]
-#      interval: 30s
-#      timeout: 10s
-#      retries: 3
-#      start_period: 10s
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   postgres:
     image: postgres:11-alpine
@@ -35,40 +37,52 @@ services:
     volumes:
       - ${DATA_PATH:-/tmp}/joinimpact/postgresql:/var/lib/postgresql/data:rw
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U postgres || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
-#  frontend:
-#    build:
-#      context: ../impact-frontend
-#    image: ${CI_REGISTRY_IMAGE:-frontend}:${CI_COMMIT_REF:-local}
-#    container_name: frontend
-#    hostname: frontend
-#    expose:
-#      - "80"
-#    ports:
-#      - "127.0.0.1:8080:80/tcp"
-#    restart: unless-stopped
-#    healthcheck:
-#      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/healthcheck"]
-#      interval: 30s
-#      timeout: 10s
-#      retries: 3
-#      start_period: 10s
+  frontend:
+    image: ${CI_REGISTRY_IMAGE:-docker.pkg.github.com/joinimpact/impact-frontend/frontend}:${CI_COMMIT_REF:-master}
+    build:
+      context: ../impact-frontend
+      args:
+        BUILD_TARGET: ${FRONTEND_BUILD_TARGET:-dev}
+    container_name: frontend
+    hostname: frontend
+    expose:
+      - "80"
+    ports:
+      - "127.0.0.1:8080:80/tcp"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
-#  nginx:
-#    image: nginx:stable-alpine
-#    container_name: nginx
-#    hostname: nginx
-#    ports:
-#      - "80:80/tcp"
-#    volumes:
-#      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-#    restart: unless-stopped
-#    depends_on:
-#      - api
-#      - frontend
-#    healthcheck:
-#      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/healthcheck"]
-#      interval: 30s
-#      timeout: 10s
-#      retries: 3
-#      start_period: 10s
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx
+    hostname: nginx
+    ports:
+      - "80:80/tcp"
+      - "443:443/tcp"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ${DATA_PATH:-/tmp}/joinimpact/certbot/www:/var/www/certbot:ro
+      - ${DATA_PATH:-/tmp}/joinimpact/certbot/letsencrypt:/etc/letsencrypt:ro        
+    restart: unless-stopped
+    depends_on:
+      - api
+      - frontend
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
