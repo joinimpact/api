@@ -4,17 +4,18 @@ import (
 	"fmt"
 
 	"github.com/jinzhu/gorm"
+	"github.com/joinimpact/api/internal/config"
 	"github.com/rs/zerolog"
 )
 
 // DatabaseService provides functions for connecting to a database.
 type DatabaseService struct {
-	config *Config
+	config *config.Config
 	logger *zerolog.Logger
 }
 
 // NewDatabaseService creates and returns a new DatabaseService.
-func NewDatabaseService(config *Config, logger *zerolog.Logger) *DatabaseService {
+func NewDatabaseService(config *config.Config, logger *zerolog.Logger) *DatabaseService {
 	return &DatabaseService{config, logger}
 }
 

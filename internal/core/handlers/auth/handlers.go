@@ -1,0 +1,65 @@
+package auth
+
+import (
+	"net/http"
+	"time"
+
+	"github.com/joinimpact/api/internal/authentication"
+	"github.com/joinimpact/api/internal/models"
+	"github.com/joinimpact/api/pkg/parse"
+	"github.com/joinimpact/api/pkg/resp"
+)
+
+// Login attempts to login the user.
+func Login(service authentication.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := struct {
+			Email    string `json:"email" validate:"email"`
+			Password string `json:"password" validate:"min=8,max=512"`
+		}{}
+		err := parse.POST(w, r, &req)
+		if err != nil {
+			return
+		}
+
+		tokenPair, err := service.Login(req.Email, req.Password)
+		if err != nil {
+			resp.ServerError(w, r, resp.Error(500, err.Error()))
+			return
+		}
+
+		resp.OK(w, r, tokenPair)
+	}
+}
+
+// Register attempts to register the user.
+func Register(service authentication.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := struct {
+			FirstName   string    `json:"firstName" validate:"min=2,max=48"`
+			LastName    string    `json:"lastName" validate:"min=2,max=48"`
+			Email       string    `json:"email" validate:"email"`
+			Password    string    `json:"password" validate:"min=8,max=512"`
+			DateOfBirth time.Time `json:"dateOfBirth"`
+			ZIPCode     string    `json:"zipCode"`
+		}{}
+		err := parse.POST(w, r, &req)
+		if err != nil {
+			return
+		}
+
+		tokenPair, err := service.Register(models.User{
+			FirstName:   req.FirstName,
+			LastName:    req.LastName,
+			Email:       req.Email,
+			DateOfBirth: req.DateOfBirth,
+			ZIPCode:     req.ZIPCode,
+		}, req.Password)
+		if err != nil {
+			resp.ServerError(w, r, resp.Error(500, err.Error()))
+			return
+		}
+
+		resp.OK(w, r, tokenPair)
+	}
+}

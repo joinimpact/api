@@ -11,7 +11,7 @@ import (
 )
 
 var sampleUsers []models.User = []models.User{
-	models.User{
+	{
 		Model: models.Model{
 			ID: 12738165059,
 		},
@@ -34,8 +34,6 @@ func initializeGorm() (*gormTest, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	mock.ExpectBegin()
 
 	gorm, err := gorm.Open("postgres", db)
 	if err != nil {
@@ -60,8 +58,6 @@ func TestCreate(t *testing.T) {
 	}
 	defer test.db.Close()
 
-	// Begin expecting mock DB queries.
-
 	// Get the table name for the User model.
 	usersTableName := test.db.NewScope(&models.User{}).TableName()
 
@@ -70,6 +66,9 @@ func TestCreate(t *testing.T) {
 
 	// Attempt to add the test users into the database.
 	for _, user := range sampleUsers {
+		// Expect the beginning of a transaction.
+		test.mock.ExpectBegin()
+
 		// Expect a query inserting a user into the database.
 		test.mock.ExpectQuery(fmt.Sprintf("INSERT INTO \"%s\"", usersTableName)).
 			WithArgs(
@@ -98,6 +97,37 @@ func TestCreate(t *testing.T) {
 		if err != nil {
 			t.Error("error creating user:", err)
 		}
+	}
+
+	// Make sure that all expectations were met.
+	if err := test.mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+// TestFindByID tests the FindByID function of the repository.
+func TestFindByID(t *testing.T) {
+	// Initialize the mock database and ORM.
+	test, err := initializeGorm()
+	if err != nil {
+		t.Fatal("error initializing mock database:", err)
+	}
+	defer test.db.Close()
+
+	// Create a repository around our mock database.
+	repo := postgres.NewUserRepository(test.db, nil)
+
+	// Expect the select query from the repository.
+	test.mock.ExpectQuery("SELECT").
+		WillReturnRows(
+			sqlmock.NewRows([]string{"id"}).
+				AddRow(sampleUsers[0].ID),
+		)
+
+	// Find the user by ID 12738165059.
+	_, err = repo.FindByID(12738165059)
+	if err != nil {
+		t.Error("could not find user:", err)
 	}
 
 	// Make sure that all expectations were met.

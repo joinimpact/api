@@ -6,6 +6,8 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/joinimpact/api/internal/authentication"
+	"github.com/joinimpact/api/internal/config"
 	"github.com/rs/zerolog"
 )
 
@@ -14,13 +16,18 @@ const APIRevision = 1
 
 // App represents a servable app.
 type App struct {
-	config *Config
-	logger *zerolog.Logger
+	config                *config.Config
+	logger                *zerolog.Logger
+	authenticationService authentication.Service
 }
 
 // NewApp creates and returns a new *App with the provided Config.
-func NewApp(config *Config, logger *zerolog.Logger) *App {
-	return &App{config, logger}
+func NewApp(config *config.Config, logger *zerolog.Logger, authenticationService authentication.Service) *App {
+	return &App{
+		config,
+		logger,
+		authenticationService,
+	}
 }
 
 // Serve serves the App on the port specified in the config.
