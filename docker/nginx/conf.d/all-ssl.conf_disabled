@@ -1,0 +1,93 @@
+
+server {
+
+        # letsencrypt validation
+        location ^~ /.well-known {
+              root /var/www/certbot;
+              index index.html;
+              autoindex off;
+        }
+
+        location /healthcheck {
+                return 200 "OK\n";
+                access_log off;
+        }
+
+        location / {
+                return 301 https://$host$request_uri;
+        }        
+
+}
+
+
+server {
+
+        listen 443 ssl http2;
+        server_name dev.joinimpact.org;
+
+        ssl_certificate /etc/letsencrypt/live/dev.joinimpact.org/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/dev.joinimpact.org/privkey.pem;
+
+        ssl_dhparam conf.d/dhparam.pem;
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+
+        ssl_prefer_server_ciphers on;
+        ssl_session_cache shared:SSL:20m;
+        ssl_session_timeout 15m;
+        ssl_stapling on;
+        ssl_stapling_verify on;
+        resolver 8.8.8.8 8.8.4.4 valid=300s;
+        resolver_timeout 10s;
+        ssl_trusted_certificate /etc/letsencrypt/live/dev.joinimpact.org/chain.pem;
+
+        add_header X-Frame-Options SAMEORIGIN;
+        add_header X-Content-Type-Options nosniff;
+        add_header X-XSS-Protection "1; mode=block";
+
+        location / {
+
+                set $frontend http://frontend:80;
+                resolver 127.0.0.11 ipv6=off valid=60;
+
+                proxy_pass                                $frontend;
+                tcp_nodelay                               on;
+                client_max_body_size                      16m;
+                client_body_buffer_size                   16m;
+                proxy_set_header X-Forwarded-Host         $host;
+                proxy_set_header X-Real-IP                $remote_addr;
+                proxy_set_header X-Forwarded-For          $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto        $scheme;
+                proxy_set_header X-Forwarded-Port         $server_port;
+        }
+
+        location /api {
+
+                set $api http://api:3000;
+                resolver 127.0.0.11 ipv6=off valid=60;
+
+                proxy_pass                                $api;
+                rewrite                                   ^/api(.*) $1 break;
+                tcp_nodelay                               on;
+                client_max_body_size                      16m;
+                client_body_buffer_size                   16m;
+                proxy_set_header X-Forwarded-Host         $host;
+                proxy_set_header X-Real-IP                $remote_addr;
+                proxy_set_header X-Forwarded-For          $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto        $scheme;
+                proxy_set_header X-Forwarded-Port         $server_port;
+
+#                if ($request_method = OPTIONS ) {
+#                        add_header 'Access-Control-Allow-Origin'  '*';
+#                        add_header 'Access-Control-Allow-Methods' 'POST, GET, OPTIONS, PUT, PATCH, DELETE';
+#                        add_header 'Access-Control-Allow-Headers' 'Content-Type';
+#                        return 204;
+#                }
+#
+#                add_header 'Access-Control-Allow-Origin'  '*' always;
+#                add_header 'Access-Control-Allow-Methods' 'POST, GET, OPTIONS, PUT, PATCH, DELETE' always;
+#                add_header 'Access-Control-Allow-Headers' 'Content-Type' always;
+
+        }
+
+}
