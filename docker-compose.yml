@@ -3,9 +3,9 @@ version: "3.5"
 services:
 
   api:
+    image: ${CI_REGISTRY_IMAGE:-docker.pkg.github.com/joinimpact/api/api}:${CI_COMMIT_REF:-local}
     build:
       context: ./
-    image: ${CI_REGISTRY_IMAGE:-api}:${CI_COMMIT_REF:-local}
     container_name: api
     hostname: api
     env_file:
@@ -39,11 +39,11 @@ services:
     restart: unless-stopped
 
   frontend:
+    image: ${CI_REGISTRY_IMAGE:-docker.pkg.github.com/joinimpact/impact-frontend/frontend}:${CI_COMMIT_REF:-local}
     build:
       context: ../impact-frontend
       args:
         BUILD_TARGET: ${FRONTEND_BUILD_TARGET:-dev}
-    image: ${CI_REGISTRY_IMAGE:-frontend}:${CI_COMMIT_REF:-local}
     container_name: frontend
     hostname: frontend
     expose:
