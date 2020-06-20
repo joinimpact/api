@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/joinimpact/api/internal/config"
+	"github.com/joinimpact/api/internal/email"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/snowflakes"
 	"github.com/rs/zerolog"
@@ -24,15 +25,18 @@ type service struct {
 	config           *config.Config
 	logger           *zerolog.Logger
 	snowflakeService snowflakes.SnowflakeService
+	emailService     email.Service
 }
 
 // NewService creates and returns a new Service with the provided UserRepository, Config, Logger, and SnowflakeService.
-func NewService(userRepository models.UserRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService) Service {
+func NewService(userRepository models.UserRepository, config *config.Config, logger *zerolog.Logger,
+	snowflakeService snowflakes.SnowflakeService, emailService email.Service) Service {
 	return &service{
 		userRepository,
 		config,
 		logger,
 		snowflakeService,
+		emailService,
 	}
 }
 

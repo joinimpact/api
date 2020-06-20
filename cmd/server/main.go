@@ -6,6 +6,7 @@ import (
 	"github.com/joinimpact/api/internal/authentication"
 	"github.com/joinimpact/api/internal/config"
 	"github.com/joinimpact/api/internal/database/postgres"
+	"github.com/joinimpact/api/internal/email"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/snowflakes"
 
@@ -59,12 +60,16 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error initializing snowflake service")
 	}
+	emailService := email.NewService(config, email.NewSender(
+		"Impact",
+		"no-reply@joinimpact.org",
+	))
 
 	// Repositories
 	userRepository := postgres.NewUserRepository(db, &log.Logger)
 
 	// Internal services
-	authenticationService := authentication.NewService(userRepository, config, &log.Logger, snowflakeService)
+	authenticationService := authentication.NewService(userRepository, config, &log.Logger, snowflakeService, emailService)
 
 	// Create a new app using the new config.
 	app := core.NewApp(config, &log.Logger, authenticationService)

@@ -17,6 +17,8 @@ require (
 	github.com/lib/pq v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.3.2
 	github.com/rs/zerolog v1.18.0
+	github.com/sendgrid/rest v2.6.0+incompatible // indirect
+	github.com/sendgrid/sendgrid-go v3.6.0+incompatible
 	golang.org/x/crypto v0.0.0-20191205180655-e7c4368fe9dd
 	golang.org/x/net v0.0.0-20191109021931-daa7c04131f5 // indirect
 	google.golang.org/appengine v1.5.0 // indirect

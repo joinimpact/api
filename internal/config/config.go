@@ -21,6 +21,7 @@ type Config struct {
 	DatabaseUser     string // the user of the postgres database
 	DatabaseName     string // the dbname of the postgres database
 	DatabasePassword string // the password to the postgres database
+	SendGridAPIKey   string // the api key to access sendgrid
 }
 
 // NewConfig generates a new config from environment variables and returns a Config struct.
@@ -34,6 +35,7 @@ func NewConfig() *Config {
 		DatabaseUser:     envString("IMPACT_DATABASE_USER", "postgres"),
 		DatabaseName:     envString("IMPACT_DATABASE_NAME", "impact"),
 		DatabasePassword: envString("IMPACT_DATABASE_PASSWORD", ""),
+		SendGridAPIKey:   envString("IMPACT_SENDGRID_API_KEY", ""),
 	}
 }
 
