@@ -63,3 +63,26 @@ func Register(service authentication.Service) http.HandlerFunc {
 		resp.OK(w, r, tokenPair)
 	}
 }
+
+// RequestPasswordReset requests a password reset link to be emailed to a user.
+func RequestPasswordReset(service authentication.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := struct {
+			Email string `json:"email" validate:"email"`
+		}{}
+		err := parse.POST(w, r, &req)
+		if err != nil {
+			return
+		}
+
+		err = service.RequestPasswordReset(req.Email)
+		if err != nil {
+			resp.BadRequest(w, r, resp.Error(400, err.Error()))
+			return
+		}
+
+		resp.OK(w, r, map[string]bool{
+			"success": true,
+		})
+	}
+}

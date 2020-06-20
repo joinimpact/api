@@ -2,10 +2,13 @@ package authentication
 
 import (
 	"errors"
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/joinimpact/api/internal/config"
 	"github.com/joinimpact/api/internal/email"
+	"github.com/joinimpact/api/internal/email/templates"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/snowflakes"
 	"github.com/rs/zerolog"
@@ -17,22 +20,26 @@ type Service interface {
 	Login(email, password string) (*TokenPair, error)
 	// Register attempts to create a new user and returns a token pair on success.
 	Register(user models.User, password string) (*TokenPair, error)
+	// RequestPasswordReset creates a new PasswordResetKey and emails the user a link to it.
+	RequestPasswordReset(userEmail string) error
 }
 
 // service represents the default authentication service of this package.
 type service struct {
-	userRepository   models.UserRepository
-	config           *config.Config
-	logger           *zerolog.Logger
-	snowflakeService snowflakes.SnowflakeService
-	emailService     email.Service
+	userRepository             models.UserRepository
+	passwordResetKeyRepository models.PasswordResetKeyRepository
+	config                     *config.Config
+	logger                     *zerolog.Logger
+	snowflakeService           snowflakes.SnowflakeService
+	emailService               email.Service
 }
 
 // NewService creates and returns a new Service with the provided UserRepository, Config, Logger, and SnowflakeService.
-func NewService(userRepository models.UserRepository, config *config.Config, logger *zerolog.Logger,
+func NewService(userRepository models.UserRepository, passwordResetKeyRepository models.PasswordResetKeyRepository, config *config.Config, logger *zerolog.Logger,
 	snowflakeService snowflakes.SnowflakeService, emailService email.Service) Service {
 	return &service{
 		userRepository,
+		passwordResetKeyRepository,
 		config,
 		logger,
 		snowflakeService,
@@ -105,4 +112,44 @@ func (s *service) Register(user models.User, password string) (*TokenPair, error
 
 	// Successful user creation, generate and return a token pair.
 	return s.generateTokenPair(user.ID)
+}
+
+// RequestPasswordReset creates a new PasswordResetKey and emails the user a link to it.
+func (s *service) RequestPasswordReset(userEmail string) error {
+	// Find the user by email.
+	user, err := s.userRepository.FindByEmail(userEmail)
+	if err != nil {
+		return err
+	}
+
+	// Generate an id and a key for the PasswordResetKey.
+	id := s.snowflakeService.GenerateID()
+	key := generatePasswordResetKey()
+
+	// Create the PasswordResetKey.
+	err = s.passwordResetKeyRepository.Create(models.PasswordResetKey{
+		Model: models.Model{
+			ID: id,
+		},
+		UserID:    user.ID,
+		Key:       key,
+		ExpiresAt: time.Now().UTC().Add(24 * time.Hour),
+	})
+	if err != nil {
+		return err
+	}
+
+	// Create a new email with the reset password template.
+	email := s.emailService.NewEmail(
+		email.NewRecipient(fmt.Sprintf("%s %s", user.FirstName, user.LastName), user.Email),
+		"Your password reset link",
+		templates.ResetPasswordTemplate(user.FirstName, user.Email, key),
+	)
+
+	err = s.emailService.Send(email)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

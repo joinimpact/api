@@ -1,6 +1,8 @@
 package email
 
 import (
+	"errors"
+
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
@@ -28,11 +30,16 @@ func (e *Email) Send(client *sendgrid.Client) error {
 	// Define the from and to.
 	from := mail.NewEmail(e.Sender.Name, e.Sender.Email)
 	to := mail.NewEmail(e.Recipient.Name, e.Recipient.Email)
-	message := mail.NewSingleEmail(from, e.Subject, to, "", e.HTMLContent)
+	message := mail.NewSingleEmail(from, e.Subject, to, "This email is not supported by your email client.", e.HTMLContent)
 
 	// Send the message.
-	if _, err := client.Send(message); err != nil {
+	response, err := client.Send(message)
+	if err != nil {
 		return err
+	}
+
+	if response.StatusCode != 200 {
+		return errors.New("unable to send email")
 	}
 
 	return nil

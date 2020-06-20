@@ -1,6 +1,8 @@
 package email
 
 import (
+	"fmt"
+
 	"github.com/joinimpact/api/internal/config"
 	"github.com/sendgrid/sendgrid-go"
 )
@@ -21,6 +23,7 @@ type service struct {
 // NewService creates and returns a new Service with the given config and
 // sender identity.
 func NewService(config *config.Config, sender *Sender) Service {
+	fmt.Println(config.SendGridAPIKey)
 	client := sendgrid.NewSendClient(config.SendGridAPIKey)
 
 	return &service{
