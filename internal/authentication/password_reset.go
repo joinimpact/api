@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+// PasswordResetValidation contains fields about a password reset.
+type PasswordResetValidation struct {
+	FirstName string `json:"firstName"`
+	Email     string `json:"email"`
+}
+
 const charset = "abcdefghijklmnopqrstuvwxyz" +
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 

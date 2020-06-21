@@ -1,6 +1,9 @@
 package postgres
 
 import (
+	"errors"
+	"time"
+
 	"github.com/jinzhu/gorm"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/rs/zerolog"
@@ -32,6 +35,12 @@ func (r *passwordResetKeyRepository) FindByKey(key string) (*models.PasswordRese
 	if err := r.db.Where("key = ?", key).First(&pwk).Error; err != nil {
 		return &pwk, err
 	}
+
+	// Compare expired time.
+	if pwk.ExpiresAt.Sub(time.Now().UTC()) <= 0 {
+		return nil, errors.New("expired")
+	}
+
 	return &pwk, nil
 }
 

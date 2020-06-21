@@ -22,6 +22,10 @@ type Service interface {
 	Register(user models.User, password string) (*TokenPair, error)
 	// RequestPasswordReset creates a new PasswordResetKey and emails the user a link to it.
 	RequestPasswordReset(userEmail string) error
+	// CheckPasswordReset gets a PasswordResetKey by its key for validation purposes.
+	CheckPasswordReset(key string) (*PasswordResetValidation, error)
+	// ResetPassword resets a user's password from a PasswordResetKey's key.
+	ResetPassword(key string, newPassword string) error
 }
 
 // service represents the default authentication service of this package.
@@ -119,7 +123,7 @@ func (s *service) RequestPasswordReset(userEmail string) error {
 	// Find the user by email.
 	user, err := s.userRepository.FindByEmail(userEmail)
 	if err != nil {
-		return err
+		return errors.New("invalid user")
 	}
 
 	// Generate an id and a key for the PasswordResetKey.
@@ -136,7 +140,7 @@ func (s *service) RequestPasswordReset(userEmail string) error {
 		ExpiresAt: time.Now().UTC().Add(24 * time.Hour),
 	})
 	if err != nil {
-		return err
+		return errors.New("could not create reset key")
 	}
 
 	// Create a new email with the reset password template.
@@ -148,8 +152,53 @@ func (s *service) RequestPasswordReset(userEmail string) error {
 
 	err = s.emailService.Send(email)
 	if err != nil {
-		return err
+		return errors.New("error sending email")
 	}
 
 	return nil
+}
+
+// CheckPasswordReset gets a PasswordResetKey by its key for validation purposes.
+func (s *service) CheckPasswordReset(key string) (*PasswordResetValidation, error) {
+	resetKey, err := s.passwordResetKeyRepository.FindByKey(key)
+	if err != nil {
+		return nil, errors.New("invalid key")
+	}
+
+	user, err := s.userRepository.FindByID(resetKey.UserID)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	return &PasswordResetValidation{
+		FirstName: user.FirstName,
+		Email:     user.Email,
+	}, nil
+}
+
+// ResetPassword resets a user's password from a PasswordResetKey's key.
+func (s *service) ResetPassword(key string, newPassword string) error {
+	resetKey, err := s.passwordResetKeyRepository.FindByKey(key)
+	if err != nil {
+		return errors.New("invalid key")
+	}
+
+	// Hash the new password.
+	hash, err := generateFromPassword(newPassword)
+	if err != nil {
+		return errors.New("could not hash password")
+	}
+
+	if err = s.userRepository.Update(models.User{
+		Model: models.Model{
+			ID: resetKey.UserID,
+		},
+		Password: hash,
+	}); err != nil {
+		return err
+	}
+
+	err = s.passwordResetKeyRepository.DeleteByID(resetKey.ID)
+
+	return err
 }

@@ -86,3 +86,48 @@ func RequestPasswordReset(service authentication.Service) http.HandlerFunc {
 		})
 	}
 }
+
+// VerifyPasswordReset verifies a password reset request by key and returns the user's first name and email for UI purposes.
+func VerifyPasswordReset(service authentication.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := struct {
+			Key string `json:"key" validate:"min=2"`
+		}{}
+		err := parse.POST(w, r, &req)
+		if err != nil {
+			return
+		}
+
+		reset, err := service.CheckPasswordReset(req.Key)
+		if err != nil {
+			resp.BadRequest(w, r, resp.Error(400, err.Error()))
+			return
+		}
+
+		resp.OK(w, r, reset)
+	}
+}
+
+// ResetPassword resets a user's password using a reset key.
+func ResetPassword(service authentication.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := struct {
+			Key      string `json:"key" validate:"min=2"`
+			Password string `json:"password" validate:"min=8,max=512"`
+		}{}
+		err := parse.POST(w, r, &req)
+		if err != nil {
+			return
+		}
+
+		err = service.ResetPassword(req.Key, req.Password)
+		if err != nil {
+			resp.BadRequest(w, r, resp.Error(400, err.Error()))
+			return
+		}
+
+		resp.OK(w, r, map[string]bool{
+			"success": true,
+		})
+	}
+}

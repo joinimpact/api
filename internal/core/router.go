@@ -12,7 +12,11 @@ func (app *App) Router() *chi.Mux {
 	router.Route("/auth", func(r chi.Router) {
 		r.Post("/login", auth.Login(app.authenticationService))
 		r.Post("/register", auth.Register(app.authenticationService))
-		r.Post("/reset-password", auth.RequestPasswordReset(app.authenticationService))
+		r.Route("/password-resets", func(r chi.Router) {
+			r.Post("/request", auth.RequestPasswordReset(app.authenticationService))
+			r.Post("/verify", auth.VerifyPasswordReset(app.authenticationService))
+			r.Post("/reset-password", auth.ResetPassword(app.authenticationService))
+		})
 	})
 
 	return router
