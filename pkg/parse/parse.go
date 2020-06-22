@@ -70,13 +70,13 @@ func POST(w http.ResponseWriter, r *http.Request, s interface{}) error {
 	for _, err := range err.(validator.ValidationErrors) {
 		field, ok := reflect.TypeOf(s).Elem().FieldByName(err.StructField())
 		if ok {
-			fieldErr.InvalidFields = append(fieldErr.InvalidFields.([]string), field.Tag.Get("json"))
+			fieldErr.InvalidFields = append(fieldErr.InvalidFields, field.Tag.Get("json"))
 		} else {
-			fieldErr.InvalidFields = append(fieldErr.InvalidFields.([]string), err.Field())
+			fieldErr.InvalidFields = append(fieldErr.InvalidFields, err.Field())
 		}
 	}
 
-	if len(fieldErr.Data.([]string)) > 0 {
+	if len(fieldErr.InvalidFields) > 0 {
 		resp.BadRequest(w, r, fieldErr)
 		return errors.New("validation error")
 	}

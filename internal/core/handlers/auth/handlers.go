@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi"
 	"github.com/joinimpact/api/internal/authentication"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/pkg/parse"
@@ -92,10 +93,8 @@ func VerifyPasswordReset(service authentication.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := struct {
 			Key string `json:"key" validate:"min=2"`
-		}{}
-		err := parse.POST(w, r, &req)
-		if err != nil {
-			return
+		}{
+			Key: chi.URLParam(r, "passwordResetKey"),
 		}
 
 		reset, err := service.CheckPasswordReset(req.Key)
@@ -112,9 +111,11 @@ func VerifyPasswordReset(service authentication.Service) http.HandlerFunc {
 func ResetPassword(service authentication.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := struct {
-			Key      string `json:"key" validate:"min=2"`
+			Key      string `json:"key"`
 			Password string `json:"password" validate:"min=8,max=512"`
-		}{}
+		}{
+			Key: chi.URLParam(r, "passwordResetKey"),
+		}
 		err := parse.POST(w, r, &req)
 		if err != nil {
 			return

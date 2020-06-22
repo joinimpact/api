@@ -42,7 +42,7 @@ func (r *userRepository) Create(user models.User) error {
 
 // Update updates a User with the ID in the provided User.
 func (r *userRepository) Update(user models.User) error {
-	return r.db.Save(&user).Error
+	return r.db.Model(&models.User{}).Updates(user).Error
 }
 
 // DeleteByID deletes a User by ID.

@@ -51,7 +51,7 @@ func (r *passwordResetKeyRepository) Create(pwk models.PasswordResetKey) error {
 
 // Update updates a PasswordResetKey with the ID in the provided PasswordResetKey.
 func (r *passwordResetKeyRepository) Update(pwk models.PasswordResetKey) error {
-	return r.db.Save(&pwk).Error
+	return r.db.Model(&models.PasswordResetKey{}).Updates(pwk).Error
 }
 
 // DeleteByID deletes a PasswordResetKey by ID.

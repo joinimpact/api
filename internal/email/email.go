@@ -38,7 +38,7 @@ func (e *Email) Send(client *sendgrid.Client) error {
 		return err
 	}
 
-	if response.StatusCode != 200 {
+	if response.StatusCode != 200 && response.StatusCode != 202 {
 		return errors.New("unable to send email")
 	}
 
