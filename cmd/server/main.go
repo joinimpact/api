@@ -3,7 +3,12 @@ package main
 import (
 	"os"
 
+	"github.com/joinimpact/api/internal/authentication"
+	"github.com/joinimpact/api/internal/config"
+	"github.com/joinimpact/api/internal/database/postgres"
+	"github.com/joinimpact/api/internal/email"
 	"github.com/joinimpact/api/internal/models"
+	"github.com/joinimpact/api/internal/snowflakes"
 
 	"github.com/joinimpact/api/internal/migrations"
 
@@ -17,7 +22,7 @@ const APIVersion = "1.0.0"
 
 func main() {
 	// Create a new default configuration based on environment variables.
-	config := core.NewConfig()
+	config := config.NewConfig()
 	if config.DevMode {
 		// If in dev mode, enable pretty printing.
 		// This makes the logger less efficient, so it is only
@@ -44,14 +49,32 @@ func main() {
 		&models.Organization{},
 		&models.OrganizationProfileField{},
 		&models.OrganizationMembership{},
+		&models.PasswordResetKey{},
 	)
 	if err != nil {
 		// Error migrating the database, panic.
-		log.Panic().Err(err).Msg("Error migrating the database")
+		log.Fatal().Err(err).Msg("Error migrating the database")
 	}
 
+	// Dependencies/external services
+	snowflakeService, err := snowflakes.NewSnowflakeService()
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error initializing snowflake service")
+	}
+	emailService := email.NewService(config, email.NewSender(
+		"Impact",
+		"no-reply@joinimpact.org",
+	))
+
+	// Repositories
+	userRepository := postgres.NewUserRepository(db, &log.Logger)
+	passwordResetRepository := postgres.NewPasswordResetRepository(db, &log.Logger)
+
+	// Internal services
+	authenticationService := authentication.NewService(userRepository, passwordResetRepository, config, &log.Logger, snowflakeService, emailService)
+
 	// Create a new app using the new config.
-	app := core.NewApp(config, &log.Logger)
+	app := core.NewApp(config, &log.Logger, authenticationService)
 
 	// Print a message.
 	log.Info().Int("port", int(config.Port)).Str("version", APIVersion).Msg("Listening")

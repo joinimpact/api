@@ -43,7 +43,7 @@
 						"type": "string",
 						"minLength": 8,
 						"maxLength": 512,
-						"example": "hunter2"
+						"example": "hunter2!"
 					},
 					"dateOfBirth": {
 						"type": "string",
@@ -66,12 +66,6 @@
 						"description": "The user's ID (for redundancy). This can also be found in the body of the JWT. All ID's are sent as strings to avoid rounding issues.",
 						"example": "112751457261385472"
 					},
-					"issuedAt": {
-						"type": "string",
-						"format": "date-time",
-						"description": "The time at which the tokens were issued (measured by the server). Used to calculate token expiration time, if necessary.",
-						"example": "2018-01-18T01:30:22Z"
-					},
 					"tokenPair": {
 						"type": "object",
 						"properties": {
@@ -80,11 +74,37 @@
 								"description": "The newly generated JSON Web Token. Will be used in most API requests under the Authorization header. Good for 3 days.",
 								"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTkyNjEzMjE3fQ.YMQ9Fjpr0uWUcvH0lx2w1BVNttEbeVVzwMFkqADO8y4"
 							},
+							"authExpiry": {
+								"type": "integer",
+								"description": "The epoch of token expiry for the auth token."
+							},
 							"refreshToken": {
 								"type": "string",
 								"description": "The user's refresh token. Will be used to get a new token pair after the auth token expires. Good for 21 days.",
 								"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
+							},
+							"refreshExpiry": {
+								"type": "integer",
+								"description": "The epoch of token expiry for the refresh token."
 							}
+						}
+					}
+				}
+			},
+			"success": {
+				"type": "object",
+				"description": "A request was successful, with no extra data needed to be sent.",
+				"properties": {
+					"data": {
+						"type": "object",
+						"properties": {
+							"success": {
+								"type": "boolean",
+								"example": true
+							}
+						},
+						"example": {
+							"success": true
 						}
 					}
 				}
@@ -127,15 +147,6 @@
 								"schema": {
 									"type": "object",
 									"properties": {
-										"invalidFields": {
-											"type": "array",
-											"items": {
-												"type": "string"
-											},
-											"example": [
-												"password"
-											]
-										},
 										"errors": {
 											"type": "array",
 											"items": {
@@ -146,6 +157,9 @@
 													},
 													"message": {
 														"type": "string"
+													},
+													"invalidFields": {
+														"type": "array"
 													}
 												}
 											},
@@ -153,6 +167,13 @@
 												{
 													"code": 10,
 													"message": "email already exists"
+												},
+												{
+													"code": 98,
+													"message": "missing or invalid fields",
+													"invalidFields": [
+														"password"
+													]
 												}
 											]
 										}
@@ -192,7 +213,7 @@
 										"type": "string",
 										"minLength": 8,
 										"maxLength": 512,
-										"example": "hunter2"
+										"example": "hunter2!"
 									}
 								}
 							}
@@ -282,8 +303,200 @@
 						}
 					},
 					"400": {
-						"description": "Invalid refresh token. Please require the user to log in again.",
-						"content": {}
+						"description": "Invalid refresh token. Please require the user to log in again."
+					}
+				}
+			}
+		},
+		"/auth/password-resets": {
+			"post": {
+				"tags": [
+					"Authentication"
+				],
+				"summary": "Creates a new password reset request and emails the link to the user.",
+				"requestBody": {
+					"description": "Includes the users email to send the request to.",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": [
+									"email"
+								],
+								"properties": {
+									"email": {
+										"type": "string",
+										"example": "tyler@joinimpact.org"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success! The reset password email was sent.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/success"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid email.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"errors": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"code": {
+														"type": "number"
+													},
+													"message": {
+														"type": "string"
+													},
+													"invalidFields": {
+														"type": "array"
+													}
+												}
+											},
+											"example": [
+												{
+													"code": 98,
+													"message": "missing or invalid fields",
+													"invalidFields": [
+														"email"
+													]
+												}
+											]
+										}
+									}
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "User not found."
+					}
+				}
+			}
+		},
+		"/auth/password-resets/{passwordResetKey}": {
+			"get": {
+				"tags": [
+					"Authentication"
+				],
+				"summary": "Gets a password reset object. If valid, it returns a first name and email to render a form with.",
+				"responses": {
+					"200": {
+						"description": "Success! The password reset object was found!",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"firstName": {
+											"type": "string",
+											"example": "Tyler"
+										},
+										"email": {
+											"type": "string",
+											"example": "tyler@joinimpact.org"
+										}
+									}
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Password reset object not found, invalid key."
+					}
+				}
+			}
+		},
+		"/auth/password-resets/{passwordResetKey}/reset": {
+			"post": {
+				"tags": [
+					"Authentication"
+				],
+				"summary": "Resets the user's password from a password reset key.",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"password": {
+										"type": "string",
+										"description": "The new password for the user.",
+										"minLength": 8,
+										"maxLength": 512,
+										"example": "hunter3!"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success! The user's password was changed.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/success"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid password.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"errors": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"code": {
+														"type": "number"
+													},
+													"message": {
+														"type": "string"
+													},
+													"invalidFields": {
+														"type": "array"
+													}
+												}
+											},
+											"example": [
+												{
+													"code": 98,
+													"message": "missing or invalid fields",
+													"invalidFields": [
+														"password"
+													]
+												}
+											]
+										}
+									}
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Password reset object not found, invalid key."
 					}
 				}
 			}
