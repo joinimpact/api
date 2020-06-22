@@ -65,14 +65,14 @@ func POST(w http.ResponseWriter, r *http.Request, s interface{}) error {
 
 	fieldErr.Code = 98
 	fieldErr.Message = "missing or invalid fields"
-	fieldErr.Data = []string{}
+	fieldErr.InvalidFields = []string{}
 
 	for _, err := range err.(validator.ValidationErrors) {
 		field, ok := reflect.TypeOf(s).Elem().FieldByName(err.StructField())
 		if ok {
-			fieldErr.Data = append(fieldErr.Data.([]string), field.Tag.Get("json"))
+			fieldErr.InvalidFields = append(fieldErr.InvalidFields.([]string), field.Tag.Get("json"))
 		} else {
-			fieldErr.Data = append(fieldErr.Data.([]string), err.Field())
+			fieldErr.InvalidFields = append(fieldErr.InvalidFields.([]string), err.Field())
 		}
 	}
 

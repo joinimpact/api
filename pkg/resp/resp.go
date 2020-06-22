@@ -13,9 +13,10 @@ type response struct {
 
 // Err represents a client-facing error.
 type Err struct {
-	Code    int         `json:"code"`
-	Message string      `json:"msg"`
-	Data    interface{} `json:"data,omitempty"`
+	Code          int         `json:"code"`
+	Message       string      `json:"msg"`
+	Data          interface{} `json:"data,omitempty"`
+	InvalidFields interface{} `json:"invalidFields,omitempty"`
 }
 
 // Client-facing standard errors.
@@ -100,6 +101,15 @@ func ErrorData(code int, message string, data interface{}) Err {
 		Code:    code,
 		Message: message,
 		Data:    data,
+	}
+}
+
+// ErrorInvalidFields returns a client-facing error with invalid fields.
+func ErrorInvalidFields(code int, message string, invalidFields interface{}) Err {
+	return Err{
+		Code:          code,
+		Message:       message,
+		InvalidFields: invalidFields,
 	}
 }
 
