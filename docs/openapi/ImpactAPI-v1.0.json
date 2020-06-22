@@ -43,7 +43,7 @@
 						"type": "string",
 						"minLength": 8,
 						"maxLength": 512,
-						"example": "hunter2"
+						"example": "hunter2!"
 					},
 					"dateOfBirth": {
 						"type": "string",
@@ -87,6 +87,24 @@
 								"type": "integer",
 								"description": "The epoch of token expiry for the refresh token."
 							}
+						}
+					}
+				}
+			},
+			"success": {
+				"type": "object",
+				"description": "A request was successful, with no extra data needed to be sent.",
+				"properties": {
+					"data": {
+						"type": "object",
+						"properties": {
+							"success": {
+								"type": "boolean",
+								"example": true
+							}
+						},
+						"example": {
+							"success": true
 						}
 					}
 				}
@@ -195,7 +213,7 @@
 										"type": "string",
 										"minLength": 8,
 										"maxLength": 512,
-										"example": "hunter2"
+										"example": "hunter2!"
 									}
 								}
 							}
@@ -285,8 +303,200 @@
 						}
 					},
 					"400": {
-						"description": "Invalid refresh token. Please require the user to log in again.",
-						"content": {}
+						"description": "Invalid refresh token. Please require the user to log in again."
+					}
+				}
+			}
+		},
+		"/auth/password-resets": {
+			"post": {
+				"tags": [
+					"Authentication"
+				],
+				"summary": "Creates a new password reset request and emails the link to the user.",
+				"requestBody": {
+					"description": "Includes the users email to send the request to.",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": [
+									"email"
+								],
+								"properties": {
+									"email": {
+										"type": "string",
+										"example": "tyler@joinimpact.org"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success! The reset password email was sent.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/success"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid email.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"errors": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"code": {
+														"type": "number"
+													},
+													"message": {
+														"type": "string"
+													},
+													"invalidFields": {
+														"type": "array"
+													}
+												}
+											},
+											"example": [
+												{
+													"code": 98,
+													"message": "missing or invalid fields",
+													"invalidFields": [
+														"email"
+													]
+												}
+											]
+										}
+									}
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "User not found."
+					}
+				}
+			}
+		},
+		"/auth/password-resets/{passwordResetKey}": {
+			"get": {
+				"tags": [
+					"Authentication"
+				],
+				"summary": "Gets a password reset object. If valid, it returns a first name and email to render a form with.",
+				"responses": {
+					"200": {
+						"description": "Success! The password reset object was found!",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"firstName": {
+											"type": "string",
+											"example": "Tyler"
+										},
+										"email": {
+											"type": "string",
+											"example": "tyler@joinimpact.org"
+										}
+									}
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Password reset object not found, invalid key."
+					}
+				}
+			}
+		},
+		"/auth/password-resets/{passwordResetKey}/reset": {
+			"post": {
+				"tags": [
+					"Authentication"
+				],
+				"summary": "Resets the user's password from a password reset key.",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"password": {
+										"type": "string",
+										"description": "The new password for the user.",
+										"minLength": 8,
+										"maxLength": 512,
+										"example": "hunter3!"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success! The user's password was changed.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/success"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid password.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"errors": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"code": {
+														"type": "number"
+													},
+													"message": {
+														"type": "string"
+													},
+													"invalidFields": {
+														"type": "array"
+													}
+												}
+											},
+											"example": [
+												{
+													"code": 98,
+													"message": "missing or invalid fields",
+													"invalidFields": [
+														"password"
+													]
+												}
+											]
+										}
+									}
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Password reset object not found, invalid key."
 					}
 				}
 			}

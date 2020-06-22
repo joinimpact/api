@@ -78,7 +78,7 @@ func RequestPasswordReset(service authentication.Service) http.HandlerFunc {
 
 		err = service.RequestPasswordReset(req.Email)
 		if err != nil {
-			resp.BadRequest(w, r, resp.Error(400, err.Error()))
+			resp.NotFound(w, r, resp.Error(404, err.Error()))
 			return
 		}
 
@@ -99,7 +99,7 @@ func VerifyPasswordReset(service authentication.Service) http.HandlerFunc {
 
 		reset, err := service.CheckPasswordReset(req.Key)
 		if err != nil {
-			resp.BadRequest(w, r, resp.Error(400, err.Error()))
+			resp.NotFound(w, r, resp.Error(404, err.Error()))
 			return
 		}
 
@@ -123,7 +123,7 @@ func ResetPassword(service authentication.Service) http.HandlerFunc {
 
 		err = service.ResetPassword(req.Key, req.Password)
 		if err != nil {
-			resp.BadRequest(w, r, resp.Error(400, err.Error()))
+			resp.NotFound(w, r, resp.Error(404, err.Error()))
 			return
 		}
 
