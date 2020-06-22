@@ -39,6 +39,9 @@ func (app *App) Serve() error {
 		router.Use(middleware.Logger)
 	}
 
+	// Add the healthcheck.
+	router.Get("/healthcheck", healthcheckHandler)
+
 	// Mount the API router at /api/v1
 	router.Mount(fmt.Sprintf("/api/v%d", APIRevision), app.Router())
 
