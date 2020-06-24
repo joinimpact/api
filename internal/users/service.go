@@ -13,17 +13,23 @@ type Service interface {
 
 // service represents the internal implementation of the Service interface.
 type service struct {
-	userRepository   models.UserRepository
-	config           *config.Config
-	logger           *zerolog.Logger
-	snowflakeService snowflakes.SnowflakeService
+	userRepository             models.UserRepository
+	userProfileFieldRepository models.UserProfileFieldRepository
+	userTagRepository          models.UserTagRepository
+	tagRepository              models.TagRepository
+	config                     *config.Config
+	logger                     *zerolog.Logger
+	snowflakeService           snowflakes.SnowflakeService
 }
 
 // NewService creates and returns a new Users service with the provifded dependencies.
-func NewService(userRepository models.UserRepository, config *config.Config, logger *zerolog.Logger,
-	snowflakeService snowflakes.SnowflakeService) Service {
+func NewService(userRepository models.UserRepository, userProfileFieldRepository models.UserProfileFieldRepository, userTagRepository models.UserTagRepository,
+	tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService) Service {
 	return &service{
 		userRepository,
+		userProfileFieldRepository,
+		userTagRepository,
+		tagRepository,
 		config,
 		logger,
 		snowflakeService,
