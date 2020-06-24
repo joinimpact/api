@@ -132,3 +132,45 @@ func ResetPassword(service authentication.Service) http.HandlerFunc {
 		})
 	}
 }
+
+// GoogleOauth attempts to use Google to login through Oauth.
+func GoogleOauth(service authentication.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := struct {
+			Code string `json:"code" validate:"min=8,max=1024"`
+		}{}
+		err := parse.POST(w, r, &req)
+		if err != nil {
+			return
+		}
+
+		res, err := service.OauthLogin("google", req.Code)
+		if err != nil {
+			resp.BadRequest(w, r, resp.Error(400, err.Error()))
+			return
+		}
+
+		resp.OK(w, r, res)
+	}
+}
+
+// FacebookOauth attempts to use Facebook to login through Oauth.
+func FacebookOauth(service authentication.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := struct {
+			Code string `json:"code" validate:"min=8,max=1024"`
+		}{}
+		err := parse.POST(w, r, &req)
+		if err != nil {
+			return
+		}
+
+		res, err := service.OauthLogin("facebook", req.Code)
+		if err != nil {
+			resp.BadRequest(w, r, resp.Error(400, err.Error()))
+			return
+		}
+
+		resp.OK(w, r, res)
+	}
+}

@@ -500,6 +500,160 @@
 					}
 				}
 			}
+		},
+		"/auth/oauth/google": {
+			"post": {
+				"tags": [
+					"Authentication"
+				],
+				"summary": "Attempts to login with a Google Oauth code.",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"code": {
+										"type": "string",
+										"description": "The Oauth code supplied by the Google login.",
+										"example": "AQB3pDqTHj-1dDrwMqE3qgk8LnOD9aijF1j8wgaRDpEZh6NC6Jod9Sn6reK_ujwlYZxJJsEyfiTjhJQU_QhT16mfIF-kVAE0r8jwJ4HmbOGbFcVvAAqbvwPFobBHSLwxKzJCLjZnbYi0SdWJpY4Lu0-AFbUAbl72-4JDJNzMqmDj9RreAhfcrMCVkCNCnSpoTOmXPnDpJXMagyZDINS4zDGOfn94MwMxdlQ9qkqvwt6PPjD4u3ks1DfdvsuD_WXYYcMlj79xC3N3TVco-1Ej9a6pGPYvYHfB_uZm1GuKqY4R--Odiw0g0JKQHIIg4Q05PX0"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success! A user was either logged in or created.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "object",
+											"properties": {
+												"userCreated": {
+													"type": "boolean",
+													"description": "Responds with true if a new user was created. If true, please redirect to onboarding to complete a profile.",
+													"example": true
+												},
+												"token": {
+													"type": "object",
+													"properties": {
+														"authToken": {
+															"type": "string",
+															"description": "The newly generated JSON Web Token. Will be used in most API requests under the Authorization header. Good for 3 days.",
+															"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTkyNjEzMjE3fQ.YMQ9Fjpr0uWUcvH0lx2w1BVNttEbeVVzwMFkqADO8y4"
+														},
+														"authExpiry": {
+															"type": "integer",
+															"description": "The epoch of token expiry for the auth token."
+														},
+														"refreshToken": {
+															"type": "string",
+															"description": "The user's refresh token. Will be used to get a new token pair after the auth token expires. Good for 21 days.",
+															"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
+														},
+														"refreshExpiry": {
+															"type": "integer",
+															"description": "The epoch of token expiry for the refresh token."
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid Oauth code. Please try logging in again."
+					},
+					"500": {
+						"description": "An error occurred while signing in or creating the account on the server."
+					}
+				}
+			}
+		},
+		"/auth/oauth/facebook": {
+			"post": {
+				"tags": [
+					"Authentication"
+				],
+				"summary": "Attempts to login with a Facebook Oauth code.",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"code": {
+										"type": "string",
+										"description": "The Oauth code supplied by the Facebook login.",
+										"example": "AQB3pDqTHj-1dDrwMqE3qgk8LnOD9aijF1j8wgaRDpEZh6NC6Jod9Sn6reK_ujwlYZxJJsEyfiTjhJQU_QhT16mfIF-kVAE0r8jwJ4HmbOGbFcVvAAqbvwPFobBHSLwxKzJCLjZnbYi0SdWJpY4Lu0-AFbUAbl72-4JDJNzMqmDj9RreAhfcrMCVkCNCnSpoTOmXPnDpJXMagyZDINS4zDGOfn94MwMxdlQ9qkqvwt6PPjD4u3ks1DfdvsuD_WXYYcMlj79xC3N3TVco-1Ej9a6pGPYvYHfB_uZm1GuKqY4R--Odiw0g0JKQHIIg4Q05PX0"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success! A user was either logged in or created.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "object",
+											"properties": {
+												"userCreated": {
+													"type": "boolean",
+													"description": "Responds with true if a new user was created. If true, please redirect to onboarding to complete a profile.",
+													"example": true
+												},
+												"token": {
+													"type": "object",
+													"properties": {
+														"authToken": {
+															"type": "string",
+															"description": "The newly generated JSON Web Token. Will be used in most API requests under the Authorization header. Good for 3 days.",
+															"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTkyNjEzMjE3fQ.YMQ9Fjpr0uWUcvH0lx2w1BVNttEbeVVzwMFkqADO8y4"
+														},
+														"authExpiry": {
+															"type": "integer",
+															"description": "The epoch of token expiry for the auth token."
+														},
+														"refreshToken": {
+															"type": "string",
+															"description": "The user's refresh token. Will be used to get a new token pair after the auth token expires. Good for 21 days.",
+															"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
+														},
+														"refreshExpiry": {
+															"type": "integer",
+															"description": "The epoch of token expiry for the refresh token."
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid Oauth code. Please try logging in again."
+					},
+					"500": {
+						"description": "An error occurred while signing in or creating the account on the server."
+					}
+				}
+			}
 		}
 	}
 }

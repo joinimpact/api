@@ -50,6 +50,7 @@ func main() {
 		&models.OrganizationProfileField{},
 		&models.OrganizationMembership{},
 		&models.PasswordResetKey{},
+		&models.ThirdPartyIdentity{},
 	)
 	if err != nil {
 		// Error migrating the database, panic.
@@ -69,9 +70,10 @@ func main() {
 	// Repositories
 	userRepository := postgres.NewUserRepository(db, &log.Logger)
 	passwordResetRepository := postgres.NewPasswordResetRepository(db, &log.Logger)
+	thirdPartyIdentityRepository := postgres.NewThirdPartyIdentityRepository(db, &log.Logger)
 
 	// Internal services
-	authenticationService := authentication.NewService(userRepository, passwordResetRepository, config, &log.Logger, snowflakeService, emailService)
+	authenticationService := authentication.NewService(userRepository, passwordResetRepository, thirdPartyIdentityRepository, config, &log.Logger, snowflakeService, emailService)
 
 	// Create a new app using the new config.
 	app := core.NewApp(config, &log.Logger, authenticationService)

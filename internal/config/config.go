@@ -13,29 +13,41 @@ const defaultPort = 3000
 
 // Config stores configuration values such as API keys, secrets, and more.
 type Config struct {
-	DevMode          bool   // enables/disables certain debugging features for development
-	JWTSecret        string // secret for signing JWTs for authorization
-	Port             int    // the HTTP port to serve the application on
-	DatabaseHost     string // the host of the postgres database
-	DatabasePort     int    // the port of the postgres database
-	DatabaseUser     string // the user of the postgres database
-	DatabaseName     string // the dbname of the postgres database
-	DatabasePassword string // the password to the postgres database
-	SendGridAPIKey   string // the api key to access sendgrid
+	DevMode             bool   // enables/disables certain debugging features for development
+	JWTSecret           string // secret for signing JWTs for authorization
+	Port                int    // the HTTP port to serve the application on
+	DatabaseHost        string // the host of the postgres database
+	DatabasePort        int    // the port of the postgres database
+	DatabaseUser        string // the user of the postgres database
+	DatabaseName        string // the dbname of the postgres database
+	DatabasePassword    string // the password to the postgres database
+	SendGridAPIKey      string // the api key to access sendgrid
+	GoogleClientID      string // the client ID for Google Oauth
+	GoogleClientSecret  string // the client secret for Google Oauth
+	GoogleCallbackURL   string // the callback URL for Google Oauth
+	FacebookAppID       string // the app id for Facebook Oauth
+	FacebookAppSecret   string // the app secret for Facebook Oauth
+	FacebookCallbackURL string // the callback URL for Facebook Oauth
 }
 
 // NewConfig generates a new config from environment variables and returns a Config struct.
 func NewConfig() *Config {
 	return &Config{
-		DevMode:          envBool("IMPACT_DEV_MODE", true),
-		JWTSecret:        envString("IMPACT_JWT_SECRET", defaultJWTSecret),
-		Port:             envInt("PORT", defaultPort),
-		DatabaseHost:     envString("IMPACT_DATABASE_HOST", "localhost"),
-		DatabasePort:     envInt("IMPACT_DATABASE_PORT", 5432),
-		DatabaseUser:     envString("IMPACT_DATABASE_USER", "postgres"),
-		DatabaseName:     envString("IMPACT_DATABASE_NAME", "impact"),
-		DatabasePassword: envString("IMPACT_DATABASE_PASSWORD", ""),
-		SendGridAPIKey:   envString("IMPACT_SENDGRID_API_KEY", ""),
+		DevMode:             envBool("IMPACT_DEV_MODE", true),
+		JWTSecret:           envString("IMPACT_JWT_SECRET", defaultJWTSecret),
+		Port:                envInt("PORT", defaultPort),
+		DatabaseHost:        envString("IMPACT_DATABASE_HOST", "localhost"),
+		DatabasePort:        envInt("IMPACT_DATABASE_PORT", 5432),
+		DatabaseUser:        envString("IMPACT_DATABASE_USER", "postgres"),
+		DatabaseName:        envString("IMPACT_DATABASE_NAME", "impact"),
+		DatabasePassword:    envString("IMPACT_DATABASE_PASSWORD", ""),
+		SendGridAPIKey:      envString("IMPACT_SENDGRID_API_KEY", ""),
+		GoogleClientID:      envString("IMPACT_GOOGLE_CLIENT_ID", ""),
+		GoogleClientSecret:  envString("IMPACT_GOOGLE_CLIENT_SECRET", ""),
+		GoogleCallbackURL:   envString("IMPACT_GOOGLE_CALLBACK_URL", "https://dev.joinimpact.org/google/success"),
+		FacebookAppID:       envString("IMPACT_FACEBOOK_APP_ID", ""),
+		FacebookAppSecret:   envString("IMPACT_FACEBOOK_APP_SECRET", ""),
+		FacebookCallbackURL: envString("IMPACT_FACEBOOK_CALLBACK_URL", "https://dev.joinimpact.org/fb/success"),
 	}
 }
 
