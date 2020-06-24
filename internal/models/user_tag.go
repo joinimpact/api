@@ -15,6 +15,8 @@ type UserTagRepository interface {
 	FindByID(id int64) (*UserTag, error)
 	// FindByUserID finds entities by UserID.
 	FindByUserID(userID int64) ([]UserTag, error)
+	// FindUserTagByID finds a single entity by UserID and tag ID.
+	FindUserTagByID(userID int64, tagID int64) (*UserTag, error)
 	// Create creates a new entity.
 	Create(userTag UserTag) error
 	// Update updates an entity with the ID in the provided entity.
