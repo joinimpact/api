@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// repository stores and controls Users in the database.
+// passwordResetKeyRepository stores and controls PasswordResetKeys in the database.
 type passwordResetKeyRepository struct {
 	db     *gorm.DB
 	logger *zerolog.Logger

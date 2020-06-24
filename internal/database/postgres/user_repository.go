@@ -6,7 +6,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// repository stores and controls Users in the database.
+// userRepository stores and controls Users in the database.
 type userRepository struct {
 	db     *gorm.DB
 	logger *zerolog.Logger
