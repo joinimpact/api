@@ -9,6 +9,10 @@ import (
 
 // Service represents a provider of User services (excluding authentication).
 type Service interface {
+	// GetUserTags gets all of a user's tags.
+	GetUserTags(userID int64) ([]models.Tag, error)
+	// AddUserTags adds tags to a user by tag name.
+	AddUserTags(userID int64, tags []string) (int, error)
 }
 
 // service represents the internal implementation of the Service interface.

@@ -37,6 +37,10 @@ func NewApp(config *config.Config, logger *zerolog.Logger, authenticationService
 func (app *App) Serve() error {
 	// Create a new router.
 	router := chi.NewRouter()
+
+	// JSON middleware
+	router.Use(middleware.SetHeader("Content-Type", "application/json"))
+
 	// Apply the Logger middleware if dev mode is enabled.
 	if app.config.DevMode {
 		router.Use(middleware.Logger)

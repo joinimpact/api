@@ -6,7 +6,7 @@ type UserTag struct {
 	UserID int64 `json:"-"`
 	User   User  `json:"-"`
 	TagID  int64 `json:"-"`
-	Tag
+	Tag    Tag
 }
 
 // UserTagRepository represents a repository of UserTag.

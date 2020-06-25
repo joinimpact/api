@@ -1,11 +1,16 @@
 package users
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
+	"github.com/go-chi/chi"
 	"github.com/joinimpact/api/internal/authentication"
+	"github.com/joinimpact/api/pkg/resp"
 )
 
 // userRequestContext contains contextual information about a user needed
@@ -15,8 +20,10 @@ type userRequestContext struct {
 	isSelf bool
 }
 
+type key int
+
 const (
-	keyUserRequestContext = iota
+	keyUserRequestContext key = iota
 )
 
 // getToken attempts to get the token from the Authorization HTTP header.
@@ -36,21 +43,34 @@ func Middleware(authService authentication.Service) func(next http.Handler) http
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 
-			// userID := chi.URLParam(r, "userID")
-			// if userID != "me" {
-			// 	id, err := strconv.ParseInt(userID, 10, 64)
-			// 	if err != nil {
-			// 		resp.BadRequest(w, r, resp.Error(400, "invalid user ID"))
-			// 		return
-			// 	}
-			// 	ctx = context.WithValue(ctx, keyUserRequestContext, userRequestContext{
+			token, err := getToken(r)
+			if err != nil {
+				resp.Unauthorized(w, r, resp.Error(401, "no authorization header present"))
+				return
+			}
 
-			// 	})
-			// }
-			// token, err := getToken(r)
-			// if err != nil {
+			userID, err := authService.GetUserIDFromToken(token)
+			if err != nil {
+				fmt.Println(token)
+				resp.Unauthorized(w, r, resp.Error(401, "invalid auth token"))
+				return
+			}
 
-			// }
+			queryUserID := userID
+			userIDString := chi.URLParam(r, "userID")
+
+			if userIDString != "me" {
+				queryUserID, err = strconv.ParseInt(userIDString, 10, 64)
+				if err != nil {
+					resp.BadRequest(w, r, resp.Error(400, "invalid user ID"))
+					return
+				}
+			}
+
+			ctx = context.WithValue(ctx, keyUserRequestContext, &userRequestContext{
+				userID: queryUserID,
+				isSelf: queryUserID == userID,
+			})
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

@@ -21,7 +21,7 @@ type Err struct {
 
 // Client-facing standard errors.
 var (
-	UnknownError      = Error(1, "unknown error")
+	UnknownError      = Error(500, "unknown error")
 	UnauthorizedError = Error(401, "unauthorized; check headers and token")
 )
 

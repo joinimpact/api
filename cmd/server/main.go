@@ -51,6 +51,8 @@ func main() {
 		&models.OrganizationProfileField{},
 		&models.OrganizationMembership{},
 		&models.PasswordResetKey{},
+		&models.UserTag{},
+		&models.Tag{},
 	)
 	if err != nil {
 		// Error migrating the database, panic.

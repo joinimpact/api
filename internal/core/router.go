@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/go-chi/chi"
 	"github.com/joinimpact/api/internal/core/handlers/auth"
+	"github.com/joinimpact/api/internal/core/handlers/users"
 )
 
 // Router assembles and returns a *chi.Mux router with all the API routes.
@@ -18,6 +19,16 @@ func (app *App) Router() *chi.Mux {
 				r.Get("/", auth.VerifyPasswordReset(app.authenticationService))
 				r.Post("/reset", auth.ResetPassword(app.authenticationService))
 			})
+		})
+	})
+
+	router.Route("/users", func(r chi.Router) {
+		r.Route("/{userID}", func(r chi.Router) {
+			// For processing the userID param.
+			r.Use(users.Middleware(app.authenticationService))
+
+			r.Get("/tags", users.GetUserTags(app.usersService))
+			r.Post("/tags", users.PostUserTags(app.usersService))
 		})
 	})
 
