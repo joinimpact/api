@@ -500,6 +500,138 @@
 					}
 				}
 			}
+		},
+		"/users/{userID}/profile": {
+			"get": {
+				"summary": "Gets the profile of a single user by ID.",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userID",
+						"description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
+						"schema": {
+							"type": "integer"
+						},
+						"required": true
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Success! A user profile was returned.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "object",
+											"properties": {
+												"profilePicture": {
+													"type": "string",
+													"example": "https://cdn.joinimpact.org/profile-picture-1273884565403865088-1593076042.png"
+												},
+												"firstName": {
+													"type": "string",
+													"example": "Tyler"
+												},
+												"lastName": {
+													"type": "string",
+													"example": "Lafayette"
+												},
+												"dateOfBirth": {
+													"type": "string",
+													"example": "2003-07-28T00:00:00Z"
+												},
+												"zipCode": {
+													"type": "string",
+													"description": "May change",
+													"example": "Menlo Park, CA, US 94025"
+												},
+												"tags": {
+													"type": "array",
+													"description": "The user's areas of interest.",
+													"items": {
+														"type": "object",
+														"properties": {
+															"id": {
+																"type": "integer",
+																"example": "1283918398189"
+															},
+															"name": {
+																"type": "string",
+																"example": "Research"
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			},
+			"patch": {
+				"summary": "Updates a user's profile. Non-filled fields will be ignored.",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userID",
+						"description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
+						"schema": {
+							"type": "integer"
+						},
+						"required": true
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"data": {
+										"type": "object",
+										"properties": {
+											"firstName": {
+												"type": "string",
+												"example": "Tyler"
+											},
+											"lastName": {
+												"type": "string",
+												"example": "Lafayette"
+											},
+											"dateOfBirth": {
+												"type": "string",
+												"example": "2003-07-28T00:00:00Z"
+											},
+											"zipCode": {
+												"type": "string",
+												"description": "May change",
+												"example": "Menlo Park, CA, US 94025"
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Profile updated successfully.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/success"
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 }
