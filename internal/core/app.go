@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/joinimpact/api/internal/authentication"
 	"github.com/joinimpact/api/internal/config"
+	"github.com/joinimpact/api/internal/users"
 	"github.com/rs/zerolog"
 )
 
@@ -19,14 +20,16 @@ type App struct {
 	config                *config.Config
 	logger                *zerolog.Logger
 	authenticationService authentication.Service
+	usersService          users.Service
 }
 
 // NewApp creates and returns a new *App with the provided Config.
-func NewApp(config *config.Config, logger *zerolog.Logger, authenticationService authentication.Service) *App {
+func NewApp(config *config.Config, logger *zerolog.Logger, authenticationService authentication.Service, usersService users.Service) *App {
 	return &App{
 		config,
 		logger,
 		authenticationService,
+		usersService,
 	}
 }
 

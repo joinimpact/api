@@ -38,6 +38,15 @@ func (r *userTagRepository) FindByUserID(userID int64) ([]models.UserTag, error)
 	return userTags, nil
 }
 
+// FindUserTagByID finds a single entity by UserID and tag ID.
+func (r *userTagRepository) FindUserTagByID(userID int64, tagID int64) (*models.UserTag, error) {
+	var userTag models.UserTag
+	if err := r.db.Where("user_id = ? AND tag_id = ?", userID, tagID).First(&userTag).Error; err != nil {
+		return &userTag, err
+	}
+	return &userTag, nil
+}
+
 // Create creates a new entity.
 func (r *userTagRepository) Create(userTag models.UserTag) error {
 	return r.db.Create(&userTag).Error

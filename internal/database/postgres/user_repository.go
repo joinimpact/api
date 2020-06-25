@@ -20,7 +20,7 @@ func NewUserRepository(db *gorm.DB, logger *zerolog.Logger) models.UserRepositor
 // FindByID finds a single User by ID.
 func (r *userRepository) FindByID(id int64) (*models.User, error) {
 	var user models.User
-	if err := r.db.First(&user, id).Error; err != nil {
+	if err := r.db.First(&user, id).Error; err != nil || !user.Active {
 		return &user, err
 	}
 	return &user, nil
@@ -29,7 +29,7 @@ func (r *userRepository) FindByID(id int64) (*models.User, error) {
 // FindByEmail finds a single User by Email.
 func (r *userRepository) FindByEmail(email string) (*models.User, error) {
 	var user models.User
-	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil {
+	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil || !user.Active {
 		return &user, err
 	}
 	return &user, nil
