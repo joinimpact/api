@@ -22,6 +22,10 @@ type Config struct {
 	DatabaseName     string // the dbname of the postgres database
 	DatabasePassword string // the password to the postgres database
 	SendGridAPIKey   string // the api key to access sendgrid
+	CDNKey           string // the cdn key to access the cdn
+	CDNSecret        string // the cdn secret to access the cdn
+	CDNEndpoint      string // the cdn endpoint to access the cdn
+	CDNBucket        string // the cdn bucket to access the cdn
 }
 
 // NewConfig generates a new config from environment variables and returns a Config struct.
@@ -36,6 +40,10 @@ func NewConfig() *Config {
 		DatabaseName:     envString("IMPACT_DATABASE_NAME", "impact"),
 		DatabasePassword: envString("IMPACT_DATABASE_PASSWORD", ""),
 		SendGridAPIKey:   envString("IMPACT_SENDGRID_API_KEY", ""),
+		CDNKey:           envString("IMPACT_CDN_KEY", ""),
+		CDNSecret:        envString("IMPACT_CDN_SECRET", ""),
+		CDNEndpoint:      envString("IMPACT_CDN_ENDPOINT", "https://sfo2.digitaloceanspaces.com"),
+		CDNBucket:        envString("IMPACT_CDN_BUCKET", "impact-cdn"),
 	}
 }
 

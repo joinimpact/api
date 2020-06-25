@@ -1,6 +1,10 @@
 package users
 
 import (
+	"fmt"
+	"io"
+	"time"
+
 	"github.com/joinimpact/api/internal/config"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/snowflakes"
@@ -9,10 +13,16 @@ import (
 
 // Service represents a provider of User services (excluding authentication).
 type Service interface {
+	// GetUserProfile retrieves a single user's profile.
+	GetUserProfile(userID int64) (*UserProfile, error)
+	// UpdateUserProfile updates a user's profile.
+	UpdateUserProfile(userID int64, profile UserProfile) error
 	// GetUserTags gets all of a user's tags.
 	GetUserTags(userID int64) ([]models.Tag, error)
 	// AddUserTags adds tags to a user by tag name.
 	AddUserTags(userID int64, tags []string) (int, error)
+	// UploadProfilePicture uploads a profile picture to the CDN and adds it to the user.
+	UploadProfilePicture(userID int64, fileReader io.Reader) error
 }
 
 // service represents the internal implementation of the Service interface.
@@ -24,6 +34,7 @@ type service struct {
 	config                     *config.Config
 	logger                     *zerolog.Logger
 	snowflakeService           snowflakes.SnowflakeService
+	cdnClient                  *cdnClient
 }
 
 // NewService creates and returns a new Users service with the provifded dependencies.
@@ -37,7 +48,46 @@ func NewService(userRepository models.UserRepository, userProfileFieldRepository
 		config,
 		logger,
 		snowflakeService,
+		newCDNClient(config),
 	}
+}
+
+// GetUserProfile retrieves a single user's profile.
+func (s *service) GetUserProfile(userID int64) (*UserProfile, error) {
+	profile := &UserProfile{}
+	// Find the user to verify that it is active.
+	user, err := s.userRepository.FindByID(userID)
+	if err != nil {
+		return nil, NewErrUserNotFound()
+	}
+
+	profile.FirstName = user.FirstName
+	profile.LastName = user.LastName
+	profile.ProfilePicture = user.ProfilePicture
+	profile.DateOfBirth = user.DateOfBirth
+	profile.ZIPCode = user.ZIPCode
+
+	tags, err := s.GetUserTags(userID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	profile.Tags = tags
+
+	return profile, nil
+}
+
+// UpdateUserProfile updates a user's profile.
+func (s *service) UpdateUserProfile(userID int64, profile UserProfile) error {
+	return s.userRepository.Update(models.User{
+		Model: models.Model{
+			ID: userID,
+		},
+		FirstName:   profile.FirstName,
+		LastName:    profile.LastName,
+		DateOfBirth: profile.DateOfBirth,
+		ZIPCode:     profile.ZIPCode,
+	})
 }
 
 // GetUserTags gets all of a user's tags.
@@ -115,4 +165,19 @@ func (s *service) AddUserTags(userID int64, tags []string) (int, error) {
 	}
 
 	return successfulTags, nil
+}
+
+// UploadProfilePicture uploads a profile picture to the CDN and adds it to the user.
+func (s *service) UploadProfilePicture(userID int64, fileReader io.Reader) error {
+	url, err := s.cdnClient.uploadImage(fmt.Sprintf("profile-picture-%d-%d.png", userID, time.Now().UTC().Unix()), fileReader)
+	if err != nil {
+		return err
+	}
+
+	return s.userRepository.Update(models.User{
+		Model: models.Model{
+			ID: userID,
+		},
+		ProfilePicture: url,
+	})
 }
