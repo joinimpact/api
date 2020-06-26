@@ -86,3 +86,24 @@ func (s *service) generateTokenPair(userID int64) (*TokenPair, error) {
 		now.Add(RefreshTokenLifespanDays * 24 * time.Hour).UTC().Unix(),
 	}, nil
 }
+
+// GetUserIDFromToken gets a user's ID from a JWT token.
+func (s *service) GetUserIDFromToken(token string) (int64, error) {
+	jwt, err := jwt.ParseWithClaims(token, &jwtClaims{}, func(t *jwt.Token) (interface{}, error) {
+		claims, ok := t.Claims.(*jwtClaims)
+		if !ok {
+			return nil, errors.New("error processing jwt claims")
+		}
+
+		// Append the date to the secret for rolling secrets.
+		secret := fmt.Sprintf("%s::%d", s.config.JWTSecret, claims.IssuedAt)
+
+		return []byte(secret), nil
+	})
+
+	if claims, ok := jwt.Claims.(*jwtClaims); ok && jwt.Valid {
+		return claims.UserID, nil
+	}
+
+	return 0, err
+}

@@ -654,6 +654,356 @@
 					}
 				}
 			}
+		},
+		"/users/{userId}": {
+			"get": {
+				"tags": [
+					"Users"
+				],
+				"summary": "Gets the profile of a single user by ID.",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
+						"schema": {
+							"type": "integer"
+						},
+						"required": true
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Success! A user profile was returned.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "object",
+											"properties": {
+												"profilePicture": {
+													"type": "string",
+													"example": "https://cdn.joinimpact.org/profile-picture-1273884565403865088-1593076042.png"
+												},
+												"firstName": {
+													"type": "string",
+													"example": "Tyler"
+												},
+												"lastName": {
+													"type": "string",
+													"example": "Lafayette"
+												},
+												"dateOfBirth": {
+													"type": "string",
+													"example": "2003-07-28T00:00:00Z"
+												},
+												"zipCode": {
+													"type": "string",
+													"description": "May change",
+													"example": "Menlo Park, CA, US 94025"
+												},
+												"tags": {
+													"type": "array",
+													"description": "The user's areas of interest.",
+													"items": {
+														"type": "object",
+														"properties": {
+															"id": {
+																"type": "integer",
+																"example": "1283918398189"
+															},
+															"name": {
+																"type": "string",
+																"example": "Research"
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			},
+			"patch": {
+				"tags": [
+					"Users"
+				],
+				"summary": "Updates a user's profile. Non-filled fields will be ignored.",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
+						"schema": {
+							"type": "integer"
+						},
+						"required": true
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"data": {
+										"type": "object",
+										"properties": {
+											"firstName": {
+												"type": "string",
+												"example": "Tyler"
+											},
+											"lastName": {
+												"type": "string",
+												"example": "Lafayette"
+											},
+											"dateOfBirth": {
+												"type": "string",
+												"example": "2003-07-28T00:00:00Z"
+											},
+											"zipCode": {
+												"type": "string",
+												"description": "May change",
+												"example": "Menlo Park, CA, US 94025"
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Profile updated successfully.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/success"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/users/{userId}/profile-picture": {
+			"post": {
+				"tags": [
+					"Users"
+				],
+				"summary": "Uploads a new profile picture to a user by ID.",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
+						"schema": {
+							"type": "integer"
+						},
+						"required": true
+					}
+				],
+				"requestBody": {
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"file": {
+										"type": "string",
+										"format": "binary",
+										"description": "Must be an image in a png/jpg format. The server will center crop it to a square."
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success! The user profile picture is now replaced."
+					},
+					"400": {
+						"description": "Invalid file. Please ensure it is a jpg/jpeg or png."
+					},
+					"500": {
+						"description": "There was an error encoding the image or uploading it to the CDN. Please try again."
+					}
+				}
+			}
+		},
+		"/users/{userId}/tags": {
+			"get": {
+				"tags": [
+					"Users"
+				],
+				"summary": "Gets all of a user's tags. (Areas of Interest)",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
+						"schema": {
+							"type": "integer"
+						},
+						"required": true
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"tags": {
+											"type": "array",
+											"description": "The user's areas of interest.",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "integer",
+														"example": "1283918398189"
+													},
+													"name": {
+														"type": "string",
+														"example": "Research"
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			},
+			"post": {
+				"tags": [
+					"Users"
+				],
+				"summary": "Adds multiple tags to a user. Skips duplicates, so it's okay to send tags when unsure if they are already added.",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
+						"schema": {
+							"type": "integer"
+						},
+						"required": true
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"tags": {
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": {
+												"name": {
+													"type": "string",
+													"description": "The name of the tag."
+												}
+											}
+										}
+									}
+								},
+								"example": {
+									"tags": [
+										{
+											"name": "Research"
+										},
+										{
+											"name": "Data Science"
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success! The tags were added.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "object",
+											"properties": {
+												"numAdded": {
+													"type": "integer",
+													"description": "The number of new tags added.",
+													"example": 2
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/users/{userId}/tags/{tagId}": {
+			"delete": {
+				"tags": [
+					"Users"
+				],
+				"summary": "Deletes a tag from a user's profile.",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
+						"schema": {
+							"type": "integer"
+						},
+						"required": true
+					},
+					{
+						"in": "path",
+						"name": "tagId",
+						"description": "The ID of the tag.",
+						"schema": {
+							"type": "integer"
+						},
+						"required": true
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Success! The tag was removed.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/success"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "The tag was not found in the user's profile. Safe to treat as a successful deletion."
+					}
+				}
+			}
 		}
 	}
 }

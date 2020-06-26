@@ -28,6 +28,8 @@ type Service interface {
 	CheckPasswordReset(key string) (*PasswordResetValidation, error)
 	// ResetPassword resets a user's password from a PasswordResetKey's key.
 	ResetPassword(key string, newPassword string) error
+	// GetUserIDFromToken gets a user's ID from a JWT token.
+	GetUserIDFromToken(token string) (int64, error)
 	// OauthLogin authenticates using a third-party service instead of a traditional username and password.
 	OauthLogin(serviceName, code string) (*OauthResponse, error)
 }

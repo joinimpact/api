@@ -9,6 +9,7 @@ import (
 	"github.com/joinimpact/api/internal/email"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/snowflakes"
+	"github.com/joinimpact/api/internal/users"
 
 	"github.com/joinimpact/api/internal/migrations"
 
@@ -50,6 +51,8 @@ func main() {
 		&models.OrganizationProfileField{},
 		&models.OrganizationMembership{},
 		&models.PasswordResetKey{},
+		&models.UserTag{},
+		&models.Tag{},
 		&models.ThirdPartyIdentity{},
 	)
 	if err != nil {
@@ -70,13 +73,17 @@ func main() {
 	// Repositories
 	userRepository := postgres.NewUserRepository(db, &log.Logger)
 	passwordResetRepository := postgres.NewPasswordResetRepository(db, &log.Logger)
+	userProfileFieldRepository := postgres.NewUserProfileFieldRepository(db, &log.Logger)
 	thirdPartyIdentityRepository := postgres.NewThirdPartyIdentityRepository(db, &log.Logger)
+	userTagRepository := postgres.NewUserTagRepository(db, &log.Logger)
+	tagRepository := postgres.NewTagRepository(db, &log.Logger)
 
 	// Internal services
+	usersService := users.NewService(userRepository, userProfileFieldRepository, userTagRepository, tagRepository, config, &log.Logger, snowflakeService)
 	authenticationService := authentication.NewService(userRepository, passwordResetRepository, thirdPartyIdentityRepository, config, &log.Logger, snowflakeService, emailService)
 
 	// Create a new app using the new config.
-	app := core.NewApp(config, &log.Logger, authenticationService)
+	app := core.NewApp(config, &log.Logger, authenticationService, usersService)
 
 	// Print a message.
 	log.Info().Int("port", int(config.Port)).Str("version", APIVersion).Msg("Listening")
