@@ -6,12 +6,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/joinimpact/api/internal/authentication/oauth"
 	"github.com/joinimpact/api/internal/config"
 	"github.com/joinimpact/api/internal/email"
 	"github.com/joinimpact/api/internal/email/templates"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/snowflakes"
 	"github.com/rs/zerolog"
+	"golang.org/x/oauth2"
 )
 
 // Service represents a provider of authentication services.
@@ -28,24 +30,28 @@ type Service interface {
 	ResetPassword(key string, newPassword string) error
 	// GetUserIDFromToken gets a user's ID from a JWT token.
 	GetUserIDFromToken(token string) (int64, error)
+	// OauthLogin authenticates using a third-party service instead of a traditional username and password.
+	OauthLogin(serviceName, code string) (*OauthResponse, error)
 }
 
 // service represents the default authentication service of this package.
 type service struct {
-	userRepository             models.UserRepository
-	passwordResetKeyRepository models.PasswordResetKeyRepository
-	config                     *config.Config
-	logger                     *zerolog.Logger
-	snowflakeService           snowflakes.SnowflakeService
-	emailService               email.Service
+	userRepository               models.UserRepository
+	passwordResetKeyRepository   models.PasswordResetKeyRepository
+	thirdPartyIdentityRepository models.ThirdPartyIdentityRepository
+	config                       *config.Config
+	logger                       *zerolog.Logger
+	snowflakeService             snowflakes.SnowflakeService
+	emailService                 email.Service
 }
 
 // NewService creates and returns a new Service with the provided UserRepository, Config, Logger, and SnowflakeService.
-func NewService(userRepository models.UserRepository, passwordResetKeyRepository models.PasswordResetKeyRepository, config *config.Config, logger *zerolog.Logger,
+func NewService(userRepository models.UserRepository, passwordResetKeyRepository models.PasswordResetKeyRepository, thirdPartyIdentityRepository models.ThirdPartyIdentityRepository, config *config.Config, logger *zerolog.Logger,
 	snowflakeService snowflakes.SnowflakeService, emailService email.Service) Service {
 	return &service{
 		userRepository,
 		passwordResetKeyRepository,
+		thirdPartyIdentityRepository,
 		config,
 		logger,
 		snowflakeService,
@@ -203,4 +209,109 @@ func (s *service) ResetPassword(key string, newPassword string) error {
 	err = s.passwordResetKeyRepository.DeleteByID(resetKey.ID)
 
 	return err
+}
+
+// OauthResponse has information relating to the autentication of users using Oauth.
+type OauthResponse struct {
+	UserCreated bool       `json:"userCreated"`
+	TokenPair   *TokenPair `json:"token"`
+}
+
+// OauthLogin authenticates using a third-party service instead of a traditional username and password.
+func (s *service) OauthLogin(serviceName, code string) (*OauthResponse, error) {
+	var profile oauth.Profile
+	var token *oauth2.Token
+	var err error
+
+	switch serviceName {
+	case "google":
+		client := oauth.NewGoogleClient(s.config)
+		token, err = client.GetToken(code)
+		if err != nil {
+			return nil, err
+		}
+		profile, err = client.GetProfile(token)
+		if err != nil {
+			return nil, err
+		}
+	case "facebook":
+		client := oauth.NewFacebookClient(s.config)
+		token, err = client.GetToken(code)
+		if err != nil {
+			return nil, err
+		}
+		profile, err = client.GetProfile(token)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if profile == nil {
+		return nil, errors.New("invalid service name")
+	}
+
+	if !validateEmail(profile.GetEmail()) {
+		return nil, errors.New("could not get user email")
+	}
+
+	user, created, err := s.createOauthUserIfNotExists(profile)
+	if err != nil {
+		return nil, err
+	}
+
+	identity, err := s.thirdPartyIdentityRepository.FindUserIdentityByServiceName(user.ID, serviceName)
+	if err != nil {
+		identity = &models.ThirdPartyIdentity{
+			UserID:                 user.ID,
+			ThirdPartyServiceName:  serviceName,
+			ThirdPartyAccessToken:  token.AccessToken,
+			ThirdPartyRefreshToken: token.RefreshToken,
+		}
+
+		identity.ID = s.snowflakeService.GenerateID()
+
+		err = s.thirdPartyIdentityRepository.Create(*identity)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Successful login, generate and return a token pair.
+	userToken, err := s.generateTokenPair(user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &OauthResponse{
+		UserCreated: created,
+		TokenPair:   userToken,
+	}, nil
+}
+
+// createOauthUserIfNotExists takes an oauth profile and checks to see if a user already exists.
+// If one exists, it will return it with the bool false,
+// and if not, it will return a newly created user with the bool true.
+func (s *service) createOauthUserIfNotExists(profile oauth.Profile) (*models.User, bool, error) {
+	user, err := s.userRepository.FindByEmail(profile.GetEmail())
+	if err == nil {
+		return user, false, nil
+	}
+
+	// Create the new user around the oauth values.
+	newUser := models.User{
+		Email:     strings.ToLower(profile.GetEmail()),
+		FirstName: profile.GetFirstName(),
+		LastName:  profile.GetLastName(),
+	}
+
+	// Generate an ID for the new user.
+	newUser.ID = s.snowflakeService.GenerateID()
+
+	// Create the user in the repository.
+	err = s.userRepository.Create(newUser)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return &newUser, true, nil
 }

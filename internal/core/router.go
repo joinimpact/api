@@ -20,6 +20,10 @@ func (app *App) Router() *chi.Mux {
 				r.Post("/reset", auth.ResetPassword(app.authenticationService))
 			})
 		})
+		r.Route("/oauth", func(r chi.Router) {
+			r.Post("/google", auth.GoogleOauth(app.authenticationService))
+			r.Post("/facebook", auth.FacebookOauth(app.authenticationService))
+		})
 	})
 
 	router.Route("/users", func(r chi.Router) {
