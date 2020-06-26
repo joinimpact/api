@@ -1,4 +1,4 @@
-package users
+package cdn
 
 import (
 	"fmt"
@@ -11,12 +11,14 @@ import (
 	"github.com/joinimpact/api/internal/config"
 )
 
-type cdnClient struct {
+// Client represents a CDN client.
+type Client struct {
 	config  *config.Config
 	session *session.Session
 }
 
-func newCDNClient(config *config.Config) *cdnClient {
+// NewCDNClient creates and returns a new Client with a config.
+func NewCDNClient(config *config.Config) *Client {
 	key := config.CDNKey
 	secret := config.CDNSecret
 
@@ -33,14 +35,14 @@ func newCDNClient(config *config.Config) *cdnClient {
 
 	fmt.Println("connected to s3")
 
-	return &cdnClient{
+	return &Client{
 		config,
 		newSession,
 	}
 }
 
-// uploadImage uploads an image to the Spaces CDN. On success, it returns the full URL of the profile picture.
-func (c *cdnClient) uploadImage(imageName string, reader io.Reader) (string, error) {
+// UploadImage uploads an image to the Spaces CDN. On success, it returns the full URL of the profile picture.
+func (c *Client) UploadImage(imageName string, reader io.Reader) (string, error) {
 	uploader := s3manager.NewUploader(c.session)
 
 	_, err := uploader.Upload(&s3manager.UploadInput{
