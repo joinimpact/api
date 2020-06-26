@@ -21,9 +21,9 @@ type OrganizationMembershipRepository interface {
 	// FindUserInOrganization finds a user's membership in a specific organization.
 	FindUserInOrganization(organizationID, userID int64) (*OrganizationMembership, error)
 	// Create creates a new entity.
-	Create(organization Organization) error
+	Create(organizationMembership OrganizationMembership) error
 	// Update updates an entity with the ID in the provided entity.
-	Update(organization Organization) error
+	Update(organizationMembership OrganizationMembership) error
 	// DeleteByID deletes an entity by ID.
 	DeleteByID(id int64) error
 }
