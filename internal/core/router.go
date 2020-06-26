@@ -27,11 +27,11 @@ func (app *App) Router() *chi.Mux {
 			// For processing the userID param.
 			r.Use(users.Middleware(app.authenticationService))
 
-			r.Get("/profile", users.GetUserProfile(app.usersService))
-			r.Patch("/profile", users.UpdateUserProfile(app.usersService))
+			r.Get("/", users.GetUserProfile(app.usersService))
+			r.Patch("/", users.UpdateUserProfile(app.usersService))
 
-			r.Get("/profile/tags", users.GetUserTags(app.usersService))
-			r.Post("/profile/tags", users.PostUserTags(app.usersService))
+			r.Get("/tags", users.GetUserTags(app.usersService))
+			r.Post("/tags", users.PostUserTags(app.usersService))
 
 			r.Post("/profile-picture", users.UploadProfilePicture(app.usersService))
 		})
