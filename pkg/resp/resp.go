@@ -8,7 +8,7 @@ import (
 )
 
 type response struct {
-	Data   interface{} `json:"data,omitempty"`
+	Data   interface{} `json:"data,omitempty" groups:"user"`
 	Errors []Err       `json:"errors,omitempty"`
 }
 
@@ -37,17 +37,21 @@ func marshal(w http.ResponseWriter, r *http.Request, groups []string, data inter
 		options.Groups = append(options.Groups, groups...)
 	}
 
-	// Use sheriff marshaling for scoping.
-	marshaled, err := sheriff.Marshal(&options, data)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		render.JSON(w, r, Err{
-			Code:    500,
-			Message: "error encoding response",
-		})
-	}
+	// fmt.Println(data)
 
-	render.JSON(w, r, marshaled)
+	// // Use sheriff marshaling for scoping.
+	// marshaled, err := sheriff.Marshal(&options, data)
+	// if err != nil {
+	// 	w.WriteHeader(http.StatusInternalServerError)
+	// 	render.JSON(w, r, Err{
+	// 		Code:    500,
+	// 		Message: "error encoding response",
+	// 	})
+	// }
+
+	// fmt.Println(marshaled)
+
+	render.JSON(w, r, data)
 }
 
 // OK returns an HTTP 200 response.

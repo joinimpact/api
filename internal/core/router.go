@@ -32,6 +32,7 @@ func (app *App) Router() *chi.Mux {
 
 			r.Get("/tags", users.GetUserTags(app.usersService))
 			r.Post("/tags", users.PostUserTags(app.usersService))
+			r.Delete("/tags/{tagID}", users.DeleteUserTag(app.usersService))
 
 			r.Post("/profile-picture", users.UploadProfilePicture(app.usersService))
 		})

@@ -7,8 +7,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
+	"github.com/go-chi/chi"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/users"
 	"github.com/joinimpact/api/pkg/parse"
@@ -26,7 +28,7 @@ func GetUserProfile(usersService users.Service) http.HandlerFunc {
 			return
 		}
 
-		profile, err := usersService.GetUserProfile(reqCtx.userID)
+		profile, err := usersService.GetUserProfile(reqCtx.userID, reqCtx.isSelf)
 		if err != nil {
 			switch err.(type) {
 			case *users.ErrUserNotFound:
@@ -172,6 +174,47 @@ func PostUserTags(usersService users.Service) http.HandlerFunc {
 		}
 
 		resp.OK(w, r, postUserTagsResponse{numAdded})
+	}
+}
+
+// DeleteUserTag deletes a single user tag by ID.
+func DeleteUserTag(usersService users.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		reqCtx, ok := ctx.Value(keyUserRequestContext).(*userRequestContext)
+		if !ok {
+			resp.ServerError(w, r, resp.UnknownError)
+			return
+		}
+		if !reqCtx.isSelf {
+			resp.Forbidden(w, r, resp.Error(403, "forbidden user"))
+			return
+		}
+
+		// Get the tagID from the URL.
+		tagIDString := chi.URLParam(r, "tagID")
+		tagID, err := strconv.ParseInt(tagIDString, 10, 64)
+		if err != nil {
+			resp.BadRequest(w, r, resp.Error(400, "invalid tag ID"))
+			return
+		}
+
+		err = usersService.RemoveUserTag(reqCtx.userID, tagID)
+		if err != nil {
+			switch err.(type) {
+			case *users.ErrUserNotFound, *users.ErrTagNotFound:
+				resp.NotFound(w, r, resp.Error(404, err.Error()))
+			case *users.ErrServerError:
+				resp.ServerError(w, r, resp.Error(500, err.Error()))
+			default:
+				resp.ServerError(w, r, resp.UnknownError)
+			}
+			return
+		}
+
+		resp.OK(w, r, map[string]bool{
+			"success": true,
+		})
 	}
 }
 

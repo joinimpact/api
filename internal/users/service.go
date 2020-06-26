@@ -14,7 +14,7 @@ import (
 // Service represents a provider of User services (excluding authentication).
 type Service interface {
 	// GetUserProfile retrieves a single user's profile.
-	GetUserProfile(userID int64) (*UserProfile, error)
+	GetUserProfile(userID int64, self bool) (*UserProfile, error)
 	// UpdateUserProfile updates a user's profile.
 	UpdateUserProfile(userID int64, profile UserProfile) error
 	// GetUserTags gets all of a user's tags.
@@ -23,6 +23,8 @@ type Service interface {
 	AddUserTags(userID int64, tags []string) (int, error)
 	// UploadProfilePicture uploads a profile picture to the CDN and adds it to the user.
 	UploadProfilePicture(userID int64, fileReader io.Reader) error
+	// RemoveUserTag removes a tag from a user by id.
+	RemoveUserTag(userID, tagID int64) error
 }
 
 // service represents the internal implementation of the Service interface.
@@ -52,8 +54,9 @@ func NewService(userRepository models.UserRepository, userProfileFieldRepository
 	}
 }
 
-// GetUserProfile retrieves a single user's profile.
-func (s *service) GetUserProfile(userID int64) (*UserProfile, error) {
+// GetUserProfile retrieves a single user's profile. If self is true, it will also add sensitive fields
+// such as email.
+func (s *service) GetUserProfile(userID int64, self bool) (*UserProfile, error) {
 	profile := &UserProfile{}
 	// Find the user to verify that it is active.
 	user, err := s.userRepository.FindByID(userID)
@@ -64,8 +67,12 @@ func (s *service) GetUserProfile(userID int64) (*UserProfile, error) {
 	profile.FirstName = user.FirstName
 	profile.LastName = user.LastName
 	profile.ProfilePicture = user.ProfilePicture
-	profile.DateOfBirth = user.DateOfBirth
-	profile.ZIPCode = user.ZIPCode
+
+	if self {
+		profile.Email = user.Email
+		profile.DateOfBirth = user.DateOfBirth
+		profile.ZIPCode = user.ZIPCode
+	}
 
 	tags, err := s.GetUserTags(userID)
 	if err != nil {
@@ -165,6 +172,16 @@ func (s *service) AddUserTags(userID int64, tags []string) (int, error) {
 	}
 
 	return successfulTags, nil
+}
+
+// RemoveUserTag removes a tag from a user by id.
+func (s *service) RemoveUserTag(userID, tagID int64) error {
+	userTag, err := s.userTagRepository.FindUserTagByID(userID, tagID)
+	if err != nil {
+		return NewErrTagNotFound()
+	}
+
+	return s.userTagRepository.DeleteByID(userTag.ID)
 }
 
 // UploadProfilePicture uploads a profile picture to the CDN and adds it to the user.
