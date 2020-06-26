@@ -61,31 +61,36 @@
 			"tokenPairResponse": {
 				"type": "object",
 				"properties": {
-					"userId": {
-						"type": "string",
-						"description": "The user's ID (for redundancy). This can also be found in the body of the JWT. All ID's are sent as strings to avoid rounding issues.",
-						"example": "112751457261385472"
-					},
-					"tokenPair": {
+					"data": {
 						"type": "object",
 						"properties": {
-							"authToken": {
+							"userId": {
 								"type": "string",
-								"description": "The newly generated JSON Web Token. Will be used in most API requests under the Authorization header. Good for 3 days.",
-								"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTkyNjEzMjE3fQ.YMQ9Fjpr0uWUcvH0lx2w1BVNttEbeVVzwMFkqADO8y4"
+								"description": "The user's ID (for redundancy). This can also be found in the body of the JWT. All ID's are sent as strings to avoid rounding issues.",
+								"example": "112751457261385472"
 							},
-							"authExpiry": {
-								"type": "integer",
-								"description": "The epoch of token expiry for the auth token."
-							},
-							"refreshToken": {
-								"type": "string",
-								"description": "The user's refresh token. Will be used to get a new token pair after the auth token expires. Good for 21 days.",
-								"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
-							},
-							"refreshExpiry": {
-								"type": "integer",
-								"description": "The epoch of token expiry for the refresh token."
+							"tokenPair": {
+								"type": "object",
+								"properties": {
+									"authToken": {
+										"type": "string",
+										"description": "The newly generated JSON Web Token. Will be used in most API requests under the Authorization header. Good for 3 days.",
+										"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTkyNjEzMjE3fQ.YMQ9Fjpr0uWUcvH0lx2w1BVNttEbeVVzwMFkqADO8y4"
+									},
+									"authExpiry": {
+										"type": "integer",
+										"description": "The epoch of token expiry for the auth token."
+									},
+									"refreshToken": {
+										"type": "string",
+										"description": "The user's refresh token. Will be used to get a new token pair after the auth token expires. Good for 21 days.",
+										"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
+									},
+									"refreshExpiry": {
+										"type": "integer",
+										"description": "The epoch of token expiry for the refresh token."
+									}
+								}
 							}
 						}
 					}
@@ -228,29 +233,34 @@
 								"schema": {
 									"type": "object",
 									"properties": {
-										"userId": {
-											"type": "string",
-											"description": "The user's ID (for redundancy). This can also be found in the body of the JWT. All ID's are sent as strings to avoid rounding issues.",
-											"example": "112751457261385472"
-										},
-										"issuedAt": {
-											"type": "string",
-											"format": "date-time",
-											"description": "The time at which the tokens were issued (measured by the server). Used to calculate token expiration time, if necessary.",
-											"example": "2018-01-18T01:30:22Z"
-										},
-										"tokenPair": {
+										"data": {
 											"type": "object",
 											"properties": {
-												"authToken": {
+												"userId": {
 													"type": "string",
-													"description": "The newly generated JSON Web Token. Will be used in most API requests under the Authorization header. Good for 3 days.",
-													"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTkyNjEzMjE3fQ.YMQ9Fjpr0uWUcvH0lx2w1BVNttEbeVVzwMFkqADO8y4"
+													"description": "The user's ID (for redundancy). This can also be found in the body of the JWT. All ID's are sent as strings to avoid rounding issues.",
+													"example": "112751457261385472"
 												},
-												"refreshToken": {
+												"issuedAt": {
 													"type": "string",
-													"description": "The user's refresh token. Will be used to get a new token pair after the auth token expires. Good for 21 days.",
-													"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
+													"format": "date-time",
+													"description": "The time at which the tokens were issued (measured by the server). Used to calculate token expiration time, if necessary.",
+													"example": "2018-01-18T01:30:22Z"
+												},
+												"tokenPair": {
+													"type": "object",
+													"properties": {
+														"authToken": {
+															"type": "string",
+															"description": "The newly generated JSON Web Token. Will be used in most API requests under the Authorization header. Good for 3 days.",
+															"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTkyNjEzMjE3fQ.YMQ9Fjpr0uWUcvH0lx2w1BVNttEbeVVzwMFkqADO8y4"
+														},
+														"refreshToken": {
+															"type": "string",
+															"description": "The user's refresh token. Will be used to get a new token pair after the auth token expires. Good for 21 days.",
+															"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
+														}
+													}
 												}
 											}
 										}
@@ -1001,6 +1011,387 @@
 					},
 					"404": {
 						"description": "The tag was not found in the user's profile. Safe to treat as a successful deletion."
+					}
+				}
+			}
+		},
+		"/organizations": {
+			"post": {
+				"tags": [
+					"Organizations"
+				],
+				"summary": "Creates a new organization and adds the authenticated user as the owner.",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": [
+									"name"
+								],
+								"properties": {
+									"name": {
+										"type": "string",
+										"minLength": 6,
+										"maxLength": 64,
+										"description": "The organization's name",
+										"example": "Birdwatchers International"
+									},
+									"website": {
+										"type": "string",
+										"format": "url",
+										"minLength": 6,
+										"maxLength": 72,
+										"description": "The organization's URL",
+										"example": "http://birdwatchers.org"
+									},
+									"location": {
+										"type": "string",
+										"description": "In the process of being replaced by the lat/long system.",
+										"example": "New York, NY, US"
+									},
+									"description": {
+										"type": "string",
+										"description": "A description of the organization",
+										"maxLength": 800,
+										"example": "We bring the birds to you!"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success! The organization was created!",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "object",
+											"properties": {
+												"organizationId": {
+													"type": "integer",
+													"description": "The ID of the newly generated organization.",
+													"example": 1593325088
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "One or more fields are invalid.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"errors": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"code": {
+														"type": "number"
+													},
+													"message": {
+														"type": "string"
+													},
+													"invalidFields": {
+														"type": "array"
+													}
+												}
+											},
+											"example": [
+												{
+													"code": 98,
+													"message": "missing or invalid fields",
+													"invalidFields": [
+														"name"
+													]
+												}
+											]
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/organizations/{organizationId}/tags": {
+			"get": {
+				"tags": [
+					"Organizations"
+				],
+				"summary": "Gets all of an organization's tags. (Areas of Interest)",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "organizationId",
+						"description": "The ID of the organization who you are querying.",
+						"schema": {
+							"type": "integer"
+						},
+						"required": true
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Success, the tags were returned.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"tags": {
+											"type": "array",
+											"description": "The organization's tags.",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "integer",
+														"example": "1283918398189"
+													},
+													"name": {
+														"type": "string",
+														"example": "Research"
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			},
+			"post": {
+				"tags": [
+					"Organizations"
+				],
+				"summary": "Adds multiple tags to an organization. Skips duplicates, so it's okay to send tags when unsure if they are already added.",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "organizationId",
+						"description": "The ID of the organization who you are querying.",
+						"schema": {
+							"type": "integer"
+						},
+						"required": true
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"tags": {
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": {
+												"name": {
+													"type": "string",
+													"description": "The name of the tag."
+												}
+											}
+										}
+									}
+								},
+								"example": {
+									"tags": [
+										{
+											"name": "Research"
+										},
+										{
+											"name": "Data Science"
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success! The tags were added.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "object",
+											"properties": {
+												"numAdded": {
+													"type": "integer",
+													"description": "The number of new tags added.",
+													"example": 2
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/organizations/{organizationId}/tags/{tagId}": {
+			"delete": {
+				"tags": [
+					"Organizations"
+				],
+				"summary": "Deletes a tag from an organization's profile.",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"description": "The ID of the organization who you are querying.",
+						"schema": {
+							"type": "integer"
+						},
+						"required": true
+					},
+					{
+						"in": "path",
+						"name": "tagId",
+						"description": "The ID of the tag.",
+						"schema": {
+							"type": "integer"
+						},
+						"required": true
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Success! The tag was removed.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/success"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "The tag was not found in the organization's profile. Safe to treat as a successful deletion."
+					}
+				}
+			}
+		},
+		"/organizations/{organizationId}/profile-picture": {
+			"post": {
+				"tags": [
+					"Organizations"
+				],
+				"summary": "Uploads a new profile picture to an organization by ID.",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "organizationId",
+						"description": "The ID of the organization who you are querying.",
+						"schema": {
+							"type": "integer"
+						},
+						"required": true
+					}
+				],
+				"requestBody": {
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"file": {
+										"type": "string",
+										"format": "binary",
+										"description": "Must be an image in a png/jpg format. The server will center crop it to a square."
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success! The organization profile picture is now replaced."
+					},
+					"400": {
+						"description": "Invalid file. Please ensure it is a jpg/jpeg or png."
+					},
+					"500": {
+						"description": "There was an error encoding the image or uploading it to the CDN. Please try again."
+					}
+				}
+			}
+		},
+		"/organizations/{organizationId}/invite": {
+			"post": {
+				"tags": [
+					"Organizations"
+				],
+				"summary": "Sends invites to multiple organization members by email address.",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "organizationId",
+						"description": "The ID of the organization who you are querying.",
+						"schema": {
+							"type": "integer"
+						},
+						"required": true
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"invites": {
+										"type": "array",
+										"description": "An array of invite objects.",
+										"items": {
+											"type": "object",
+											"required": [
+												"email"
+											],
+											"properties": {
+												"email": {
+													"type": "string",
+													"description": "A valid email address.",
+													"format": "email"
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success! All invites were successfully sent."
+					},
+					"400": {
+						"description": "One or more of the emails were invalid."
+					},
+					"500": {
+						"description": "Server error, please try again."
 					}
 				}
 			}
