@@ -12,3 +12,17 @@ type Organization struct {
 	Location       string                     `json:"location"`
 	ProfileFields  []OrganizationProfileField `json:"profile"` // fields of the organization's profile
 }
+
+// OrganizationRepository represents a repository of organizations.
+type OrganizationRepository interface {
+	// FindByID finds a single entity by ID.
+	FindByID(id int64) (*Organization, error)
+	// FindByCreatorID finds multiple entities by the creator's ID.
+	FindByCreatorID(creatorID int64) ([]Organization, error)
+	// Create creates a new entity.
+	Create(organization Organization) error
+	// Update updates an entity with the ID in the provided entity.
+	Update(organization Organization) error
+	// DeleteByID deletes an entity by ID.
+	DeleteByID(id int64) error
+}
