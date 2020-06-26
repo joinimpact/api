@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/go-chi/chi"
 	"github.com/joinimpact/api/internal/core/handlers/auth"
+	"github.com/joinimpact/api/internal/core/handlers/organizations"
 	"github.com/joinimpact/api/internal/core/handlers/users"
 )
 
@@ -39,6 +40,25 @@ func (app *App) Router() *chi.Mux {
 			r.Delete("/tags/{tagID}", users.DeleteUserTag(app.usersService))
 
 			r.Post("/profile-picture", users.UploadProfilePicture(app.usersService))
+		})
+	})
+
+	router.Route("/organizations", func(r chi.Router) {
+		// TODO: replace with separate package for auth middleware
+		r.Use(organizations.AuthMiddleware(app.authenticationService))
+
+		r.Post("/", organizations.CreateOrganization(app.organizationsService))
+
+		r.Route("/{organizationID}", func(r chi.Router) {
+
+			// r.Get("/", users.GetUserProfile(app.usersService))
+			// r.Patch("/", users.UpdateUserProfile(app.usersService))
+
+			r.Get("/tags", organizations.GetOrganizationTags(app.organizationsService))
+			r.Post("/tags", organizations.PostOrganizationTags(app.organizationsService))
+			r.Delete("/tags/{tagID}", organizations.DeleteOrganizationTag(app.organizationsService))
+
+			r.Post("/profile-picture", organizations.UploadProfilePicture(app.organizationsService))
 		})
 	})
 
