@@ -33,8 +33,6 @@ func NewCDNClient(config *config.Config) *Client {
 		fmt.Println(err)
 	}
 
-	fmt.Println("connected to s3")
-
 	return &Client{
 		config,
 		newSession,
