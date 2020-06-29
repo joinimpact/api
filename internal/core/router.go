@@ -4,6 +4,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/joinimpact/api/internal/core/handlers/auth"
 	"github.com/joinimpact/api/internal/core/handlers/organizations"
+	"github.com/joinimpact/api/internal/core/handlers/tags"
 	"github.com/joinimpact/api/internal/core/handlers/users"
 )
 
@@ -14,6 +15,7 @@ func (app *App) Router() *chi.Mux {
 	router.Route("/auth", func(r chi.Router) {
 		r.Post("/login", auth.Login(app.authenticationService))
 		r.Post("/register", auth.Register(app.authenticationService))
+
 		r.Route("/password-resets", func(r chi.Router) {
 			r.Post("/", auth.RequestPasswordReset(app.authenticationService))
 			r.Route("/{passwordResetKey}", func(r chi.Router) {
@@ -21,6 +23,7 @@ func (app *App) Router() *chi.Mux {
 				r.Post("/reset", auth.ResetPassword(app.authenticationService))
 			})
 		})
+
 		r.Route("/oauth", func(r chi.Router) {
 			r.Post("/google", auth.GoogleOauth(app.authenticationService))
 			r.Post("/facebook", auth.FacebookOauth(app.authenticationService))
@@ -59,7 +62,14 @@ func (app *App) Router() *chi.Mux {
 			r.Delete("/tags/{tagID}", organizations.DeleteOrganizationTag(app.organizationsService))
 
 			r.Post("/profile-picture", organizations.UploadProfilePicture(app.organizationsService))
+
+			r.Post("/invite", organizations.PostInvite(app.organizationsService))
+			r.Post("/invites", organizations.PostInvite(app.organizationsService))
 		})
+	})
+
+	router.Route("/tags", func(r chi.Router) {
+		r.Get("/", tags.GetTags(app.tagsService))
 	})
 
 	return router

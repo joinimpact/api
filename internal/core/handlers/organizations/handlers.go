@@ -258,3 +258,52 @@ func UploadProfilePicture(organizationsService organizations.Service) http.Handl
 		})
 	}
 }
+
+type postInviteEmail struct {
+	Email string `json:"email" validate:"email"`
+}
+
+// PostInvite creates new invites from user emails.
+func PostInvite(organizationsService organizations.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		organizationIDString := chi.URLParam(r, "organizationID")
+		organizationID, err := strconv.ParseInt(organizationIDString, 10, 64)
+		if err != nil {
+			resp.BadRequest(w, r, resp.Error(400, "invalid organization id"))
+			return
+		}
+
+		ctx := r.Context()
+		userID, ok := ctx.Value(keyUserID).(int64)
+		if !ok {
+			resp.ServerError(w, r, resp.UnknownError)
+			return
+		}
+
+		req := struct {
+			Invites []postInviteEmail `json:"invites"`
+		}{}
+		err = parse.POST(w, r, &req)
+		if err != nil {
+			return
+		}
+
+		errors := []error{}
+
+		for _, invite := range req.Invites {
+			err := organizationsService.InviteUser(userID, organizationID, invite.Email, models.OrganizationPermissionsMember)
+			if err != nil {
+				errors = append(errors, err)
+			}
+		}
+
+		if len(errors) > 0 {
+			resp.BadRequest(w, r, resp.ErrorData(32, "errors while sending invites", errors))
+			return
+		}
+
+		resp.OK(w, r, map[string]bool{
+			"success": true,
+		})
+	}
+}

@@ -6,7 +6,7 @@ import "time"
 // password.
 type PasswordResetKey struct {
 	Model
-	UserID    int64 `json:"userID"`
+	UserID    int64 `json:"userId"`
 	User      User
 	Key       string    `json:"key"`
 	ExpiresAt time.Time `json:"expiresAt"`

@@ -7,6 +7,8 @@ import (
 
 	"github.com/joinimpact/api/internal/cdn"
 	"github.com/joinimpact/api/internal/config"
+	"github.com/joinimpact/api/internal/email"
+	"github.com/joinimpact/api/internal/email/templates"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/snowflakes"
 	"github.com/rs/zerolog"
@@ -29,31 +31,39 @@ type Service interface {
 	RemoveOrganizationTag(organizationID, tagID int64) error
 	// UploadProfilePicture uploads a profile picture to the CDN and adds it to the user.
 	UploadProfilePicture(organizationID int64, fileReader io.Reader) error
+	// InviteUser invites a user by user email to an organization.
+	InviteUser(inviterID, organizationID int64, userEmail string, permissionsFlag int) error
 }
 
 // service represents the internal implementation of the organizations Service.
 type service struct {
-	organizationRepository           models.OrganizationRepository
-	organizationMembershipRepository models.OrganizationMembershipRepository
-	organizationTagRepository        models.OrganizationTagRepository
-	tagRepository                    models.TagRepository
-	config                           *config.Config
-	logger                           *zerolog.Logger
-	snowflakeService                 snowflakes.SnowflakeService
-	cdnClient                        *cdn.Client
+	organizationRepository                 models.OrganizationRepository
+	organizationMembershipRepository       models.OrganizationMembershipRepository
+	organizationMembershipInviteRepository models.OrganizationMembershipInviteRepository
+	organizationTagRepository              models.OrganizationTagRepository
+	userRepository                         models.UserRepository
+	tagRepository                          models.TagRepository
+	config                                 *config.Config
+	logger                                 *zerolog.Logger
+	snowflakeService                       snowflakes.SnowflakeService
+	emailService                           email.Service
+	cdnClient                              *cdn.Client
 }
 
 // NewService creates and returns a new Users service with the provifded dependencies.
-func NewService(organizationRepository models.OrganizationRepository, organizationMembershipRepository models.OrganizationMembershipRepository, organizationTagRepository models.OrganizationTagRepository,
-	tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService) Service {
+func NewService(organizationRepository models.OrganizationRepository, organizationMembershipRepository models.OrganizationMembershipRepository, organizationMembershipInviteRepository models.OrganizationMembershipInviteRepository, organizationTagRepository models.OrganizationTagRepository,
+	userRepository models.UserRepository, tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service) Service {
 	return &service{
 		organizationRepository,
 		organizationMembershipRepository,
+		organizationMembershipInviteRepository,
 		organizationTagRepository,
+		userRepository,
 		tagRepository,
 		config,
 		logger,
 		snowflakeService,
+		emailService,
 		cdn.NewCDNClient(config),
 	}
 }
@@ -81,7 +91,7 @@ func (s *service) CreateOrganization(organization models.Organization) (int64, e
 		Active:          true,
 		UserID:          organization.CreatorID,
 		OrganizationID:  organization.ID,
-		PermissionsFlag: 3,
+		PermissionsFlag: models.OrganizationPermissionsCreator,
 	}
 
 	// Generate an ID for the membership.
@@ -195,4 +205,85 @@ func (s *service) UploadProfilePicture(organizationID int64, fileReader io.Reade
 		},
 		ProfilePicture: url,
 	})
+}
+
+// InviteUser invites a user by user email to an organization.
+func (s *service) InviteUser(inviterID, organizationID int64, userEmail string, permissionsFlag int) error {
+	organization, err := s.organizationRepository.FindByID(organizationID)
+	if err != nil {
+		return NewErrOrganizationNotFound()
+	}
+
+	user, err := s.userRepository.FindByEmail(userEmail)
+	if err != nil {
+		return s.inviteByEmail(inviterID, organization, userEmail, permissionsFlag)
+	}
+
+	return s.inviteByID(inviterID, organization, user, permissionsFlag)
+}
+
+func (s *service) inviteByEmail(inviterID int64, organization *models.Organization, userEmail string, permissionsFlag int) error {
+	// Generate an ID for the invite.
+	id := s.snowflakeService.GenerateID()
+	err := s.organizationMembershipInviteRepository.Create(models.OrganizationMembershipInvite{
+		Model: models.Model{
+			ID: id,
+		},
+		Accepted:       false,
+		InviteeEmail:   userEmail,
+		OrganizationID: organization.ID,
+		InviterID:      inviterID,
+	})
+	if err != nil {
+		return NewErrServerError()
+	}
+
+	// Create a new email with the reset password template.
+	email := s.emailService.NewEmail(
+		email.NewRecipient(fmt.Sprintf("%s %s", "Impact", "User"), userEmail),
+		fmt.Sprintf("You've been invited to join %s!", organization.Name),
+		templates.OrganizationInvitationTemplate("friend", organization.Name, organization.ID, id),
+	)
+	err = s.emailService.Send(email)
+	if err != nil {
+		return NewErrServerError()
+	}
+
+	return nil
+}
+
+func (s *service) inviteByID(inviterID int64, organization *models.Organization, user *models.User, permissionsFlag int) error {
+	_, err := s.organizationMembershipRepository.FindUserInOrganization(organization.ID, user.ID)
+	if err == nil {
+		// OrganizationMembership exists, throw error
+		return NewErrUserAlreadyInOrganization()
+	}
+
+	// Generate an ID for the invite.
+	id := s.snowflakeService.GenerateID()
+	err = s.organizationMembershipInviteRepository.Create(models.OrganizationMembershipInvite{
+		Model: models.Model{
+			ID: id,
+		},
+		Accepted:       false,
+		InviteeID:      user.ID,
+		OrganizationID: organization.ID,
+		InviterID:      inviterID,
+	})
+	if err != nil {
+		return NewErrServerError()
+	}
+
+	// Create a new email with the reset password template.
+	email := s.emailService.NewEmail(
+		email.NewRecipient(fmt.Sprintf("%s %s", user.FirstName, user.LastName), user.Email),
+		fmt.Sprintf("You've been invited to join %s!", organization.Name),
+		templates.OrganizationInvitationTemplate(user.FirstName, organization.Name, organization.ID, id),
+	)
+	err = s.emailService.Send(email)
+	if err != nil {
+		return NewErrServerError()
+	}
+
+	return nil
 }

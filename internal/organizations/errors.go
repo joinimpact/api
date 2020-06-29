@@ -55,3 +55,17 @@ func NewErrServerError() error {
 func (e *ErrServerError) Error() string {
 	return "internal error processing request, please try again"
 }
+
+// ErrUserAlreadyInOrganization is thrown when a user invite is requested, but the user is already a member of the organization.
+type ErrUserAlreadyInOrganization struct {
+}
+
+// NewErrUserAlreadyInOrganization creates and returns a ErrUserAlreadyInOrganization.
+func NewErrUserAlreadyInOrganization() error {
+	return &ErrUserAlreadyInOrganization{}
+}
+
+// Error provides a string representation of the error.
+func (e *ErrUserAlreadyInOrganization) Error() string {
+	return "user already a member of organization"
+}

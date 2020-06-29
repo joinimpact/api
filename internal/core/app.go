@@ -9,6 +9,7 @@ import (
 	"github.com/joinimpact/api/internal/authentication"
 	"github.com/joinimpact/api/internal/config"
 	"github.com/joinimpact/api/internal/organizations"
+	"github.com/joinimpact/api/internal/tags"
 	"github.com/joinimpact/api/internal/users"
 	"github.com/rs/zerolog"
 )
@@ -23,16 +24,18 @@ type App struct {
 	authenticationService authentication.Service
 	usersService          users.Service
 	organizationsService  organizations.Service
+	tagsService           tags.Service
 }
 
 // NewApp creates and returns a new *App with the provided Config.
-func NewApp(config *config.Config, logger *zerolog.Logger, authenticationService authentication.Service, usersService users.Service, organizationsService organizations.Service) *App {
+func NewApp(config *config.Config, logger *zerolog.Logger, authenticationService authentication.Service, usersService users.Service, organizationsService organizations.Service, tagsService tags.Service) *App {
 	return &App{
 		config,
 		logger,
 		authenticationService,
 		usersService,
 		organizationsService,
+		tagsService,
 	}
 }
 

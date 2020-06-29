@@ -1,5 +1,12 @@
 package models
 
+// OrganizationPermissions flags
+const (
+	OrganizationPermissionsMember  = iota
+	OrganizationPermissionsOwner   = iota
+	OrganizationPermissionsCreator = iota
+)
+
 // OrganizationMembership creates a relationship between Organizations and their employees.
 type OrganizationMembership struct {
 	Model
