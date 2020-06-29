@@ -5,6 +5,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/joinimpact/api/internal/cdn"
 	"github.com/joinimpact/api/internal/config"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/snowflakes"
@@ -36,7 +37,7 @@ type service struct {
 	config                     *config.Config
 	logger                     *zerolog.Logger
 	snowflakeService           snowflakes.SnowflakeService
-	cdnClient                  *cdnClient
+	cdnClient                  *cdn.Client
 }
 
 // NewService creates and returns a new Users service with the provifded dependencies.
@@ -50,7 +51,7 @@ func NewService(userRepository models.UserRepository, userProfileFieldRepository
 		config,
 		logger,
 		snowflakeService,
-		newCDNClient(config),
+		cdn.NewCDNClient(config),
 	}
 }
 
@@ -186,7 +187,7 @@ func (s *service) RemoveUserTag(userID, tagID int64) error {
 
 // UploadProfilePicture uploads a profile picture to the CDN and adds it to the user.
 func (s *service) UploadProfilePicture(userID int64, fileReader io.Reader) error {
-	url, err := s.cdnClient.uploadImage(fmt.Sprintf("profile-picture-%d-%d.png", userID, time.Now().UTC().Unix()), fileReader)
+	url, err := s.cdnClient.UploadImage(fmt.Sprintf("profile-picture-%d-%d.png", userID, time.Now().UTC().Unix()), fileReader)
 	if err != nil {
 		return err
 	}

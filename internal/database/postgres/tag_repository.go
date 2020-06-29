@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"fmt"
+
 	"github.com/jinzhu/gorm"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/rs/zerolog"
@@ -45,6 +47,15 @@ func (r *tagRepository) FindByName(name string) (*models.Tag, error) {
 		return &tag, err
 	}
 	return &tag, nil
+}
+
+// SearchTags searches for tags with a query string.
+func (r *tagRepository) SearchTags(query string, limit int) ([]models.Tag, error) {
+	var tags []models.Tag
+	if err := r.db.Where("name LIKE ?", fmt.Sprintf("%%%s%%", query)).Limit(limit).Find(&tags).Error; err != nil {
+		return tags, err
+	}
+	return tags, nil
 }
 
 // Create creates a new entity.
