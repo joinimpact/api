@@ -54,6 +54,7 @@ func main() {
 		&models.OrganizationMembership{},
 		&models.OrganizationMembershipInvite{},
 		&models.OrganizationTag{},
+		&models.Opportunity{},
 		&models.PasswordResetKey{},
 		&models.UserTag{},
 		&models.Tag{},
