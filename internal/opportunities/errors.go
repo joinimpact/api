@@ -56,7 +56,7 @@ func (e *ErrServerError) Error() string {
 	return "internal error processing request, please try again"
 }
 
-// ErrOpportunityNotFound is thrown when a user invite is requested, but the user is already a member of the organization.
+// ErrOpportunityNotFound is thrown when an opportunity is not found.
 type ErrOpportunityNotFound struct {
 }
 
@@ -67,5 +67,19 @@ func NewErrOpportunityNotFound() error {
 
 // Error provides a string representation of the error.
 func (e *ErrOpportunityNotFound) Error() string {
+	return "opportunity not found"
+}
+
+// ErrOpportunityNotPublishable is thrown when an opportunity is missing required fields and is unable to be published.
+type ErrOpportunityNotPublishable struct {
+}
+
+// NewErrOpportunityNotPublishable creates and returns a ErrOpportunityNotPublishable.
+func NewErrOpportunityNotPublishable() error {
+	return &ErrOpportunityNotPublishable{}
+}
+
+// Error provides a string representation of the error.
+func (e *ErrOpportunityNotPublishable) Error() string {
 	return "opportunity not found"
 }
