@@ -29,6 +29,9 @@ func Login(service authentication.Service) http.HandlerFunc {
 			return
 		}
 
+		// Update cookies.
+		setAuthCookie(w, r, tokenPair)
+
 		resp.OK(w, r, tokenPair)
 	}
 }
@@ -60,6 +63,9 @@ func Register(service authentication.Service) http.HandlerFunc {
 			resp.ServerError(w, r, resp.Error(500, err.Error()))
 			return
 		}
+
+		// Update cookies.
+		setAuthCookie(w, r, tokenPair)
 
 		resp.OK(w, r, tokenPair)
 	}
@@ -150,6 +156,9 @@ func GoogleOauth(service authentication.Service) http.HandlerFunc {
 			return
 		}
 
+		// Update cookies.
+		setAuthCookie(w, r, res.TokenPair)
+
 		resp.OK(w, r, res)
 	}
 }
@@ -170,6 +179,9 @@ func FacebookOauth(service authentication.Service) http.HandlerFunc {
 			resp.BadRequest(w, r, resp.Error(400, err.Error()))
 			return
 		}
+
+		// Update cookies.
+		setAuthCookie(w, r, res.TokenPair)
 
 		resp.OK(w, r, res)
 	}

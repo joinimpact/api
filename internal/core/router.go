@@ -34,13 +34,13 @@ func (app *App) Router() *chi.Mux {
 	})
 
 	router.Group(func(router chi.Router) {
+		router.Use(authm.CookieMiddleware(app.authenticationService))
 		router.Use(authm.AuthMiddleware(app.authenticationService))
 
 		router.Route("/users", func(r chi.Router) {
-			// For processing the userID param.
-			r.Use(users.Middleware(app.authenticationService))
-
 			r.Route("/{userID}", func(r chi.Router) {
+				// For processing the userID param.
+				r.Use(users.Middleware(app.authenticationService))
 				r.Get("/", users.GetUserProfile(app.usersService))
 				r.Patch("/", users.UpdateUserProfile(app.usersService))
 

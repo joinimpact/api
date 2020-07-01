@@ -19,5 +19,5 @@ func validateEmail(email string) bool {
 // validatePassword checks whether or not a password matches the set criteria.
 func validatePassword(password string) bool {
 	// TODO: better password validation.
-	return len(password) > 8 && len(password) < 512
+	return len(password) >= 8 && len(password) < 512
 }
