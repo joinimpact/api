@@ -8,6 +8,7 @@ import (
 	"github.com/joinimpact/api/internal/database/postgres"
 	"github.com/joinimpact/api/internal/email"
 	"github.com/joinimpact/api/internal/models"
+	"github.com/joinimpact/api/internal/opportunities"
 	"github.com/joinimpact/api/internal/organizations"
 	"github.com/joinimpact/api/internal/snowflakes"
 	"github.com/joinimpact/api/internal/tags"
@@ -54,6 +55,7 @@ func main() {
 		&models.OrganizationMembership{},
 		&models.OrganizationMembershipInvite{},
 		&models.OrganizationTag{},
+		&models.Opportunity{},
 		&models.PasswordResetKey{},
 		&models.UserTag{},
 		&models.Tag{},
@@ -85,15 +87,17 @@ func main() {
 	organizationMembershipRepository := postgres.NewOrganizationMembershipRepository(db, &log.Logger)
 	organizationMembershipInviteRepository := postgres.NewOrganizationMembershipInviteRepository(db, &log.Logger)
 	organizationTagRepository := postgres.NewOrganizationTagRepository(db, &log.Logger)
+	opportunityRepository := postgres.NewOpportunityRepository(db, &log.Logger)
 
 	// Internal services
 	usersService := users.NewService(userRepository, userProfileFieldRepository, userTagRepository, tagRepository, config, &log.Logger, snowflakeService)
 	authenticationService := authentication.NewService(userRepository, passwordResetRepository, thirdPartyIdentityRepository, config, &log.Logger, snowflakeService, emailService)
 	organizationsService := organizations.NewService(organizationRepository, organizationMembershipRepository, organizationMembershipInviteRepository, organizationTagRepository, userRepository, tagRepository, config, &log.Logger, snowflakeService, emailService)
+	opportunitiesService := opportunities.NewService(opportunityRepository, tagRepository, config, &log.Logger, snowflakeService, emailService)
 	tagsService := tags.NewService(tagRepository, config, &log.Logger, snowflakeService)
 
 	// Create a new app using the new config.
-	app := core.NewApp(config, &log.Logger, authenticationService, usersService, organizationsService, tagsService)
+	app := core.NewApp(config, &log.Logger, authenticationService, usersService, organizationsService, tagsService, opportunitiesService)
 
 	// Print a message.
 	log.Info().Int("port", int(config.Port)).Str("version", APIVersion).Msg("Listening")

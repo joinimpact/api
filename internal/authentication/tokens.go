@@ -87,8 +87,9 @@ func (s *service) generateTokenPair(userID int64) (*TokenPair, error) {
 	}, nil
 }
 
-// GetUserIDFromToken gets a user's ID from a JWT token.
-func (s *service) GetUserIDFromToken(token string) (int64, error) {
+// claimsFromToken validates and parses a token. If the token is valid, it
+// will return a jwtClaims.
+func (s *service) claimsFromToken(token string) (*jwtClaims, error) {
 	jwt, err := jwt.ParseWithClaims(token, &jwtClaims{}, func(t *jwt.Token) (interface{}, error) {
 		claims, ok := t.Claims.(*jwtClaims)
 		if !ok {
@@ -102,8 +103,18 @@ func (s *service) GetUserIDFromToken(token string) (int64, error) {
 	})
 
 	if claims, ok := jwt.Claims.(*jwtClaims); ok && jwt.Valid {
-		return claims.UserID, nil
+		return claims, nil
 	}
 
-	return 0, err
+	return nil, err
+}
+
+// GetUserIDFromToken gets a user's ID from a JWT token.
+func (s *service) GetUserIDFromToken(token string) (int64, error) {
+	claims, err := s.claimsFromToken(token)
+	if err != nil {
+		return 0, err
+	}
+
+	return claims.UserID, nil
 }

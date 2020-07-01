@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/joinimpact/api/internal/authentication"
+	authm "github.com/joinimpact/api/internal/core/middleware/auth"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/pkg/parse"
 	"github.com/joinimpact/api/pkg/resp"
@@ -28,6 +29,9 @@ func Login(service authentication.Service) http.HandlerFunc {
 			resp.ServerError(w, r, resp.Error(500, err.Error()))
 			return
 		}
+
+		// Update cookies.
+		authm.SetAuthCookies(w, r, tokenPair)
 
 		resp.OK(w, r, tokenPair)
 	}
@@ -60,6 +64,9 @@ func Register(service authentication.Service) http.HandlerFunc {
 			resp.ServerError(w, r, resp.Error(500, err.Error()))
 			return
 		}
+
+		// Update cookies.
+		authm.SetAuthCookies(w, r, tokenPair)
 
 		resp.OK(w, r, tokenPair)
 	}
@@ -150,6 +157,9 @@ func GoogleOauth(service authentication.Service) http.HandlerFunc {
 			return
 		}
 
+		// Update cookies.
+		authm.SetAuthCookies(w, r, res.TokenPair)
+
 		resp.OK(w, r, res)
 	}
 }
@@ -171,6 +181,20 @@ func FacebookOauth(service authentication.Service) http.HandlerFunc {
 			return
 		}
 
+		// Update cookies.
+		authm.SetAuthCookies(w, r, res.TokenPair)
+
 		resp.OK(w, r, res)
+	}
+}
+
+// Logout logs a user out by clearing auth and refresh token cookies.
+func Logout(service authentication.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		authm.ClearAuthCookies(w, r)
+
+		resp.OK(w, r, map[string]bool{
+			"success": true,
+		})
 	}
 }

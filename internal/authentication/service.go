@@ -1,6 +1,7 @@
 package authentication
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -32,6 +33,8 @@ type Service interface {
 	GetUserIDFromToken(token string) (int64, error)
 	// OauthLogin authenticates using a third-party service instead of a traditional username and password.
 	OauthLogin(serviceName, code string) (*OauthResponse, error)
+	// RefreshToken generates a new token pair from a refresh token.
+	RefreshToken(ctx context.Context, refreshToken string) (*TokenPair, error)
 }
 
 // service represents the default authentication service of this package.
@@ -314,4 +317,20 @@ func (s *service) createOauthUserIfNotExists(profile oauth.Profile) (*models.Use
 	}
 
 	return &newUser, true, nil
+}
+
+// RefreshToken generates a new token pair from a refresh token.
+func (s *service) RefreshToken(ctx context.Context, refreshToken string) (*TokenPair, error) {
+	claims, err := s.claimsFromToken(refreshToken)
+	if err != nil {
+		// Error validating/parsing token.
+		return nil, err
+	}
+
+	if claims.Type != RefreshTokenType {
+		return nil, errors.New("not a refresh token")
+	}
+
+	// No errors, generate a token pair.
+	return s.generateTokenPair(claims.UserID)
 }
