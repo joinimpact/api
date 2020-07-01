@@ -59,8 +59,6 @@ func Middleware(authService authentication.Service) func(next http.Handler) http
 			queryUserID := userID
 			userIDString := chi.URLParam(r, "userID")
 
-			fmt.Println(userIDString)
-
 			if userIDString != "me" {
 				queryUserID, err = strconv.ParseInt(userIDString, 10, 64)
 				if err != nil {
