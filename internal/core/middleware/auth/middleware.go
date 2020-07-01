@@ -76,8 +76,37 @@ func CookieMiddleware(authService authentication.Service) func(next http.Handler
 				return
 			}
 
+			authToken := token.Value
+
+			_, err = authService.GetUserIDFromToken(authToken)
+			if err != nil {
+				// Attempt to refresh token.
+				// Get the refresh_token cookie from the request.
+				refreshToken, err := r.Cookie("refresh_token")
+				if err != nil {
+					// Clear cookies on failure.
+					ClearAuthCookies(w, r)
+
+					next.ServeHTTP(w, r)
+					return
+				}
+
+				// Attempt to refresh the token.
+				tokenPair, err := authService.RefreshToken(r.Context(), refreshToken.Value)
+				if err != nil {
+					// Clear cookies on failure.
+					ClearAuthCookies(w, r)
+
+					next.ServeHTTP(w, r)
+					return
+				}
+
+				SetAuthCookies(w, r, tokenPair)
+				authToken = tokenPair.AuthToken
+			}
+
 			// Set the header.
-			r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token.Value))
+			r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", authToken))
 
 			next.ServeHTTP(w, r)
 		})
