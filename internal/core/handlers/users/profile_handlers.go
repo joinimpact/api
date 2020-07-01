@@ -13,6 +13,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/users"
+	"github.com/joinimpact/api/pkg/location"
 	"github.com/joinimpact/api/pkg/parse"
 	"github.com/joinimpact/api/pkg/resp"
 	"github.com/oliamb/cutter"
@@ -60,10 +61,10 @@ func UpdateUserProfile(usersService users.Service) http.HandlerFunc {
 		}
 
 		req := struct {
-			FirstName   string    `json:"firstName" validate:"omitempty,min=2,max=48"`
-			LastName    string    `json:"lastName" validate:"omitempty,min=2,max=48"`
-			DateOfBirth time.Time `json:"dateOfBirth" validate:"omitempty"`
-			ZIPCode     string    `json:"zipCode" validate:"omitempty,min=5,max=8"`
+			FirstName   string                `json:"firstName" validate:"omitempty,min=2,max=48"`
+			LastName    string                `json:"lastName" validate:"omitempty,min=2,max=48"`
+			DateOfBirth time.Time             `json:"dateOfBirth" validate:"omitempty"`
+			Location    *location.Coordinates `json:"location"`
 		}{}
 		err := parse.POST(w, r, &req)
 		if err != nil {
@@ -74,7 +75,6 @@ func UpdateUserProfile(usersService users.Service) http.HandlerFunc {
 			FirstName:   req.FirstName,
 			LastName:    req.LastName,
 			DateOfBirth: req.DateOfBirth,
-			ZIPCode:     req.ZIPCode,
 		})
 		if err != nil {
 			switch err.(type) {
@@ -86,6 +86,21 @@ func UpdateUserProfile(usersService users.Service) http.HandlerFunc {
 				resp.ServerError(w, r, resp.UnknownError)
 			}
 			return
+		}
+
+		if req.Location != nil {
+			err = usersService.UpdateUserLocation(reqCtx.userID, req.Location)
+			if err != nil {
+				switch err.(type) {
+				case *users.ErrUserNotFound:
+					resp.NotFound(w, r, resp.Error(404, err.Error()))
+				case *users.ErrServerError:
+					resp.ServerError(w, r, resp.Error(500, err.Error()))
+				default:
+					resp.ServerError(w, r, resp.UnknownError)
+				}
+				return
+			}
 		}
 
 		resp.OK(w, r, map[string]bool{

@@ -9,6 +9,7 @@ import (
 	"github.com/joinimpact/api/internal/config"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/snowflakes"
+	"github.com/joinimpact/api/pkg/location"
 	"github.com/rs/zerolog"
 )
 
@@ -18,6 +19,8 @@ type Service interface {
 	GetUserProfile(userID int64, self bool) (*UserProfile, error)
 	// UpdateUserProfile updates a user's profile.
 	UpdateUserProfile(userID int64, profile UserProfile) error
+	// UpdateUserLocation updates a user's location.
+	UpdateUserLocation(userID int64, location *location.Coordinates) error
 	// GetUserTags gets all of a user's tags.
 	GetUserTags(userID int64) ([]models.Tag, error)
 	// AddUserTags adds tags to a user by tag name.
@@ -72,7 +75,6 @@ func (s *service) GetUserProfile(userID int64, self bool) (*UserProfile, error) 
 	if self {
 		profile.Email = user.Email
 		profile.DateOfBirth = user.DateOfBirth
-		profile.ZIPCode = user.ZIPCode
 	}
 
 	tags, err := s.GetUserTags(userID)
@@ -94,7 +96,17 @@ func (s *service) UpdateUserProfile(userID int64, profile UserProfile) error {
 		FirstName:   profile.FirstName,
 		LastName:    profile.LastName,
 		DateOfBirth: profile.DateOfBirth,
-		ZIPCode:     profile.ZIPCode,
+	})
+}
+
+// UpdateUserLocation updates a user's location.
+func (s *service) UpdateUserLocation(userID int64, location *location.Coordinates) error {
+	return s.userRepository.Update(models.User{
+		Model: models.Model{
+			ID: userID,
+		},
+		LocationLatitude:  location.Latitude,
+		LocationLongitude: location.Longitude,
 	})
 }
 

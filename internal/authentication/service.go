@@ -125,6 +125,16 @@ func (s *service) Register(user models.User, password string) (*TokenPair, error
 		return nil, err
 	}
 
+	email := s.emailService.NewEmail(email.NewRecipient(
+		fmt.Sprintf("%s %s", user.FirstName, user.LastName), user.Email),
+		"Welcome to Impact!",
+		templates.WelcomeTemplate(user.FirstName),
+	)
+	err = s.emailService.Send(email)
+	if err != nil {
+		s.logger.Error().Err(err).Msg("error sending email to new user")
+	}
+
 	// Successful user creation, generate and return a token pair.
 	return s.generateTokenPair(user.ID)
 }
@@ -314,6 +324,16 @@ func (s *service) createOauthUserIfNotExists(profile oauth.Profile) (*models.Use
 	err = s.userRepository.Create(newUser)
 	if err != nil {
 		return nil, false, err
+	}
+
+	email := s.emailService.NewEmail(email.NewRecipient(
+		fmt.Sprintf("%s %s", newUser.FirstName, newUser.LastName), newUser.Email),
+		"Welcome to Impact!",
+		templates.WelcomeTemplate(newUser.FirstName),
+	)
+	err = s.emailService.Send(email)
+	if err != nil {
+		s.logger.Error().Err(err).Msg("error sending email to new user (oauth)")
 	}
 
 	return &newUser, true, nil
