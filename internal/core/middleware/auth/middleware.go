@@ -56,3 +56,30 @@ func AuthMiddleware(authService authentication.Service) func(next http.Handler) 
 		})
 	}
 }
+
+// CookieMiddleware takes authentication information from the cookies and injects it into the Authorization header for later consumption.
+func CookieMiddleware(authService authentication.Service) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if len(r.Header.Get("Authorization")) > 0 {
+				// Authorization headers set by the client will take priority.
+				// If one exists, skip the injection.
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// Get the auth_token cookie from the request.
+			token, err := r.Cookie("auth_token")
+			if err != nil {
+				// No cookie found, skip.
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// Set the header.
+			r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token.Value))
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
