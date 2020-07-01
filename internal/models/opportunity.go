@@ -3,15 +3,15 @@ package models
 // Opportunity represents an organization's opportunity.
 type Opportunity struct {
 	Model
-	Active         bool         `json:"-"`                    // when false, the opportunity will be treated as if deleted. Useful for suspensions, etc.
-	OrganizationID int64        ``                            // the id of the parent organization
-	Organization   Organization ``                            //
-	CreatorID      int64        ``                            // the id of the user who created the opportunity initially
-	Creator        User         `gorm:"foreignkey:CreatorID"` //
-	Public         bool         `json:"public"`               // whether or not the opportunity should be shown to volunteers
-	Title          string       `json:"title"`                // the title of the opportunity
-	Image          string       `json:"image"`                // a url to the opportunity's banner image
-	Description    string       `json:"description"`          // a long description of the opportunity and its purpose
+	Active         bool         `json:"-"`                             // when false, the opportunity will be treated as if deleted. Useful for suspensions, etc.
+	OrganizationID int64        `json:"opportunityId"`                 // the id of the parent organization
+	Organization   Organization `json:"-"`                             //
+	CreatorID      int64        `json:"creatorId"`                     // the id of the user who created the opportunity initially
+	Creator        User         `json:"-" gorm:"foreignkey:CreatorID"` //
+	Public         bool         `json:"public"`                        // whether or not the opportunity should be shown to volunteers
+	Title          string       `json:"title"`                         // the title of the opportunity
+	Image          string       `json:"image"`                         // a url to the opportunity's banner image
+	Description    string       `json:"description"`                   // a long description of the opportunity and its purpose
 }
 
 // OpportunityRepository represents a repository of opportunities.

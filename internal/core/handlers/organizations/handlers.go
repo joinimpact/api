@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi"
+	"github.com/joinimpact/api/internal/core/middleware/auth"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/organizations"
 	"github.com/joinimpact/api/pkg/parse"
@@ -25,7 +26,7 @@ type createOrganizationResponse struct {
 func CreateOrganization(organizationsService organizations.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		userID, ok := ctx.Value(keyUserID).(int64)
+		userID, ok := ctx.Value(auth.KeyUserID).(int64)
 		if !ok {
 			resp.ServerError(w, r, resp.UnknownError)
 			return
@@ -274,7 +275,7 @@ func PostInvite(organizationsService organizations.Service) http.HandlerFunc {
 		}
 
 		ctx := r.Context()
-		userID, ok := ctx.Value(keyUserID).(int64)
+		userID, ok := ctx.Value(auth.KeyUserID).(int64)
 		if !ok {
 			resp.ServerError(w, r, resp.UnknownError)
 			return
