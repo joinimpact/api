@@ -16,7 +16,9 @@ type User struct {
 	LastName       string             `json:"lastName"`                // the user's last name
 	DateOfBirth    time.Time          `json:"dateOfBirth" level:"1"`   // the user's date of birth, used for calculating age
 	ProfileFields  []UserProfileField `json:"profile"`                 // fields of the user's profile
-	ZIPCode        string             `json:"zipCode" level:"1"`       // the user's zip code, used to find nearby opportunities
+	// ZIPCode        string             `json:"zipCode" level:"1"`       // the user's zip code, used to find nearby opportunities
+	LocationLatitude  float32 `json:"-"` // the latitude of the user's city
+	LocationLongitude float32 `json:"-"` // the longitude of the user's city
 }
 
 // UserRepository represents a repository of users.

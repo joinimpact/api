@@ -20,6 +20,7 @@ type TokenPair struct {
 	AuthExpiry    int64  `json:"authExpiry"`
 	RefreshToken  string `json:"refreshToken"`
 	RefreshExpiry int64  `json:"refreshExpiry"`
+	UserID        int64  `json:"userId,omitempty"`
 }
 
 const (
@@ -84,6 +85,7 @@ func (s *service) generateTokenPair(userID int64) (*TokenPair, error) {
 		now.Add(AuthTokenLifespanDays * 24 * time.Hour).UTC().Unix(),
 		refreshToken,
 		now.Add(RefreshTokenLifespanDays * 24 * time.Hour).UTC().Unix(),
+		userID,
 	}, nil
 }
 

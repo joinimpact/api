@@ -8,6 +8,8 @@ import (
 	"github.com/joinimpact/api/internal/authentication"
 	authm "github.com/joinimpact/api/internal/core/middleware/auth"
 	"github.com/joinimpact/api/internal/models"
+	"github.com/joinimpact/api/internal/users"
+	"github.com/joinimpact/api/pkg/location"
 	"github.com/joinimpact/api/pkg/parse"
 	"github.com/joinimpact/api/pkg/resp"
 )
@@ -38,15 +40,15 @@ func Login(service authentication.Service) http.HandlerFunc {
 }
 
 // Register attempts to register the user.
-func Register(service authentication.Service) http.HandlerFunc {
+func Register(service authentication.Service, usersService users.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := struct {
-			FirstName   string    `json:"firstName" validate:"min=2,max=48"`
-			LastName    string    `json:"lastName" validate:"min=2,max=48"`
-			Email       string    `json:"email" validate:"email"`
-			Password    string    `json:"password" validate:"min=8,max=512"`
-			DateOfBirth time.Time `json:"dateOfBirth"`
-			ZIPCode     string    `json:"zipCode"`
+			FirstName   string                `json:"firstName" validate:"min=2,max=48"`
+			LastName    string                `json:"lastName" validate:"min=2,max=48"`
+			Email       string                `json:"email" validate:"email"`
+			Password    string                `json:"password" validate:"min=8,max=512"`
+			DateOfBirth time.Time             `json:"dateOfBirth"`
+			Location    *location.Coordinates `json:"location"`
 		}{}
 		err := parse.POST(w, r, &req)
 		if err != nil {
@@ -58,11 +60,14 @@ func Register(service authentication.Service) http.HandlerFunc {
 			LastName:    req.LastName,
 			Email:       req.Email,
 			DateOfBirth: req.DateOfBirth,
-			ZIPCode:     req.ZIPCode,
 		}, req.Password)
 		if err != nil {
 			resp.ServerError(w, r, resp.Error(500, err.Error()))
 			return
+		}
+
+		if req.Location != nil {
+			_ = usersService.UpdateUserLocation(tokenPair.UserID, req.Location)
 		}
 
 		// Update cookies.
