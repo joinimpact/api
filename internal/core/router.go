@@ -34,7 +34,6 @@ func (app *App) Router() *chi.Mux {
 	})
 
 	router.Group(func(router chi.Router) {
-		// TODO: replace with separate package for auth middleware
 		router.Use(authm.AuthMiddleware(app.authenticationService))
 
 		router.Route("/users", func(r chi.Router) {
