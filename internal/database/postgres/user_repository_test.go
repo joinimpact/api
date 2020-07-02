@@ -84,7 +84,6 @@ func TestCreate(t *testing.T) {
 				user.FirstName,
 				user.LastName,
 				sqlmock.AnyArg(),
-				user.ZIPCode,
 			).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).
 				AddRow(user.ID))
