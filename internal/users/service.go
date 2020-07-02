@@ -41,11 +41,12 @@ type service struct {
 	logger                     *zerolog.Logger
 	snowflakeService           snowflakes.SnowflakeService
 	cdnClient                  *cdn.Client
+	locationService            location.Service
 }
 
 // NewService creates and returns a new Users service with the provifded dependencies.
 func NewService(userRepository models.UserRepository, userProfileFieldRepository models.UserProfileFieldRepository, userTagRepository models.UserTagRepository,
-	tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService) Service {
+	tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, locationService location.Service) Service {
 	return &service{
 		userRepository,
 		userProfileFieldRepository,
@@ -55,6 +56,7 @@ func NewService(userRepository models.UserRepository, userProfileFieldRepository
 		logger,
 		snowflakeService,
 		cdn.NewCDNClient(config),
+		locationService,
 	}
 }
 
@@ -83,6 +85,19 @@ func (s *service) GetUserProfile(userID int64, self bool) (*UserProfile, error) 
 	}
 
 	profile.Tags = tags
+
+	// Location
+	if user.LocationLatitude != 0.0 || user.LocationLongitude != 0.0 {
+		coordinates := &location.Coordinates{
+			Latitude:  user.LocationLatitude,
+			Longitude: user.LocationLongitude,
+		}
+
+		location, err := s.locationService.CoordinatesToCity(coordinates)
+		if err == nil {
+			profile.Location = location
+		}
+	}
 
 	return profile, nil
 }

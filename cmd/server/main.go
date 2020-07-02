@@ -13,6 +13,7 @@ import (
 	"github.com/joinimpact/api/internal/snowflakes"
 	"github.com/joinimpact/api/internal/tags"
 	"github.com/joinimpact/api/internal/users"
+	"github.com/joinimpact/api/pkg/location"
 
 	"github.com/joinimpact/api/internal/migrations"
 
@@ -75,6 +76,12 @@ func main() {
 		"Impact",
 		"no-reply@joinimpact.org",
 	))
+	locationService, err := location.NewService(&location.Options{
+		APIKey: config.GoogleMapsAPIKey,
+	})
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error initializing Google Maps API")
+	}
 
 	// Repositories
 	userRepository := postgres.NewUserRepository(db, &log.Logger)
@@ -90,7 +97,7 @@ func main() {
 	opportunityRepository := postgres.NewOpportunityRepository(db, &log.Logger)
 
 	// Internal services
-	usersService := users.NewService(userRepository, userProfileFieldRepository, userTagRepository, tagRepository, config, &log.Logger, snowflakeService)
+	usersService := users.NewService(userRepository, userProfileFieldRepository, userTagRepository, tagRepository, config, &log.Logger, snowflakeService, locationService)
 	authenticationService := authentication.NewService(userRepository, passwordResetRepository, thirdPartyIdentityRepository, config, &log.Logger, snowflakeService, emailService)
 	organizationsService := organizations.NewService(organizationRepository, organizationMembershipRepository, organizationMembershipInviteRepository, organizationTagRepository, userRepository, tagRepository, config, &log.Logger, snowflakeService, emailService)
 	opportunitiesService := opportunities.NewService(opportunityRepository, tagRepository, config, &log.Logger, snowflakeService, emailService)
