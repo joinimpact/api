@@ -61,10 +61,11 @@ func UpdateUserProfile(usersService users.Service) http.HandlerFunc {
 		}
 
 		req := struct {
-			FirstName   string                `json:"firstName" validate:"omitempty,min=2,max=48"`
-			LastName    string                `json:"lastName" validate:"omitempty,min=2,max=48"`
-			DateOfBirth time.Time             `json:"dateOfBirth" validate:"omitempty"`
-			Location    *location.Coordinates `json:"location"`
+			FirstName   string                    `json:"firstName" validate:"omitempty,min=2,max=48"`
+			LastName    string                    `json:"lastName" validate:"omitempty,min=2,max=48"`
+			DateOfBirth time.Time                 `json:"dateOfBirth" validate:"omitempty"`
+			Location    *location.Coordinates     `json:"location"`
+			Profile     []models.UserProfileField `json:"profile"`
 		}{}
 		err := parse.POST(w, r, &req)
 		if err != nil {
@@ -90,6 +91,21 @@ func UpdateUserProfile(usersService users.Service) http.HandlerFunc {
 
 		if req.Location != nil {
 			err = usersService.UpdateUserLocation(reqCtx.userID, req.Location)
+			if err != nil {
+				switch err.(type) {
+				case *users.ErrUserNotFound:
+					resp.NotFound(w, r, resp.Error(404, err.Error()))
+				case *users.ErrServerError:
+					resp.ServerError(w, r, resp.Error(500, err.Error()))
+				default:
+					resp.ServerError(w, r, resp.UnknownError)
+				}
+				return
+			}
+		}
+
+		for _, field := range req.Profile {
+			err := usersService.SetUserProfileField(reqCtx.userID, field)
 			if err != nil {
 				switch err.(type) {
 				case *users.ErrUserNotFound:
