@@ -25,10 +25,12 @@ type Service interface {
 	GetUserTags(userID int64) ([]models.Tag, error)
 	// AddUserTags adds tags to a user by tag name.
 	AddUserTags(userID int64, tags []string) (int, error)
-	// UploadProfilePicture uploads a profile picture to the CDN and adds it to the user.
-	UploadProfilePicture(userID int64, fileReader io.Reader) error
 	// RemoveUserTag removes a tag from a user by id.
 	RemoveUserTag(userID, tagID int64) error
+	// SetUserProfileField sets a user's profile field by name.
+	SetUserProfileField(userID int64, profileField models.UserProfileField) error
+	// UploadProfilePicture uploads a profile picture to the CDN and adds it to the user.
+	UploadProfilePicture(userID int64, fileReader io.Reader) error
 }
 
 // service represents the internal implementation of the Service interface.
@@ -41,11 +43,12 @@ type service struct {
 	logger                     *zerolog.Logger
 	snowflakeService           snowflakes.SnowflakeService
 	cdnClient                  *cdn.Client
+	locationService            location.Service
 }
 
 // NewService creates and returns a new Users service with the provifded dependencies.
 func NewService(userRepository models.UserRepository, userProfileFieldRepository models.UserProfileFieldRepository, userTagRepository models.UserTagRepository,
-	tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService) Service {
+	tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, locationService location.Service) Service {
 	return &service{
 		userRepository,
 		userProfileFieldRepository,
@@ -55,6 +58,7 @@ func NewService(userRepository models.UserRepository, userProfileFieldRepository
 		logger,
 		snowflakeService,
 		cdn.NewCDNClient(config),
+		locationService,
 	}
 }
 
@@ -83,6 +87,38 @@ func (s *service) GetUserProfile(userID int64, self bool) (*UserProfile, error) 
 	}
 
 	profile.Tags = tags
+
+	// Location
+	if user.LocationLatitude != 0.0 || user.LocationLongitude != 0.0 {
+		coordinates := &location.Coordinates{
+			Latitude:  user.LocationLatitude,
+			Longitude: user.LocationLongitude,
+		}
+
+		location, err := s.locationService.CoordinatesToCity(coordinates)
+		if err == nil {
+			profile.Location = location
+		}
+	}
+
+	// Profile fields
+	fields, err := s.userProfileFieldRepository.FindByUserID(userID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	profile.ProfileFields = []models.UserProfileField{}
+
+	// TODO: replace with scoped struct tags
+	if self {
+		profile.ProfileFields = fields
+	} else {
+		for _, field := range fields {
+			if field.Privacy == 1 {
+				profile.ProfileFields = append(profile.ProfileFields, field)
+			}
+		}
+	}
 
 	return profile, nil
 }
@@ -195,6 +231,24 @@ func (s *service) RemoveUserTag(userID, tagID int64) error {
 	}
 
 	return s.userTagRepository.DeleteByID(userTag.ID)
+}
+
+// SetUserProfileField sets a user's profile field by name.
+func (s *service) SetUserProfileField(userID int64, profileField models.UserProfileField) error {
+	field, err := s.userProfileFieldRepository.FindUserFieldByName(userID, profileField.Name)
+	if err == nil {
+		profileField.ID = field.ID
+		return s.userProfileFieldRepository.Update(profileField)
+	}
+
+	profileField.UserID = userID
+
+	// Create an ID and assign it to the profile field.
+	id := s.snowflakeService.GenerateID()
+	profileField.ID = id
+
+	// Create the profile field.
+	return s.userProfileFieldRepository.Create(profileField)
 }
 
 // UploadProfilePicture uploads a profile picture to the CDN and adds it to the user.

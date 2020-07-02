@@ -38,8 +38,8 @@ func (r *userProfileFieldRepository) FindByUserID(id int64) ([]models.UserProfil
 	return profileFields, nil
 }
 
-// FindUserFieldByID finds a single entity by UserID and field name.
-func (r *userProfileFieldRepository) FindUserFieldByID(id int64, name string) (*models.UserProfileField, error) {
+// FindUserFieldByName finds a single entity by UserID and field name.
+func (r *userProfileFieldRepository) FindUserFieldByName(id int64, name string) (*models.UserProfileField, error) {
 	var profileField models.UserProfileField
 	if err := r.db.Where("user_id = ? AND name = ?", id, name).Find(&profileField).Error; err != nil {
 		return &profileField, err
