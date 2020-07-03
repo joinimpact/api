@@ -36,6 +36,22 @@ func Marshal(scope Scope, input interface{}) interface{} {
 		return output
 	}
 
+	if inputType.Kind() == reflect.Map {
+		output := map[interface{}]interface{}{}
+
+		iter := value.MapRange()
+		for iter.Next() {
+			k := iter.Key()
+			v := iter.Value()
+			item := Marshal(scope, v.Interface())
+			if item != nil {
+				output[k] = item
+			}
+		}
+
+		return output
+	}
+
 	if inputType.Kind() != reflect.Struct {
 		return input
 	}
@@ -70,18 +86,8 @@ func Marshal(scope Scope, input interface{}) interface{} {
 			name = inputType.Field(i).Name
 		}
 
-		if !value.Field(i).CanInterface() {
-			continue
-		}
-
 		item := value.Field(i).Interface()
-
-		if inputType.Field(i).Type.Kind() == reflect.Struct ||
-			inputType.Field(i).Type.Kind() == reflect.Ptr ||
-			inputType.Field(i).Type.Kind() == reflect.Array ||
-			inputType.Field(i).Type.Kind() == reflect.Slice {
-			item = Marshal(scope, item)
-		}
+		item = Marshal(scope, item)
 
 		// Add the value to the map.
 		output[name] = item

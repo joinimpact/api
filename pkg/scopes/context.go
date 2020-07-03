@@ -16,9 +16,9 @@ const (
 // and returns a Scope.
 type ScopeFunction func(ctx context.Context) Scope
 
-// scopeFromContext gets a Scope from a context or defaults to the
+// ScopeFromContext gets a Scope from a context or defaults to the
 // ScopeUnauthenticated scope if one is not present.
-func scopeFromContext(ctx context.Context) Scope {
+func ScopeFromContext(ctx context.Context) Scope {
 	scope, ok := ctx.Value(ScopeKey).(Scope)
 	if !ok {
 		return ScopeUnauthenticated
@@ -29,6 +29,6 @@ func scopeFromContext(ctx context.Context) Scope {
 
 // MarshalFromContext uses a context to marshal data.
 func MarshalFromContext(ctx context.Context, input interface{}) interface{} {
-	scope := scopeFromContext(ctx)
+	scope := ScopeFromContext(ctx)
 	return Marshal(scope, input)
 }

@@ -54,7 +54,6 @@ func (app *App) Router() *chi.Mux {
 		})
 
 		router.Route("/organizations", func(r chi.Router) {
-
 			r.Post("/", organizations.CreateOrganization(app.organizationsService))
 
 			r.Route("/{organizationID}", func(r chi.Router) {
