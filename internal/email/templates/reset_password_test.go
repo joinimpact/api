@@ -67,7 +67,7 @@ const expectedResetPasswordOutput = `
         <td>
           <a
             style="color: initial;"
-            href="https://joinimpact.org/auth/reset-password?email=yury@joinimpact.org&key=12345678910"
+            href="https://dev.joinimpact.org/auth/reset/12345678910"
             >Click here to reset your password</a
           >
         </td>

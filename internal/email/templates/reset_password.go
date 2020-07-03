@@ -69,7 +69,7 @@ const resetPasswordTemplate = `
         <td>
           <a
             style="color: initial;"
-            href="https://joinimpact.org/auth/reset-password?email={{email}}&key={{key}}"
+            href="https://dev.joinimpact.org/auth/reset/{{key}}"
             >Click here to reset your password</a
           >
         </td>

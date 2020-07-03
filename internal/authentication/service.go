@@ -102,6 +102,11 @@ func (s *service) Register(user models.User, password string) (*TokenPair, error
 		return nil, errors.New("invalid email")
 	}
 
+	_, err := s.userRepository.FindByEmail(user.Email)
+	if err == nil {
+		return nil, errors.New("email taken")
+	}
+
 	// Make the user's email lowercase for standardization.
 	user.Email = strings.ToLower(user.Email)
 

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
+	"github.com/joinimpact/api/pkg/scopes"
 	"github.com/liip/sheriff"
 )
 
@@ -37,19 +38,8 @@ func marshal(w http.ResponseWriter, r *http.Request, groups []string, data inter
 		options.Groups = append(options.Groups, groups...)
 	}
 
-	// fmt.Println(data)
-
-	// // Use sheriff marshaling for scoping.
-	// marshaled, err := sheriff.Marshal(&options, data)
-	// if err != nil {
-	// 	w.WriteHeader(http.StatusInternalServerError)
-	// 	render.JSON(w, r, Err{
-	// 		Code:    500,
-	// 		Message: "error encoding response",
-	// 	})
-	// }
-
-	// fmt.Println(marshaled)
+	// Marshal the data with scoping.
+	data = scopes.MarshalFromContext(r.Context(), data)
 
 	render.JSON(w, r, data)
 }
@@ -69,23 +59,6 @@ func OK(w http.ResponseWriter, r *http.Request, data ...interface{}) {
 	}
 
 	marshal(w, r, nil, resp)
-}
-
-// ScopedOK returns an HTTP 200 response with an API scope.
-func ScopedOK(w http.ResponseWriter, r *http.Request, scopes []string, data ...interface{}) {
-	resp := response{}
-
-	// for i, v := range data {
-	// Loop through each data object to check its type
-	// data[i] = middleware.CleanDataForJSON(v)
-	// }
-
-	resp.Data = data
-	if len(data) == 1 {
-		resp.Data = data[0]
-	}
-
-	marshal(w, r, scopes, resp)
 }
 
 // NotFound returns an HTTP 404 response.
