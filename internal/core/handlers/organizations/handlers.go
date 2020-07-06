@@ -13,6 +13,7 @@ import (
 	"github.com/joinimpact/api/internal/core/middleware/auth"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/organizations"
+	"github.com/joinimpact/api/pkg/location"
 	"github.com/joinimpact/api/pkg/parse"
 	"github.com/joinimpact/api/pkg/resp"
 	"github.com/oliamb/cutter"
@@ -33,10 +34,10 @@ func CreateOrganization(organizationsService organizations.Service) http.Handler
 		}
 
 		req := struct {
-			Name        string `json:"name" validate:"min=4,max=72"`
-			WebsiteURL  string `json:"websiteURL" validate:"url,omitempty"`
-			Location    string `json:"location" validate:"omitempty"`
-			Description string `json:"description" validate:"max=800,omitempty"`
+			Name        string                `json:"name" validate:"min=4,max=72"`
+			WebsiteURL  string                `json:"websiteURL" validate:"url,omitempty"`
+			Location    *location.Coordinates `json:"location"`
+			Description string                `json:"description" validate:"max=800,omitempty"`
 		}{}
 		err := parse.POST(w, r, &req)
 		if err != nil {
@@ -47,7 +48,7 @@ func CreateOrganization(organizationsService organizations.Service) http.Handler
 			CreatorID:   userID,
 			Name:        req.Name,
 			WebsiteURL:  req.WebsiteURL,
-			Location:    req.Location,
+			Location:    "",
 			Description: req.Description,
 		})
 		if err != nil {
