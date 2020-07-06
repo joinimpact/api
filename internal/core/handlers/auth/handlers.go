@@ -39,6 +39,26 @@ func Login(service authentication.Service) http.HandlerFunc {
 	}
 }
 
+// ValidateEmail checks if a user's email is taken.
+func ValidateEmail(service authentication.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := struct {
+			Email string `json:"email" validate:"email"`
+		}{}
+		err := parse.POST(w, r, &req)
+		if err != nil {
+			return
+		}
+
+		err = service.CheckEmail(req.Email)
+		if err != nil {
+			resp.BadRequest(w, r, resp.Error(400, err.Error()))
+		}
+
+		resp.OK(w, r, nil)
+	}
+}
+
 // Register attempts to register the user.
 func Register(service authentication.Service, usersService users.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

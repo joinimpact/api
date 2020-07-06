@@ -21,6 +21,9 @@ import (
 type Service interface {
 	// Login attempts to login to a user account with a email and password, and returns a TokenPair on success.
 	Login(email, password string) (*TokenPair, error)
+	// CheckEmail checks if an email is available for use. If the email is taken,
+	// an error will be returned.
+	CheckEmail(email string) error
 	// Register attempts to create a new user and returns a token pair on success.
 	Register(user models.User, password string) (*TokenPair, error)
 	// RequestPasswordReset creates a new PasswordResetKey and emails the user a link to it.
@@ -87,6 +90,21 @@ func (s *service) Login(email, password string) (*TokenPair, error) {
 
 	// Successful login, generate and return a token pair.
 	return s.generateTokenPair(user.ID)
+}
+
+// CheckEmail checks if an email is available for use. If the email is taken,
+// an error will be returned.
+func (s *service) CheckEmail(email string) error {
+	if !validateEmail(email) {
+		return errors.New("invalid email")
+	}
+
+	_, err := s.userRepository.FindByEmail(email)
+	if err == nil {
+		return errors.New("email taken")
+	}
+
+	return nil
 }
 
 // Register attempts to register a new user account with an email and password, and returns a TokenPair on success.

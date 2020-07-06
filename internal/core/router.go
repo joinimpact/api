@@ -21,6 +21,7 @@ func (app *App) Router() *chi.Mux {
 	router.Get("/healthcheck", healthcheckHandler)
 	router.Route("/auth", func(r chi.Router) {
 		r.Post("/login", auth.Login(app.authenticationService))
+		r.Post("/validate-email", auth.ValidateEmail(app.authenticationService))
 		r.Post("/register", auth.Register(app.authenticationService, app.usersService))
 		r.Post("/logout", auth.Logout(app.authenticationService))
 
