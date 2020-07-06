@@ -762,27 +762,22 @@
 							"schema": {
 								"type": "object",
 								"properties": {
-									"data": {
-										"type": "object",
-										"properties": {
-											"firstName": {
-												"type": "string",
-												"example": "Tyler"
-											},
-											"lastName": {
-												"type": "string",
-												"example": "Lafayette"
-											},
-											"dateOfBirth": {
-												"type": "string",
-												"example": "2003-07-28T00:00:00Z"
-											},
-											"zipCode": {
-												"type": "string",
-												"description": "May change",
-												"example": "Menlo Park, CA, US 94025"
-											}
-										}
+									"firstName": {
+										"type": "string",
+										"example": "Tyler"
+									},
+									"lastName": {
+										"type": "string",
+										"example": "Lafayette"
+									},
+									"dateOfBirth": {
+										"type": "string",
+										"example": "2003-07-28T00:00:00Z"
+									},
+									"zipCode": {
+										"type": "string",
+										"description": "May change",
+										"example": "Menlo Park, CA, US 94025"
 									}
 								}
 							}
@@ -1392,6 +1387,68 @@
 					},
 					"500": {
 						"description": "Server error, please try again."
+					}
+				}
+			}
+		},
+		"/tags": {
+			"get": {
+				"tags": [
+					"Tags"
+				],
+				"summary": "Requires authentication. Gets tags from a search term (if present) or returns popular tags.",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "query",
+						"description": "A search query for searching through tags.",
+						"schema": {
+							"type": "string",
+							"example": "Reserarch"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"description": "An integer that limits how many tags will be returned.",
+						"schema": {
+							"type": "integer",
+							"example": 10
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Success, the tags will be included in the response.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "object",
+											"properties": {
+												"tags": {
+													"type": "array",
+													"items": {
+														"type": "object",
+														"properties": {
+															"name": {
+																"type": "string",
+																"description": "The name of the tag."
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized."
 					}
 				}
 			}
