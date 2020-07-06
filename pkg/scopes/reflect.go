@@ -2,6 +2,7 @@ package scopes
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -58,6 +59,10 @@ func Marshal(scope Scope, input interface{}) interface{} {
 		}
 
 		return output
+	}
+
+	if inputType.Kind() == reflect.Int64 {
+		return fmt.Sprintf("%d", value.Interface())
 	}
 
 	if inputType.Kind() != reflect.Struct {
