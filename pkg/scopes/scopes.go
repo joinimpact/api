@@ -14,6 +14,7 @@ const (
 	ScopeManager         Scope = iota
 	ScopeAdmin           Scope = iota
 	ScopeOwner           Scope = iota
+	NoChange             Scope = -1
 )
 
 // stringToScope converts a string (ex: "admin") to a Scope type.

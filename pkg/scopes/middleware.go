@@ -13,6 +13,11 @@ func Middleware(function ScopeFunction) func(next http.Handler) http.Handler {
 
 			// Run the scope calculation function and add the scope to the context.
 			scope := function(ctx)
+			if scope == NoChange {
+				// If NoChange returned, default to the current scope.
+				scope = ScopeFromContext(ctx)
+			}
+
 			ctx = context.WithValue(ctx, ScopeKey, scope)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
