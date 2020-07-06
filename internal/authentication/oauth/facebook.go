@@ -13,6 +13,8 @@ import (
 type FacebookClient interface {
 	// GetToken gets an oauth2 token by code.
 	GetToken(code string) (*oauth2.Token, error)
+	// GetTokenFromAcessToken returns an oauth2 token from the access token string.'
+	GetTokenFromAccessToken(accessToken string) *oauth2.Token
 	// GetProfile gets a user's profile from an oauth token.
 	GetProfile(token *oauth2.Token) (Profile, error)
 }
@@ -55,6 +57,13 @@ func buildFacebookOauthConfig(clientID, clientSecret, callback string) *oauth2.C
 // GetToken gets an oauth2 token by code.
 func (f *facebookClient) GetToken(code string) (*oauth2.Token, error) {
 	return f.oauthConfig.Exchange(context.Background(), code)
+}
+
+// GetTokenFromAcessToken returns an oauth2 token from the access token string.
+func (f *facebookClient) GetTokenFromAccessToken(accessToken string) *oauth2.Token {
+	return &oauth2.Token{
+		AccessToken: accessToken,
+	}
 }
 
 // GetProfile gets a user's profile from an oauth token.

@@ -56,7 +56,7 @@ func NewConfig() *Config {
 		GoogleCallbackURL:   envString("IMPACT_GOOGLE_CALLBACK_URL", "https://dev.joinimpact.org/google/success"),
 		FacebookAppID:       envString("IMPACT_FACEBOOK_APP_ID", ""),
 		FacebookAppSecret:   envString("IMPACT_FACEBOOK_APP_SECRET", ""),
-		FacebookCallbackURL: envString("IMPACT_FACEBOOK_CALLBACK_URL", "https://dev.joinimpact.org/fb/success"),
+		FacebookCallbackURL: envString("IMPACT_FACEBOOK_CALLBACK_URL", "https://dev.joinimpact.org/auth/login"),
 		GoogleMapsAPIKey:    envString("IMPACT_GOOGLE_MAPS_API_KEY", ""),
 	}
 }

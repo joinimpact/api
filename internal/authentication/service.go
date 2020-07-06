@@ -32,7 +32,7 @@ type Service interface {
 	// GetUserIDFromToken gets a user's ID from a JWT token.
 	GetUserIDFromToken(token string) (int64, error)
 	// OauthLogin authenticates using a third-party service instead of a traditional username and password.
-	OauthLogin(serviceName, code string) (*OauthResponse, error)
+	OauthLogin(serviceName, accessToken string) (*OauthResponse, error)
 	// RefreshToken generates a new token pair from a refresh token.
 	RefreshToken(ctx context.Context, refreshToken string) (*TokenPair, error)
 }
@@ -236,7 +236,7 @@ type OauthResponse struct {
 }
 
 // OauthLogin authenticates using a third-party service instead of a traditional username and password.
-func (s *service) OauthLogin(serviceName, code string) (*OauthResponse, error) {
+func (s *service) OauthLogin(serviceName, accessToken string) (*OauthResponse, error) {
 	var profile oauth.Profile
 	var token *oauth2.Token
 	var err error
@@ -244,20 +244,14 @@ func (s *service) OauthLogin(serviceName, code string) (*OauthResponse, error) {
 	switch serviceName {
 	case "google":
 		client := oauth.NewGoogleClient(s.config)
-		token, err = client.GetToken(code)
-		if err != nil {
-			return nil, err
-		}
+		token = client.GetTokenFromAccessToken(accessToken)
 		profile, err = client.GetProfile(token)
 		if err != nil {
 			return nil, err
 		}
 	case "facebook":
 		client := oauth.NewFacebookClient(s.config)
-		token, err = client.GetToken(code)
-		if err != nil {
-			return nil, err
-		}
+		token = client.GetTokenFromAccessToken(accessToken)
 		profile, err = client.GetProfile(token)
 		if err != nil {
 			return nil, err

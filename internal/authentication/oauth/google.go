@@ -13,6 +13,8 @@ import (
 type GoogleClient interface {
 	// GetToken gets an oauth2 token by code.
 	GetToken(code string) (*oauth2.Token, error)
+	// GetTokenFromAcessToken returns an oauth2 token from the access token string.'
+	GetTokenFromAccessToken(accessToken string) *oauth2.Token
 	// GetProfile gets a user's profile from an oauth token.
 	GetProfile(token *oauth2.Token) (Profile, error)
 }
@@ -52,6 +54,13 @@ func buildGoogleOauthConfig(clientID, clientSecret, callback string) *oauth2.Con
 // GetToken gets an oauth2 token by code.
 func (g *googleClient) GetToken(code string) (*oauth2.Token, error) {
 	return g.oauthConfig.Exchange(context.Background(), code)
+}
+
+// GetTokenFromAcessToken returns an oauth2 token from the access token string.
+func (g *googleClient) GetTokenFromAccessToken(accessToken string) *oauth2.Token {
+	return &oauth2.Token{
+		AccessToken: accessToken,
+	}
 }
 
 // GetProfile gets a user's profile from an oauth token.

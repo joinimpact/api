@@ -149,14 +149,14 @@ func ResetPassword(service authentication.Service) http.HandlerFunc {
 func GoogleOauth(service authentication.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := struct {
-			Code string `json:"code" validate:"min=8,max=1024"`
+			Token string `json:"token" validate:"min=8,max=1024"`
 		}{}
 		err := parse.POST(w, r, &req)
 		if err != nil {
 			return
 		}
 
-		res, err := service.OauthLogin("google", req.Code)
+		res, err := service.OauthLogin("google", req.Token)
 		if err != nil {
 			resp.BadRequest(w, r, resp.Error(400, err.Error()))
 			return
@@ -173,14 +173,14 @@ func GoogleOauth(service authentication.Service) http.HandlerFunc {
 func FacebookOauth(service authentication.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := struct {
-			Code string `json:"code" validate:"min=8,max=1024"`
+			Token string `json:"token" validate:"min=8,max=1024"`
 		}{}
 		err := parse.POST(w, r, &req)
 		if err != nil {
 			return
 		}
 
-		res, err := service.OauthLogin("facebook", req.Code)
+		res, err := service.OauthLogin("facebook", req.Token)
 		if err != nil {
 			resp.BadRequest(w, r, resp.Error(400, err.Error()))
 			return
