@@ -30,7 +30,7 @@ type Service interface {
 	// SetUserProfileField sets a user's profile field by name.
 	SetUserProfileField(userID int64, profileField models.UserProfileField) error
 	// UploadProfilePicture uploads a profile picture to the CDN and adds it to the user.
-	UploadProfilePicture(userID int64, fileReader io.Reader) error
+	UploadProfilePicture(userID int64, fileReader io.Reader) (string, error)
 }
 
 // service represents the internal implementation of the Service interface.
@@ -253,13 +253,13 @@ func (s *service) SetUserProfileField(userID int64, profileField models.UserProf
 }
 
 // UploadProfilePicture uploads a profile picture to the CDN and adds it to the user.
-func (s *service) UploadProfilePicture(userID int64, fileReader io.Reader) error {
+func (s *service) UploadProfilePicture(userID int64, fileReader io.Reader) (string, error) {
 	url, err := s.cdnClient.UploadImage(fmt.Sprintf("profile-picture-%d-%d.png", userID, time.Now().UTC().Unix()), fileReader)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return s.userRepository.Update(models.User{
+	return url, s.userRepository.Update(models.User{
 		Model: models.Model{
 			ID: userID,
 		},
