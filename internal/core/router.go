@@ -92,10 +92,10 @@ func (app *App) Router() *chi.Mux {
 				})
 			})
 		})
+	})
 
-		router.Route("/tags", func(r chi.Router) {
-			r.Get("/", tags.GetTags(app.tagsService))
-		})
+	router.Route("/tags", func(r chi.Router) {
+		r.Get("/", tags.GetTags(app.tagsService))
 	})
 
 	return router
