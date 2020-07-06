@@ -317,14 +317,15 @@ func UploadProfilePicture(usersService users.Service) http.HandlerFunc {
 			return
 		}
 
-		err = usersService.UploadProfilePicture(reqCtx.userID, f)
+		url, err := usersService.UploadProfilePicture(reqCtx.userID, f)
 		if err != nil {
 			resp.ServerError(w, r, resp.Error(500, err.Error()))
 			return
 		}
 
-		resp.OK(w, r, map[string]bool{
-			"success": true,
+		resp.OK(w, r, map[string]interface{}{
+			"success":        true,
+			"profilePicture": url,
 		})
 	}
 }
