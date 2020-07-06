@@ -30,7 +30,7 @@ type Service interface {
 	// RemoveOrganizationTag removes a tag from an organization by id.
 	RemoveOrganizationTag(organizationID, tagID int64) error
 	// UploadProfilePicture uploads a profile picture to the CDN and adds it to the user.
-	UploadProfilePicture(organizationID int64, fileReader io.Reader) error
+	UploadProfilePicture(organizationID int64, fileReader io.Reader) (string, error)
 	// InviteUser invites a user by user email to an organization.
 	InviteUser(inviterID, organizationID int64, userEmail string, permissionsFlag int) error
 	// GetOrganizationMembership returns the membership level of a user in an organization.
@@ -196,13 +196,13 @@ func (s *service) RemoveOrganizationTag(organizationID, tagID int64) error {
 }
 
 // UploadProfilePicture uploads a profile picture to the CDN and adds it to the user.
-func (s *service) UploadProfilePicture(organizationID int64, fileReader io.Reader) error {
+func (s *service) UploadProfilePicture(organizationID int64, fileReader io.Reader) (string, error) {
 	url, err := s.cdnClient.UploadImage(fmt.Sprintf("organization-picture-%d-%d.png", organizationID, time.Now().UTC().Unix()), fileReader)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return s.organizationRepository.Update(models.Organization{
+	return url, s.organizationRepository.Update(models.Organization{
 		Model: models.Model{
 			ID: organizationID,
 		},

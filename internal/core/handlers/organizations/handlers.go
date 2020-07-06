@@ -249,14 +249,15 @@ func UploadProfilePicture(organizationsService organizations.Service) http.Handl
 			return
 		}
 
-		err = organizationsService.UploadProfilePicture(organizationID, f)
+		url, err := organizationsService.UploadProfilePicture(organizationID, f)
 		if err != nil {
 			resp.ServerError(w, r, resp.Error(500, err.Error()))
 			return
 		}
 
-		resp.OK(w, r, map[string]bool{
-			"success": true,
+		resp.OK(w, r, map[string]interface{}{
+			"success":        true,
+			"profilePicture": url,
 		})
 	}
 }
