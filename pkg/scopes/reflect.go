@@ -1,6 +1,7 @@
 package scopes
 
 import (
+	"encoding/json"
 	"reflect"
 	"strings"
 )
@@ -22,6 +23,13 @@ func Marshal(scope Scope, input interface{}) interface{} {
 		return input
 	}
 
+	if v, ok := value.Interface().(json.Marshaler); ok {
+		marshaled, err := v.MarshalJSON()
+		if err == nil {
+			return strings.ReplaceAll(string(marshaled), "\"", "")
+		}
+	}
+
 	if inputType.Kind() == reflect.Slice || inputType.Kind() == reflect.Array {
 		output := []interface{}{}
 
@@ -37,11 +45,11 @@ func Marshal(scope Scope, input interface{}) interface{} {
 	}
 
 	if inputType.Kind() == reflect.Map {
-		output := map[interface{}]interface{}{}
+		output := map[string]interface{}{}
 
 		iter := value.MapRange()
 		for iter.Next() {
-			k := iter.Key()
+			k := iter.Key().Interface().(string)
 			v := iter.Value()
 			item := Marshal(scope, v.Interface())
 			if item != nil {
@@ -86,8 +94,21 @@ func Marshal(scope Scope, input interface{}) interface{} {
 			name = inputType.Field(i).Name
 		}
 
+		if !value.Field(i).CanInterface() {
+			continue
+		}
+
 		item := value.Field(i).Interface()
 		item = Marshal(scope, item)
+
+		if inputType.Field(i).Anonymous {
+			// If the field is an anonymous struct, marshal it inline.
+			for k, v := range item.(map[string]interface{}) {
+				output[k] = v
+			}
+
+			continue
+		}
 
 		// Add the value to the map.
 		output[name] = item

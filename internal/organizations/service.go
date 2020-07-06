@@ -33,6 +33,9 @@ type Service interface {
 	UploadProfilePicture(organizationID int64, fileReader io.Reader) error
 	// InviteUser invites a user by user email to an organization.
 	InviteUser(inviterID, organizationID int64, userEmail string, permissionsFlag int) error
+	// GetOrganizationMembership returns the membership level of a user in an organization.
+	// Returns an error if no membership is found.
+	GetOrganizationMembership(organizationID, userID int64) (int, error)
 }
 
 // service represents the internal implementation of the organizations Service.
@@ -286,4 +289,15 @@ func (s *service) inviteByID(inviterID int64, organization *models.Organization,
 	}
 
 	return nil
+}
+
+// GetOrganizationMembership returns the membership level of a user in an organization.
+// Returns an error if no membership is found.
+func (s *service) GetOrganizationMembership(organizationID, userID int64) (int, error) {
+	m, err := s.organizationMembershipRepository.FindUserInOrganization(organizationID, userID)
+	if err != nil {
+		return 0, err
+	}
+
+	return m.PermissionsFlag, nil
 }

@@ -1,6 +1,8 @@
 package core
 
 import (
+	"context"
+
 	"github.com/go-chi/chi"
 	"github.com/joinimpact/api/internal/core/handlers/auth"
 	"github.com/joinimpact/api/internal/core/handlers/opportunities"
@@ -8,7 +10,9 @@ import (
 	"github.com/joinimpact/api/internal/core/handlers/tags"
 	"github.com/joinimpact/api/internal/core/handlers/users"
 	authm "github.com/joinimpact/api/internal/core/middleware/auth"
+	"github.com/joinimpact/api/internal/core/middleware/permissions"
 	"github.com/joinimpact/api/pkg/idctx"
+	"github.com/joinimpact/api/pkg/scopes"
 )
 
 // Router assembles and returns a *chi.Mux router with all the API routes.
@@ -37,19 +41,24 @@ func (app *App) Router() *chi.Mux {
 	router.Group(func(router chi.Router) {
 		router.Use(authm.CookieMiddleware(app.authenticationService))
 		router.Use(authm.AuthMiddleware(app.authenticationService))
+		router.Use(scopes.Middleware(func(ctx context.Context) scopes.Scope {
+			return scopes.ScopeAuthenticated
+		}))
 
 		router.Route("/users", func(r chi.Router) {
 			r.Route("/{userID}", func(r chi.Router) {
 				// For processing the userID param.
 				r.Use(users.Middleware(app.authenticationService))
+				r.Use(scopes.Middleware(users.ScopeProviderUsers()))
+
 				r.Get("/", users.GetUserProfile(app.usersService))
-				r.Patch("/", users.UpdateUserProfile(app.usersService))
+				r.With(permissions.Require(scopes.ScopeOwner)).Patch("/", users.UpdateUserProfile(app.usersService))
 
 				r.Get("/tags", users.GetUserTags(app.usersService))
-				r.Post("/tags", users.PostUserTags(app.usersService))
-				r.Delete("/tags/{tagID}", users.DeleteUserTag(app.usersService))
+				r.With(permissions.Require(scopes.ScopeOwner)).Post("/tags", users.PostUserTags(app.usersService))
+				r.With(permissions.Require(scopes.ScopeOwner)).Delete("/tags/{tagID}", users.DeleteUserTag(app.usersService))
 
-				r.Post("/profile-picture", users.UploadProfilePicture(app.usersService))
+				r.With(permissions.Require(scopes.ScopeOwner)).Post("/profile-picture", users.UploadProfilePicture(app.usersService))
 			})
 		})
 
@@ -58,27 +67,27 @@ func (app *App) Router() *chi.Mux {
 
 			r.Route("/{organizationID}", func(r chi.Router) {
 				r.Use(idctx.Prepare("organizationID"))
+				r.Use(scopes.Middleware(organizations.ScopeProviderOrganizations(app.organizationsService)))
 
 				// r.Get("/", users.GetUserProfile(app.usersService))
 				// r.Patch("/", users.UpdateUserProfile(app.usersService))
 
 				r.Get("/tags", organizations.GetOrganizationTags(app.organizationsService))
-				r.Post("/tags", organizations.PostOrganizationTags(app.organizationsService))
-				r.Delete("/tags/{tagID}", organizations.DeleteOrganizationTag(app.organizationsService))
+				r.With(permissions.Require(scopes.ScopeAdmin)).Post("/tags", organizations.PostOrganizationTags(app.organizationsService))
+				r.With(permissions.Require(scopes.ScopeAdmin)).Delete("/tags/{tagID}", organizations.DeleteOrganizationTag(app.organizationsService))
 
-				r.Post("/profile-picture", organizations.UploadProfilePicture(app.organizationsService))
-
-				r.Post("/invite", organizations.PostInvite(app.organizationsService))
-				r.Post("/invites", organizations.PostInvite(app.organizationsService))
+				r.With(permissions.Require(scopes.ScopeAdmin)).Post("/profile-picture", organizations.UploadProfilePicture(app.organizationsService))
+				r.With(permissions.Require(scopes.ScopeAdmin)).Post("/invite", organizations.PostInvite(app.organizationsService))
+				r.With(permissions.Require(scopes.ScopeAdmin)).Post("/invites", organizations.PostInvite(app.organizationsService))
 
 				r.Route("/opportunities", func(r chi.Router) {
-					r.Post("/", opportunities.Post(app.opportunitiesService))
+					r.With(permissions.Require(scopes.ScopeManager)).Post("/", opportunities.Post(app.opportunitiesService))
 
 					r.Route("/{opportunityID}", func(r chi.Router) {
 						r.Use(idctx.Prepare("opportunityID"))
 
 						r.Get("/", opportunities.Get(app.opportunitiesService))
-						r.Patch("/", opportunities.Patch(app.opportunitiesService))
+						r.With(permissions.Require(scopes.ScopeAdmin)).Patch("/", opportunities.Patch(app.opportunitiesService))
 					})
 				})
 			})

@@ -9,6 +9,7 @@ import (
 
 // UserProfile represents a user's profile.
 type UserProfile struct {
+	ID             int64                     `json:"id"`
 	ProfilePicture string                    `json:"profilePicture,omitempty"`            // a URL for the user's profile picture
 	FirstName      string                    `json:"firstName"`                           // the user's first name
 	LastName       string                    `json:"lastName"`                            // the user's last name

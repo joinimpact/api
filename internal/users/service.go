@@ -72,6 +72,7 @@ func (s *service) GetUserProfile(userID int64, self bool) (*UserProfile, error) 
 		return nil, NewErrUserNotFound()
 	}
 
+	profile.ID = user.ID
 	profile.FirstName = user.FirstName
 	profile.LastName = user.LastName
 	profile.ProfilePicture = user.ProfilePicture
