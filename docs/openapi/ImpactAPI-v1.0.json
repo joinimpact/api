@@ -1,1746 +1,1956 @@
 {
-	"openapi": "3.0.2",
-	"info": {
-		"title": "Impact API",
-		"version": "1.0"
-	},
-	"servers": [
-		{
-			"url": "https://joinimpact.org/api/v1"
-		}
-	],
-	"components": {
-		"schemas": {
-			"user": {
-				"type": "object",
-				"description": "Represents a user, whether they are a volunteer or organization manager.",
-				"required": [
-					"firstName",
-					"lastName",
-					"email",
-					"password",
-					"dateOfBirth",
-					"zipCode"
-				],
-				"properties": {
-					"firstName": {
-						"type": "string",
-						"minLength": 2,
-						"maxLength": 48,
-						"example": "Yury"
-					},
-					"lastName": {
-						"type": "string",
-						"minLength": 2,
-						"maxLength": 48,
-						"example": "Orlovskiy"
-					},
-					"email": {
-						"type": "string",
-						"format": "email"
-					},
-					"password": {
-						"type": "string",
-						"minLength": 8,
-						"maxLength": 512,
-						"example": "hunter2!"
-					},
-					"dateOfBirth": {
-						"type": "string",
-						"format": "date",
-						"example": "2003-07-28T00:00:00Z"
-					},
-					"zipCode": {
-						"type": "string",
-						"minLength": 5,
-						"maxLength": 7,
-						"description": "Subject to change, I'm looking into how to submit location data."
-					}
-				}
-			},
-			"tokenPairResponse": {
-				"type": "object",
-				"properties": {
-					"data": {
-						"type": "object",
-						"properties": {
-							"userId": {
-								"type": "string",
-								"description": "The user's ID (for redundancy). This can also be found in the body of the JWT. All ID's are sent as strings to avoid rounding issues.",
-								"example": "112751457261385472"
-							},
-							"tokenPair": {
-								"type": "object",
-								"properties": {
-									"authToken": {
-										"type": "string",
-										"description": "The newly generated JSON Web Token. Will be used in most API requests under the Authorization header. Good for 3 days.",
-										"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTkyNjEzMjE3fQ.YMQ9Fjpr0uWUcvH0lx2w1BVNttEbeVVzwMFkqADO8y4"
-									},
-									"authExpiry": {
-										"type": "integer",
-										"description": "The epoch of token expiry for the auth token."
-									},
-									"refreshToken": {
-										"type": "string",
-										"description": "The user's refresh token. Will be used to get a new token pair after the auth token expires. Good for 21 days.",
-										"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
-									},
-									"refreshExpiry": {
-										"type": "integer",
-										"description": "The epoch of token expiry for the refresh token."
-									}
-								}
-							}
-						}
-					}
-				}
-			},
-			"success": {
-				"type": "object",
-				"description": "A request was successful, with no extra data needed to be sent.",
-				"properties": {
-					"data": {
-						"type": "object",
-						"properties": {
-							"success": {
-								"type": "boolean",
-								"example": true
-							}
-						},
-						"example": {
-							"success": true
-						}
-					}
-				}
-			}
-		}
-	},
-	"paths": {
-		"/auth/register": {
-			"post": {
-				"summary": "Creates a new user and returns a token pair on success.",
-				"tags": [
-					"Authentication"
-				],
-				"requestBody": {
-					"description": "Contains information about the user.",
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/user"
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "Success! A user was created, and the response contains a token pair and the user ID to use for authentication.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/tokenPairResponse"
-								}
-							}
-						}
-					},
-					"400": {
-						"description": "One or more fields are wrong, or a user with the email already exists.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"errors": {
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"code": {
-														"type": "number"
-													},
-													"message": {
-														"type": "string"
-													},
-													"invalidFields": {
-														"type": "array"
-													}
-												}
-											},
-											"example": [
-												{
-													"code": 10,
-													"message": "email already exists"
-												},
-												{
-													"code": 98,
-													"message": "missing or invalid fields",
-													"invalidFields": [
-														"password"
-													]
-												}
-											]
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		},
-		"/auth/login": {
-			"post": {
-				"summary": "Attempts to login using the credentials provided. Returns a token pair on success.",
-				"tags": [
-					"Authentication"
-				],
-				"requestBody": {
-					"description": "Contains a username and password used to authenticate the user.",
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"required": [
-									"email",
-									"password"
-								],
-								"properties": {
-									"email": {
-										"type": "string",
-										"minLength": 4,
-										"maxLength": 56,
-										"example": "tyler@joinimpact.org"
-									},
-									"password": {
-										"type": "string",
-										"minLength": 8,
-										"maxLength": 512,
-										"example": "hunter2!"
-									}
-								}
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "Success! The body of this response will contain a token pair that should be stored in order to make authenticated API requests.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"data": {
-											"type": "object",
-											"properties": {
-												"userId": {
-													"type": "string",
-													"description": "The user's ID (for redundancy). This can also be found in the body of the JWT. All ID's are sent as strings to avoid rounding issues.",
-													"example": "112751457261385472"
-												},
-												"issuedAt": {
-													"type": "string",
-													"format": "date-time",
-													"description": "The time at which the tokens were issued (measured by the server). Used to calculate token expiration time, if necessary.",
-													"example": "2018-01-18T01:30:22Z"
-												},
-												"tokenPair": {
-													"type": "object",
-													"properties": {
-														"authToken": {
-															"type": "string",
-															"description": "The newly generated JSON Web Token. Will be used in most API requests under the Authorization header. Good for 3 days.",
-															"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTkyNjEzMjE3fQ.YMQ9Fjpr0uWUcvH0lx2w1BVNttEbeVVzwMFkqADO8y4"
-														},
-														"refreshToken": {
-															"type": "string",
-															"description": "The user's refresh token. Will be used to get a new token pair after the auth token expires. Good for 21 days.",
-															"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					},
-					"400": {
-						"description": "Either the email or password was incorrect."
-					}
-				}
-			}
-		},
-		"/auth/tokens/refresh": {
-			"post": {
-				"tags": [
-					"Authentication"
-				],
-				"summary": "Generates a new token pair from a refresh token.",
-				"requestBody": {
-					"description": "Contains a refresh token.",
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"required": [
-									"refreshToken"
-								],
-								"properties": {
-									"refreshToken": {
-										"type": "string",
-										"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
-									}
-								}
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "Success! The body of this response will contain a token pair that should be stored in order to make authenticated API requests.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/tokenPairResponse"
-								}
-							}
-						}
-					},
-					"400": {
-						"description": "Invalid refresh token. Please require the user to log in again."
-					}
-				}
-			}
-		},
-		"/auth/password-resets": {
-			"post": {
-				"tags": [
-					"Authentication"
-				],
-				"summary": "Creates a new password reset request and emails the link to the user.",
-				"requestBody": {
-					"description": "Includes the users email to send the request to.",
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"required": [
-									"email"
-								],
-								"properties": {
-									"email": {
-										"type": "string",
-										"example": "tyler@joinimpact.org"
-									}
-								}
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "Success! The reset password email was sent.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/success"
-								}
-							}
-						}
-					},
-					"400": {
-						"description": "Invalid email.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"errors": {
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"code": {
-														"type": "number"
-													},
-													"message": {
-														"type": "string"
-													},
-													"invalidFields": {
-														"type": "array"
-													}
-												}
-											},
-											"example": [
-												{
-													"code": 98,
-													"message": "missing or invalid fields",
-													"invalidFields": [
-														"email"
-													]
-												}
-											]
-										}
-									}
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "User not found."
-					}
-				}
-			}
-		},
-		"/auth/password-resets/{passwordResetKey}": {
-			"get": {
-				"tags": [
-					"Authentication"
-				],
-				"summary": "Gets a password reset object. If valid, it returns a first name and email to render a form with.",
-				"responses": {
-					"200": {
-						"description": "Success! The password reset object was found!",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"firstName": {
-											"type": "string",
-											"example": "Tyler"
-										},
-										"email": {
-											"type": "string",
-											"example": "tyler@joinimpact.org"
-										}
-									}
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Password reset object not found, invalid key."
-					}
-				}
-			}
-		},
-		"/auth/password-resets/{passwordResetKey}/reset": {
-			"post": {
-				"tags": [
-					"Authentication"
-				],
-				"summary": "Resets the user's password from a password reset key.",
-				"requestBody": {
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"password": {
-										"type": "string",
-										"description": "The new password for the user.",
-										"minLength": 8,
-										"maxLength": 512,
-										"example": "hunter3!"
-									}
-								}
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "Success! The user's password was changed.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/success"
-								}
-							}
-						}
-					},
-					"400": {
-						"description": "Invalid password.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"errors": {
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"code": {
-														"type": "number"
-													},
-													"message": {
-														"type": "string"
-													},
-													"invalidFields": {
-														"type": "array"
-													}
-												}
-											},
-											"example": [
-												{
-													"code": 98,
-													"message": "missing or invalid fields",
-													"invalidFields": [
-														"password"
-													]
-												}
-											]
-										}
-									}
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Password reset object not found, invalid key."
-					}
-				}
-			}
-		},
-		"/auth/oauth/google": {
-			"post": {
-				"tags": [
-					"Authentication"
-				],
-				"summary": "Attempts to login with a Google Oauth code.",
-				"requestBody": {
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"code": {
-										"type": "string",
-										"description": "The Oauth code supplied by the Google login.",
-										"example": "AQB3pDqTHj-1dDrwMqE3qgk8LnOD9aijF1j8wgaRDpEZh6NC6Jod9Sn6reK_ujwlYZxJJsEyfiTjhJQU_QhT16mfIF-kVAE0r8jwJ4HmbOGbFcVvAAqbvwPFobBHSLwxKzJCLjZnbYi0SdWJpY4Lu0-AFbUAbl72-4JDJNzMqmDj9RreAhfcrMCVkCNCnSpoTOmXPnDpJXMagyZDINS4zDGOfn94MwMxdlQ9qkqvwt6PPjD4u3ks1DfdvsuD_WXYYcMlj79xC3N3TVco-1Ej9a6pGPYvYHfB_uZm1GuKqY4R--Odiw0g0JKQHIIg4Q05PX0"
-									}
-								}
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "Success! A user was either logged in or created.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"data": {
-											"type": "object",
-											"properties": {
-												"userCreated": {
-													"type": "boolean",
-													"description": "Responds with true if a new user was created. If true, please redirect to onboarding to complete a profile.",
-													"example": true
-												},
-												"token": {
-													"type": "object",
-													"properties": {
-														"authToken": {
-															"type": "string",
-															"description": "The newly generated JSON Web Token. Will be used in most API requests under the Authorization header. Good for 3 days.",
-															"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTkyNjEzMjE3fQ.YMQ9Fjpr0uWUcvH0lx2w1BVNttEbeVVzwMFkqADO8y4"
-														},
-														"authExpiry": {
-															"type": "integer",
-															"description": "The epoch of token expiry for the auth token."
-														},
-														"refreshToken": {
-															"type": "string",
-															"description": "The user's refresh token. Will be used to get a new token pair after the auth token expires. Good for 21 days.",
-															"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
-														},
-														"refreshExpiry": {
-															"type": "integer",
-															"description": "The epoch of token expiry for the refresh token."
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					},
-					"400": {
-						"description": "Invalid Oauth code. Please try logging in again."
-					},
-					"500": {
-						"description": "An error occurred while signing in or creating the account on the server."
-					}
-				}
-			}
-		},
-		"/auth/oauth/facebook": {
-			"post": {
-				"tags": [
-					"Authentication"
-				],
-				"summary": "Attempts to login with a Facebook Oauth code.",
-				"requestBody": {
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"code": {
-										"type": "string",
-										"description": "The Oauth code supplied by the Facebook login.",
-										"example": "AQB3pDqTHj-1dDrwMqE3qgk8LnOD9aijF1j8wgaRDpEZh6NC6Jod9Sn6reK_ujwlYZxJJsEyfiTjhJQU_QhT16mfIF-kVAE0r8jwJ4HmbOGbFcVvAAqbvwPFobBHSLwxKzJCLjZnbYi0SdWJpY4Lu0-AFbUAbl72-4JDJNzMqmDj9RreAhfcrMCVkCNCnSpoTOmXPnDpJXMagyZDINS4zDGOfn94MwMxdlQ9qkqvwt6PPjD4u3ks1DfdvsuD_WXYYcMlj79xC3N3TVco-1Ej9a6pGPYvYHfB_uZm1GuKqY4R--Odiw0g0JKQHIIg4Q05PX0"
-									}
-								}
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "Success! A user was either logged in or created.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"data": {
-											"type": "object",
-											"properties": {
-												"userCreated": {
-													"type": "boolean",
-													"description": "Responds with true if a new user was created. If true, please redirect to onboarding to complete a profile.",
-													"example": true
-												},
-												"token": {
-													"type": "object",
-													"properties": {
-														"authToken": {
-															"type": "string",
-															"description": "The newly generated JSON Web Token. Will be used in most API requests under the Authorization header. Good for 3 days.",
-															"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTkyNjEzMjE3fQ.YMQ9Fjpr0uWUcvH0lx2w1BVNttEbeVVzwMFkqADO8y4"
-														},
-														"authExpiry": {
-															"type": "integer",
-															"description": "The epoch of token expiry for the auth token."
-														},
-														"refreshToken": {
-															"type": "string",
-															"description": "The user's refresh token. Will be used to get a new token pair after the auth token expires. Good for 21 days.",
-															"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
-														},
-														"refreshExpiry": {
-															"type": "integer",
-															"description": "The epoch of token expiry for the refresh token."
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					},
-					"400": {
-						"description": "Invalid Oauth code. Please try logging in again."
-					},
-					"500": {
-						"description": "An error occurred while signing in or creating the account on the server."
-					}
-				}
-			}
-		},
-		"/users/{userId}": {
-			"get": {
-				"tags": [
-					"Users"
-				],
-				"summary": "Gets the profile of a single user by ID.",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
-						"schema": {
-							"type": "integer"
-						},
-						"required": true
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "Success! A user profile was returned.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"data": {
-											"type": "object",
-											"properties": {
-												"profilePicture": {
-													"type": "string",
-													"example": "https://cdn.joinimpact.org/profile-picture-1273884565403865088-1593076042.png"
-												},
-												"firstName": {
-													"type": "string",
-													"example": "Tyler"
-												},
-												"lastName": {
-													"type": "string",
-													"example": "Lafayette"
-												},
-												"dateOfBirth": {
-													"type": "string",
-													"example": "2003-07-28T00:00:00Z"
-												},
-												"zipCode": {
-													"type": "string",
-													"description": "May change",
-													"example": "Menlo Park, CA, US 94025"
-												},
-												"tags": {
-													"type": "array",
-													"description": "The user's areas of interest.",
-													"items": {
-														"type": "object",
-														"properties": {
-															"id": {
-																"type": "integer",
-																"example": "1283918398189"
-															},
-															"name": {
-																"type": "string",
-																"example": "Research"
-															}
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			},
-			"patch": {
-				"tags": [
-					"Users"
-				],
-				"summary": "Updates a user's profile. Non-filled fields will be ignored.",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
-						"schema": {
-							"type": "integer"
-						},
-						"required": true
-					}
-				],
-				"requestBody": {
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"firstName": {
-										"type": "string",
-										"example": "Tyler"
-									},
-									"lastName": {
-										"type": "string",
-										"example": "Lafayette"
-									},
-									"dateOfBirth": {
-										"type": "string",
-										"example": "2003-07-28T00:00:00Z"
-									},
-									"zipCode": {
-										"type": "string",
-										"description": "May change",
-										"example": "Menlo Park, CA, US 94025"
-									}
-								}
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "Profile updated successfully.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/success"
-								}
-							}
-						}
-					}
-				}
-			}
-		},
-		"/users/{userId}/profile-picture": {
-			"post": {
-				"tags": [
-					"Users"
-				],
-				"summary": "Uploads a new profile picture to a user by ID.",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
-						"schema": {
-							"type": "integer"
-						},
-						"required": true
-					}
-				],
-				"requestBody": {
-					"content": {
-						"multipart/form-data": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"file": {
-										"type": "string",
-										"format": "binary",
-										"description": "Must be an image in a png/jpg format. The server will center crop it to a square."
-									}
-								}
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "Success! The user profile picture is now replaced."
-					},
-					"400": {
-						"description": "Invalid file. Please ensure it is a jpg/jpeg or png."
-					},
-					"500": {
-						"description": "There was an error encoding the image or uploading it to the CDN. Please try again."
-					}
-				}
-			}
-		},
-		"/users/{userId}/tags": {
-			"get": {
-				"tags": [
-					"Users"
-				],
-				"summary": "Gets all of a user's tags. (Areas of Interest)",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
-						"schema": {
-							"type": "integer"
-						},
-						"required": true
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"tags": {
-											"type": "array",
-											"description": "The user's areas of interest.",
-											"items": {
-												"type": "object",
-												"properties": {
-													"id": {
-														"type": "integer",
-														"example": "1283918398189"
-													},
-													"name": {
-														"type": "string",
-														"example": "Research"
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			},
-			"post": {
-				"tags": [
-					"Users"
-				],
-				"summary": "Adds multiple tags to a user. Skips duplicates, so it's okay to send tags when unsure if they are already added.",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
-						"schema": {
-							"type": "integer"
-						},
-						"required": true
-					}
-				],
-				"requestBody": {
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"tags": {
-										"type": "array",
-										"items": {
-											"type": "object",
-											"properties": {
-												"name": {
-													"type": "string",
-													"description": "The name of the tag."
-												}
-											}
-										}
-									}
-								},
-								"example": {
-									"tags": [
-										{
-											"name": "Research"
-										},
-										{
-											"name": "Data Science"
-										}
-									]
-								}
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "Success! The tags were added.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"data": {
-											"type": "object",
-											"properties": {
-												"numAdded": {
-													"type": "integer",
-													"description": "The number of new tags added.",
-													"example": 2
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		},
-		"/users/{userId}/tags/{tagId}": {
-			"delete": {
-				"tags": [
-					"Users"
-				],
-				"summary": "Deletes a tag from a user's profile.",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
-						"schema": {
-							"type": "integer"
-						},
-						"required": true
-					},
-					{
-						"in": "path",
-						"name": "tagId",
-						"description": "The ID of the tag.",
-						"schema": {
-							"type": "integer"
-						},
-						"required": true
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "Success! The tag was removed.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/success"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "The tag was not found in the user's profile. Safe to treat as a successful deletion."
-					}
-				}
-			}
-		},
-		"/organizations": {
-			"post": {
-				"tags": [
-					"Organizations"
-				],
-				"summary": "Creates a new organization and adds the authenticated user as the owner.",
-				"requestBody": {
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"required": [
-									"name"
-								],
-								"properties": {
-									"name": {
-										"type": "string",
-										"minLength": 6,
-										"maxLength": 64,
-										"description": "The organization's name",
-										"example": "Birdwatchers International"
-									},
-									"website": {
-										"type": "string",
-										"format": "url",
-										"minLength": 6,
-										"maxLength": 72,
-										"description": "The organization's URL",
-										"example": "http://birdwatchers.org"
-									},
-									"location": {
-										"type": "string",
-										"description": "In the process of being replaced by the lat/long system.",
-										"example": "New York, NY, US"
-									},
-									"description": {
-										"type": "string",
-										"description": "A description of the organization",
-										"maxLength": 800,
-										"example": "We bring the birds to you!"
-									}
-								}
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "Success! The organization was created!",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"data": {
-											"type": "object",
-											"properties": {
-												"organizationId": {
-													"type": "integer",
-													"description": "The ID of the newly generated organization.",
-													"example": 1593325088
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					},
-					"400": {
-						"description": "One or more fields are invalid.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"errors": {
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"code": {
-														"type": "number"
-													},
-													"message": {
-														"type": "string"
-													},
-													"invalidFields": {
-														"type": "array"
-													}
-												}
-											},
-											"example": [
-												{
-													"code": 98,
-													"message": "missing or invalid fields",
-													"invalidFields": [
-														"name"
-													]
-												}
-											]
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		},
-		"/organizations/{organizationId}": {
-			"get": {
-				"tags": [
-					"Organizations"
-				],
-				"summary": "Gets the profile of a single organization. Authentication required.",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "organizationId",
-						"description": "The ID of the organization who you are querying.",
-						"schema": {
-							"type": "integer"
-						},
-						"required": true
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "Success! The organization profile was returned",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"required": [
-										"data"
-									],
-									"properties": {
-										"data": {
-											"required": [
-												"creatorId",
-												"description",
-												"id",
-												"name",
-												"tags",
-												"websiteUrl"
-											],
-											"properties": {
-												"creatorId": {
-													"type": "string",
-													"example": "1273884565403865088"
-												},
-												"description": {
-													"type": "string",
-													"example": "hi we watch bird"
-												},
-												"id": {
-													"type": "string",
-													"example": "1280407140296560640"
-												},
-												"name": {
-													"type": "string",
-													"example": "birdwatcher corp"
-												},
-												"tags": {
-													"type": "array",
-													"items": {
-														"type": "object",
-														"properties": {
-															"category": {
-																"type": "number",
-																"example": 0
-															},
-															"id": {
-																"type": "string",
-																"example": "1283918398189"
-															},
-															"name": {
-																"type": "string",
-																"example": "ant"
-															}
-														}
-													}
-												},
-												"profile": {
-													"type": "array",
-													"items": {
-														"type": "object",
-														"properties": {
-															"id": {
-																"type": "string",
-																"example": "128391283"
-															},
-															"name": {
-																"type": "string",
-																"example": "company_type"
-															},
-															"organizationId": {
-																"type": "string",
-																"example": "1280407140296560640"
-															},
-															"value": {
-																"type": "string",
-																"example": "401(c) non-profit"
-															}
-														}
-													}
-												},
-												"location": {
-													"type": "object",
-													"required": [
-														"city",
-														"state",
-														"country"
-													],
-													"properties": {
-														"city": {
-															"required": [
-																"shortName",
-																"longName"
-															],
-															"properties": {
-																"shortName": {
-																	"type": "string",
-																	"example": "Menlo Park"
-																},
-																"longName": {
-																	"type": "string",
-																	"example": "Menlo Park"
-																}
-															},
-															"type": "object"
-														},
-														"state": {
-															"required": [
-																"shortName",
-																"longName"
-															],
-															"properties": {
-																"shortName": {
-																	"type": "string",
-																	"example": "CA"
-																},
-																"longName": {
-																	"type": "string",
-																	"example": "California"
-																}
-															},
-															"type": "object"
-														},
-														"country": {
-															"required": [
-																"shortName",
-																"longName"
-															],
-															"properties": {
-																"shortName": {
-																	"type": "string",
-																	"example": "US"
-																},
-																"longName": {
-																	"type": "string",
-																	"example": "United States"
-																}
-															},
-															"type": "object"
-														}
-													}
-												},
-												"websiteURL": {
-													"type": "string",
-													"example": "http://birdwatcher.org"
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Organization not found."
-					},
-					"403": {
-						"description": "Forbidden to access this organization"
-					},
-					"500": {
-						"description": "Server error"
-					}
-				}
-			},
-			"patch": {
-				"tags": [
-					"Organizations"
-				],
-				"summary": "Gets the profile of a single organization. Authentication required.",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "organizationId",
-						"description": "The ID of the organization who you are querying.",
-						"schema": {
-							"type": "integer"
-						},
-						"required": true
-					}
-				],
-				"requestBody": {
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"name": {
-										"type": "string",
-										"example": "Birdwatchers 2"
-									},
-									"description": {
-										"type": "string",
-										"example": "Birdwatchers 2 is amazing."
-									},
-									"websiteURL": {
-										"type": "string",
-										"example": "http://birdwatchers.net"
-									},
-									"location": {
-										"type": "object",
-										"properties": {
-											"lat": {
-												"type": "number",
-												"example": 36.12
-											},
-											"long": {
-												"type": "number",
-												"example": -112.159
-											}
-										}
-									},
-									"profile": {
-										"type": "array",
-										"items": {
-											"type": "object",
-											"properties": {
-												"field": {
-													"type": "string",
-													"example": "company_type"
-												},
-												"value": {
-													"type": "string",
-													"example": "401(c) non profit"
-												},
-												"permissions": {
-													"type": "integer",
-													"example": 1
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "Success! The organization profile was returned",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"required": [
-										"data"
-									],
-									"properties": {
-										"data": {
-											"properties": {
-												"success": {
-													"type": "boolean",
-													"example": true
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Organization not found."
-					},
-					"403": {
-						"description": "Forbidden to access this organization"
-					},
-					"500": {
-						"description": "Server error"
-					}
-				}
-			}
-		},
-		"/organizations/{organizationId}/tags": {
-			"get": {
-				"tags": [
-					"Organizations"
-				],
-				"summary": "Gets all of an organization's tags. (Areas of Interest)",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "organizationId",
-						"description": "The ID of the organization who you are querying.",
-						"schema": {
-							"type": "integer"
-						},
-						"required": true
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "Success, the tags were returned.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"tags": {
-											"type": "array",
-											"description": "The organization's tags.",
-											"items": {
-												"type": "object",
-												"properties": {
-													"id": {
-														"type": "integer",
-														"example": "1283918398189"
-													},
-													"name": {
-														"type": "string",
-														"example": "Research"
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			},
-			"post": {
-				"tags": [
-					"Organizations"
-				],
-				"summary": "Adds multiple tags to an organization. Skips duplicates, so it's okay to send tags when unsure if they are already added.",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "organizationId",
-						"description": "The ID of the organization who you are querying.",
-						"schema": {
-							"type": "integer"
-						},
-						"required": true
-					}
-				],
-				"requestBody": {
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"tags": {
-										"type": "array",
-										"items": {
-											"type": "object",
-											"properties": {
-												"name": {
-													"type": "string",
-													"description": "The name of the tag."
-												}
-											}
-										}
-									}
-								},
-								"example": {
-									"tags": [
-										{
-											"name": "Research"
-										},
-										{
-											"name": "Data Science"
-										}
-									]
-								}
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "Success! The tags were added.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"data": {
-											"type": "object",
-											"properties": {
-												"numAdded": {
-													"type": "integer",
-													"description": "The number of new tags added.",
-													"example": 2
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		},
-		"/organizations/{organizationId}/tags/{tagId}": {
-			"delete": {
-				"tags": [
-					"Organizations"
-				],
-				"summary": "Deletes a tag from an organization's profile.",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"description": "The ID of the organization who you are querying.",
-						"schema": {
-							"type": "integer"
-						},
-						"required": true
-					},
-					{
-						"in": "path",
-						"name": "tagId",
-						"description": "The ID of the tag.",
-						"schema": {
-							"type": "integer"
-						},
-						"required": true
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "Success! The tag was removed.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/success"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "The tag was not found in the organization's profile. Safe to treat as a successful deletion."
-					}
-				}
-			}
-		},
-		"/organizations/{organizationId}/profile-picture": {
-			"post": {
-				"tags": [
-					"Organizations"
-				],
-				"summary": "Uploads a new profile picture to an organization by ID.",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "organizationId",
-						"description": "The ID of the organization who you are querying.",
-						"schema": {
-							"type": "integer"
-						},
-						"required": true
-					}
-				],
-				"requestBody": {
-					"content": {
-						"multipart/form-data": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"file": {
-										"type": "string",
-										"format": "binary",
-										"description": "Must be an image in a png/jpg format. The server will center crop it to a square."
-									}
-								}
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "Success! The organization profile picture is now replaced."
-					},
-					"400": {
-						"description": "Invalid file. Please ensure it is a jpg/jpeg or png."
-					},
-					"500": {
-						"description": "There was an error encoding the image or uploading it to the CDN. Please try again."
-					}
-				}
-			}
-		},
-		"/organizations/{organizationId}/invite": {
-			"post": {
-				"tags": [
-					"Organizations"
-				],
-				"summary": "Sends invites to multiple organization members by email address.",
-				"parameters": [
-					{
-						"in": "path",
-						"name": "organizationId",
-						"description": "The ID of the organization who you are querying.",
-						"schema": {
-							"type": "integer"
-						},
-						"required": true
-					}
-				],
-				"requestBody": {
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"invites": {
-										"type": "array",
-										"description": "An array of invite objects.",
-										"items": {
-											"type": "object",
-											"required": [
-												"email"
-											],
-											"properties": {
-												"email": {
-													"type": "string",
-													"description": "A valid email address.",
-													"format": "email"
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "Success! All invites were successfully sent."
-					},
-					"400": {
-						"description": "One or more of the emails were invalid."
-					},
-					"500": {
-						"description": "Server error, please try again."
-					}
-				}
-			}
-		},
-		"/tags": {
-			"get": {
-				"tags": [
-					"Tags"
-				],
-				"summary": "Requires authentication. Gets tags from a search term (if present) or returns popular tags.",
-				"parameters": [
-					{
-						"in": "query",
-						"name": "query",
-						"description": "A search query for searching through tags.",
-						"schema": {
-							"type": "string",
-							"example": "Reserarch"
-						}
-					},
-					{
-						"in": "query",
-						"name": "limit",
-						"description": "An integer that limits how many tags will be returned.",
-						"schema": {
-							"type": "integer",
-							"example": 10
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "Success, the tags will be included in the response.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"data": {
-											"type": "object",
-											"properties": {
-												"tags": {
-													"type": "array",
-													"items": {
-														"type": "object",
-														"properties": {
-															"name": {
-																"type": "string",
-																"description": "The name of the tag."
-															}
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized."
-					}
-				}
-			}
-		}
-	}
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Impact API",
+    "version": "1.0"
+  },
+  "servers": [
+    {
+      "url": "https://joinimpact.org/api/v1"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "user": {
+        "type": "object",
+        "description": "Represents a user, whether they are a volunteer or organization manager.",
+        "required": [
+          "firstName",
+          "lastName",
+          "email",
+          "password",
+          "dateOfBirth",
+          "zipCode"
+        ],
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 48,
+            "example": "Yury"
+          },
+          "lastName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 48,
+            "example": "Orlovskiy"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 512,
+            "example": "hunter2!"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date",
+            "example": "2003-07-28T00:00:00Z"
+          },
+          "zipCode": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 7,
+            "description": "Subject to change, I'm looking into how to submit location data."
+          }
+        }
+      },
+      "tokenPairResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "userId": {
+                "type": "string",
+                "description": "The user's ID (for redundancy). This can also be found in the body of the JWT. All ID's are sent as strings to avoid rounding issues.",
+                "example": "112751457261385472"
+              },
+              "tokenPair": {
+                "type": "object",
+                "properties": {
+                  "authToken": {
+                    "type": "string",
+                    "description": "The newly generated JSON Web Token. Will be used in most API requests under the Authorization header. Good for 3 days.",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTkyNjEzMjE3fQ.YMQ9Fjpr0uWUcvH0lx2w1BVNttEbeVVzwMFkqADO8y4"
+                  },
+                  "authExpiry": {
+                    "type": "integer",
+                    "description": "The epoch of token expiry for the auth token."
+                  },
+                  "refreshToken": {
+                    "type": "string",
+                    "description": "The user's refresh token. Will be used to get a new token pair after the auth token expires. Good for 21 days.",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
+                  },
+                  "refreshExpiry": {
+                    "type": "integer",
+                    "description": "The epoch of token expiry for the refresh token."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "success": {
+        "type": "object",
+        "description": "A request was successful, with no extra data needed to be sent.",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "example": true
+              }
+            },
+            "example": {
+              "success": true
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "summary": "Creates a new user and returns a token pair on success.",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "description": "Contains information about the user.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/user"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! A user was created, and the response contains a token pair and the user ID to use for authentication.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/tokenPairResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more fields are wrong, or a user with the email already exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "number"
+                          },
+                          "message": {
+                            "type": "string"
+                          },
+                          "invalidFields": {
+                            "type": "array"
+                          }
+                        }
+                      },
+                      "example": [
+                        {
+                          "code": 10,
+                          "message": "email already exists"
+                        },
+                        {
+                          "code": 98,
+                          "message": "missing or invalid fields",
+                          "invalidFields": ["password"]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Attempts to login using the credentials provided. Returns a token pair on success.",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "description": "Contains a username and password used to authenticate the user.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "minLength": 4,
+                    "maxLength": 56,
+                    "example": "tyler@joinimpact.org"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 512,
+                    "example": "hunter2!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! The body of this response will contain a token pair that should be stored in order to make authenticated API requests.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "userId": {
+                          "type": "string",
+                          "description": "The user's ID (for redundancy). This can also be found in the body of the JWT. All ID's are sent as strings to avoid rounding issues.",
+                          "example": "112751457261385472"
+                        },
+                        "issuedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "The time at which the tokens were issued (measured by the server). Used to calculate token expiration time, if necessary.",
+                          "example": "2018-01-18T01:30:22Z"
+                        },
+                        "tokenPair": {
+                          "type": "object",
+                          "properties": {
+                            "authToken": {
+                              "type": "string",
+                              "description": "The newly generated JSON Web Token. Will be used in most API requests under the Authorization header. Good for 3 days.",
+                              "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTkyNjEzMjE3fQ.YMQ9Fjpr0uWUcvH0lx2w1BVNttEbeVVzwMFkqADO8y4"
+                            },
+                            "refreshToken": {
+                              "type": "string",
+                              "description": "The user's refresh token. Will be used to get a new token pair after the auth token expires. Good for 21 days.",
+                              "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Either the email or password was incorrect."
+          }
+        }
+      }
+    },
+    "/auth/tokens/refresh": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Generates a new token pair from a refresh token.",
+        "requestBody": {
+          "description": "Contains a refresh token.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["refreshToken"],
+                "properties": {
+                  "refreshToken": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! The body of this response will contain a token pair that should be stored in order to make authenticated API requests.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/tokenPairResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid refresh token. Please require the user to log in again."
+          }
+        }
+      }
+    },
+    "/auth/password-resets": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Creates a new password reset request and emails the link to the user.",
+        "requestBody": {
+          "description": "Includes the users email to send the request to.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "tyler@joinimpact.org"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! The reset password email was sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid email.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "number"
+                          },
+                          "message": {
+                            "type": "string"
+                          },
+                          "invalidFields": {
+                            "type": "array"
+                          }
+                        }
+                      },
+                      "example": [
+                        {
+                          "code": 98,
+                          "message": "missing or invalid fields",
+                          "invalidFields": ["email"]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found."
+          }
+        }
+      }
+    },
+    "/auth/password-resets/{passwordResetKey}": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Gets a password reset object. If valid, it returns a first name and email to render a form with.",
+        "responses": {
+          "200": {
+            "description": "Success! The password reset object was found!",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "firstName": {
+                      "type": "string",
+                      "example": "Tyler"
+                    },
+                    "email": {
+                      "type": "string",
+                      "example": "tyler@joinimpact.org"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Password reset object not found, invalid key."
+          }
+        }
+      }
+    },
+    "/auth/password-resets/{passwordResetKey}/reset": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Resets the user's password from a password reset key.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "description": "The new password for the user.",
+                    "minLength": 8,
+                    "maxLength": 512,
+                    "example": "hunter3!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! The user's password was changed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid password.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "number"
+                          },
+                          "message": {
+                            "type": "string"
+                          },
+                          "invalidFields": {
+                            "type": "array"
+                          }
+                        }
+                      },
+                      "example": [
+                        {
+                          "code": 98,
+                          "message": "missing or invalid fields",
+                          "invalidFields": ["password"]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Password reset object not found, invalid key."
+          }
+        }
+      }
+    },
+    "/auth/oauth/google": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Attempts to login with a Google Oauth code.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "The Oauth code supplied by the Google login.",
+                    "example": "AQB3pDqTHj-1dDrwMqE3qgk8LnOD9aijF1j8wgaRDpEZh6NC6Jod9Sn6reK_ujwlYZxJJsEyfiTjhJQU_QhT16mfIF-kVAE0r8jwJ4HmbOGbFcVvAAqbvwPFobBHSLwxKzJCLjZnbYi0SdWJpY4Lu0-AFbUAbl72-4JDJNzMqmDj9RreAhfcrMCVkCNCnSpoTOmXPnDpJXMagyZDINS4zDGOfn94MwMxdlQ9qkqvwt6PPjD4u3ks1DfdvsuD_WXYYcMlj79xC3N3TVco-1Ej9a6pGPYvYHfB_uZm1GuKqY4R--Odiw0g0JKQHIIg4Q05PX0"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! A user was either logged in or created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "userCreated": {
+                          "type": "boolean",
+                          "description": "Responds with true if a new user was created. If true, please redirect to onboarding to complete a profile.",
+                          "example": true
+                        },
+                        "token": {
+                          "type": "object",
+                          "properties": {
+                            "authToken": {
+                              "type": "string",
+                              "description": "The newly generated JSON Web Token. Will be used in most API requests under the Authorization header. Good for 3 days.",
+                              "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTkyNjEzMjE3fQ.YMQ9Fjpr0uWUcvH0lx2w1BVNttEbeVVzwMFkqADO8y4"
+                            },
+                            "authExpiry": {
+                              "type": "integer",
+                              "description": "The epoch of token expiry for the auth token."
+                            },
+                            "refreshToken": {
+                              "type": "string",
+                              "description": "The user's refresh token. Will be used to get a new token pair after the auth token expires. Good for 21 days.",
+                              "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
+                            },
+                            "refreshExpiry": {
+                              "type": "integer",
+                              "description": "The epoch of token expiry for the refresh token."
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid Oauth code. Please try logging in again."
+          },
+          "500": {
+            "description": "An error occurred while signing in or creating the account on the server."
+          }
+        }
+      }
+    },
+    "/auth/oauth/facebook": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Attempts to login with a Facebook Oauth code.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "The Oauth code supplied by the Facebook login.",
+                    "example": "AQB3pDqTHj-1dDrwMqE3qgk8LnOD9aijF1j8wgaRDpEZh6NC6Jod9Sn6reK_ujwlYZxJJsEyfiTjhJQU_QhT16mfIF-kVAE0r8jwJ4HmbOGbFcVvAAqbvwPFobBHSLwxKzJCLjZnbYi0SdWJpY4Lu0-AFbUAbl72-4JDJNzMqmDj9RreAhfcrMCVkCNCnSpoTOmXPnDpJXMagyZDINS4zDGOfn94MwMxdlQ9qkqvwt6PPjD4u3ks1DfdvsuD_WXYYcMlj79xC3N3TVco-1Ej9a6pGPYvYHfB_uZm1GuKqY4R--Odiw0g0JKQHIIg4Q05PX0"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! A user was either logged in or created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "userCreated": {
+                          "type": "boolean",
+                          "description": "Responds with true if a new user was created. If true, please redirect to onboarding to complete a profile.",
+                          "example": true
+                        },
+                        "token": {
+                          "type": "object",
+                          "properties": {
+                            "authToken": {
+                              "type": "string",
+                              "description": "The newly generated JSON Web Token. Will be used in most API requests under the Authorization header. Good for 3 days.",
+                              "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTkyNjEzMjE3fQ.YMQ9Fjpr0uWUcvH0lx2w1BVNttEbeVVzwMFkqADO8y4"
+                            },
+                            "authExpiry": {
+                              "type": "integer",
+                              "description": "The epoch of token expiry for the auth token."
+                            },
+                            "refreshToken": {
+                              "type": "string",
+                              "description": "The user's refresh token. Will be used to get a new token pair after the auth token expires. Good for 21 days.",
+                              "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJ1c2VySWQiOiIxMTI3NTE0NTcyNjEzODU0NzIiLCJpYXQiOjE1MTYyMzkwMjIsImlzcyI6ImltcGFjdC1wcm9kLTAxIiwiZXhwIjoxNTk0MDgyMTM4fQ.Sc_WdFxs67Awd9-_ZEf7V_y6k7m9vVu4u5oYs8wZrhI"
+                            },
+                            "refreshExpiry": {
+                              "type": "integer",
+                              "description": "The epoch of token expiry for the refresh token."
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid Oauth code. Please try logging in again."
+          },
+          "500": {
+            "description": "An error occurred while signing in or creating the account on the server."
+          }
+        }
+      }
+    },
+    "/users/{userId}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Gets the profile of a single user by ID.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success! A user profile was returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "profilePicture": {
+                          "type": "string",
+                          "example": "https://cdn.joinimpact.org/profile-picture-1273884565403865088-1593076042.png"
+                        },
+                        "firstName": {
+                          "type": "string",
+                          "example": "Tyler"
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "example": "Lafayette"
+                        },
+                        "dateOfBirth": {
+                          "type": "string",
+                          "example": "2003-07-28T00:00:00Z"
+                        },
+                        "zipCode": {
+                          "type": "string",
+                          "description": "May change",
+                          "example": "Menlo Park, CA, US 94025"
+                        },
+                        "tags": {
+                          "type": "array",
+                          "description": "The user's areas of interest.",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "integer",
+                                "example": "1283918398189"
+                              },
+                              "name": {
+                                "type": "string",
+                                "example": "Research"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Users"],
+        "summary": "Updates a user's profile. Non-filled fields will be ignored.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string",
+                    "example": "Tyler"
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "example": "Lafayette"
+                  },
+                  "dateOfBirth": {
+                    "type": "string",
+                    "example": "2003-07-28T00:00:00Z"
+                  },
+                  "zipCode": {
+                    "type": "string",
+                    "description": "May change",
+                    "example": "Menlo Park, CA, US 94025"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/success"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/profile-picture": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Uploads a new profile picture to a user by ID.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Must be an image in a png/jpg format. The server will center crop it to a square."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! The user profile picture is now replaced."
+          },
+          "400": {
+            "description": "Invalid file. Please ensure it is a jpg/jpeg or png."
+          },
+          "500": {
+            "description": "There was an error encoding the image or uploading it to the CDN. Please try again."
+          }
+        }
+      }
+    },
+    "/users/{userId}/tags": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Gets all of a user's tags. (Areas of Interest)",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tags": {
+                      "type": "array",
+                      "description": "The user's areas of interest.",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "example": "1283918398189"
+                          },
+                          "name": {
+                            "type": "string",
+                            "example": "Research"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Users"],
+        "summary": "Adds multiple tags to a user. Skips duplicates, so it's okay to send tags when unsure if they are already added.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "The name of the tag."
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "tags": [
+                    {
+                      "name": "Research"
+                    },
+                    {
+                      "name": "Data Science"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! The tags were added.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "numAdded": {
+                          "type": "integer",
+                          "description": "The number of new tags added.",
+                          "example": 2
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/tags/{tagId}": {
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Deletes a tag from a user's profile.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "description": "The ID of the user who you are querying. You can use 'me' to refer to the currently logged in user.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "tagId",
+            "description": "The ID of the tag.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success! The tag was removed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/success"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The tag was not found in the user's profile. Safe to treat as a successful deletion."
+          }
+        }
+      }
+    },
+    "/organizations": {
+      "post": {
+        "tags": ["Organizations"],
+        "summary": "Creates a new organization and adds the authenticated user as the owner.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 64,
+                    "description": "The organization's name",
+                    "example": "Birdwatchers International"
+                  },
+                  "websiteURL": {
+                    "type": "string",
+                    "format": "url",
+                    "minLength": 6,
+                    "maxLength": 72,
+                    "description": "The organization's URL",
+                    "example": "http://birdwatchers.org"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "A description of the organization",
+                    "maxLength": 800,
+                    "example": "We bring the birds to you!"
+                  },
+                  "location": {
+                    "type": "object",
+                    "properties": {
+                      "lat": {
+                        "type": "number",
+                        "example": 36.12
+                      },
+                      "long": {
+                        "type": "number",
+                        "example": -112.159
+                      }
+                    }
+                  },
+                  "profile": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "field": {
+                          "type": "string",
+                          "example": "company_type"
+                        },
+                        "value": {
+                          "type": "string",
+                          "example": "401(c) non profit"
+                        },
+                        "permissions": {
+                          "type": "integer",
+                          "example": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! The organization was created!",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "organizationId": {
+                          "type": "integer",
+                          "description": "The ID of the newly generated organization.",
+                          "example": 1593325088
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more fields are invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "number"
+                          },
+                          "message": {
+                            "type": "string"
+                          },
+                          "invalidFields": {
+                            "type": "array"
+                          }
+                        }
+                      },
+                      "example": [
+                        {
+                          "code": 98,
+                          "message": "missing or invalid fields",
+                          "invalidFields": ["name"]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}": {
+      "get": {
+        "tags": ["Organizations"],
+        "summary": "Gets the profile of a single organization. Authentication required.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "description": "The ID of the organization who you are querying.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success! The organization profile was returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "required": [
+                        "creatorId",
+                        "description",
+                        "id",
+                        "name",
+                        "tags",
+                        "websiteUrl"
+                      ],
+                      "properties": {
+                        "creatorId": {
+                          "type": "string",
+                          "example": "1273884565403865088"
+                        },
+                        "description": {
+                          "type": "string",
+                          "example": "hi we watch bird"
+                        },
+                        "id": {
+                          "type": "string",
+                          "example": "1280407140296560640"
+                        },
+                        "name": {
+                          "type": "string",
+                          "example": "birdwatcher corp"
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "category": {
+                                "type": "number",
+                                "example": 0
+                              },
+                              "id": {
+                                "type": "string",
+                                "example": "1283918398189"
+                              },
+                              "name": {
+                                "type": "string",
+                                "example": "ant"
+                              }
+                            }
+                          }
+                        },
+                        "profile": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "example": "128391283"
+                              },
+                              "name": {
+                                "type": "string",
+                                "example": "company_type"
+                              },
+                              "organizationId": {
+                                "type": "string",
+                                "example": "1280407140296560640"
+                              },
+                              "value": {
+                                "type": "string",
+                                "example": "401(c) non-profit"
+                              }
+                            }
+                          }
+                        },
+                        "location": {
+                          "type": "object",
+                          "required": ["city", "state", "country"],
+                          "properties": {
+                            "city": {
+                              "required": ["shortName", "longName"],
+                              "properties": {
+                                "shortName": {
+                                  "type": "string",
+                                  "example": "Menlo Park"
+                                },
+                                "longName": {
+                                  "type": "string",
+                                  "example": "Menlo Park"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "state": {
+                              "required": ["shortName", "longName"],
+                              "properties": {
+                                "shortName": {
+                                  "type": "string",
+                                  "example": "CA"
+                                },
+                                "longName": {
+                                  "type": "string",
+                                  "example": "California"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "country": {
+                              "required": ["shortName", "longName"],
+                              "properties": {
+                                "shortName": {
+                                  "type": "string",
+                                  "example": "US"
+                                },
+                                "longName": {
+                                  "type": "string",
+                                  "example": "United States"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          }
+                        },
+                        "websiteURL": {
+                          "type": "string",
+                          "example": "http://birdwatcher.org"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Organization not found."
+          },
+          "403": {
+            "description": "Forbidden to access this organization"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Organizations"],
+        "summary": "Gets the profile of a single organization. Authentication required.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "description": "The ID of the organization who you are querying.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Birdwatchers 2"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "Birdwatchers 2 is amazing."
+                  },
+                  "websiteURL": {
+                    "type": "string",
+                    "example": "http://birdwatchers.net"
+                  },
+                  "location": {
+                    "type": "object",
+                    "properties": {
+                      "lat": {
+                        "type": "number",
+                        "example": 36.12
+                      },
+                      "long": {
+                        "type": "number",
+                        "example": -112.159
+                      }
+                    }
+                  },
+                  "profile": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "field": {
+                          "type": "string",
+                          "example": "company_type"
+                        },
+                        "value": {
+                          "type": "string",
+                          "example": "401(c) non profit"
+                        },
+                        "permissions": {
+                          "type": "integer",
+                          "example": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! The organization profile was returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "success": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Organization not found."
+          },
+          "403": {
+            "description": "Forbidden to access this organization"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/tags": {
+      "get": {
+        "tags": ["Organizations"],
+        "summary": "Gets all of an organization's tags. (Areas of Interest)",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "description": "The ID of the organization who you are querying.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success, the tags were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tags": {
+                      "type": "array",
+                      "description": "The organization's tags.",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "example": "1283918398189"
+                          },
+                          "name": {
+                            "type": "string",
+                            "example": "Research"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Organizations"],
+        "summary": "Adds multiple tags to an organization. Skips duplicates, so it's okay to send tags when unsure if they are already added.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "description": "The ID of the organization who you are querying.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "The name of the tag."
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "tags": [
+                    {
+                      "name": "Research"
+                    },
+                    {
+                      "name": "Data Science"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! The tags were added.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "numAdded": {
+                          "type": "integer",
+                          "description": "The number of new tags added.",
+                          "example": 2
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/tags/{tagId}": {
+      "delete": {
+        "tags": ["Organizations"],
+        "summary": "Deletes a tag from an organization's profile.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "description": "The ID of the organization who you are querying.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "tagId",
+            "description": "The ID of the tag.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success! The tag was removed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/success"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The tag was not found in the organization's profile. Safe to treat as a successful deletion."
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/profile-picture": {
+      "post": {
+        "tags": ["Organizations"],
+        "summary": "Uploads a new profile picture to an organization by ID.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "description": "The ID of the organization who you are querying.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Must be an image in a png/jpg format. The server will center crop it to a square."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! The organization profile picture is now replaced."
+          },
+          "400": {
+            "description": "Invalid file. Please ensure it is a jpg/jpeg or png."
+          },
+          "500": {
+            "description": "There was an error encoding the image or uploading it to the CDN. Please try again."
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/invite": {
+      "post": {
+        "tags": ["Organizations"],
+        "summary": "Sends invites to multiple organization members by email address.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "description": "The ID of the organization who you are querying.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "invites": {
+                    "type": "array",
+                    "description": "An array of invite objects.",
+                    "items": {
+                      "type": "object",
+                      "required": ["email"],
+                      "properties": {
+                        "email": {
+                          "type": "string",
+                          "description": "A valid email address.",
+                          "format": "email"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! All invites were successfully sent."
+          },
+          "400": {
+            "description": "One or more of the emails were invalid."
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/opportunities": {
+      "post": {
+        "tags": ["Opportunities", "Organizations"],
+        "summary": "Creates a new opportunity under the specified organization. Requires manager status of organization.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "description": "The ID of the organization who you are querying.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "All fields are optional - if none are filled in, a provisional opportunity will be created.",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minimum": 4,
+                    "maximum": 128,
+                    "example": "Help code algorithms to fight climate change!"
+                  },
+                  "description": {
+                    "type": "string",
+                    "minimum": 64,
+                    "maximum": 1024,
+                    "example": "Your help is needed to fight climate change! This opportunity will require you to physically come to our offices in Palo Alto."
+                  },
+                  "requirements": {
+                    "type": "object",
+                    "properties": {
+                      "ageLimit": {
+                        "type": "object",
+                        "properties": {
+                          "active": {
+                            "type": "boolean",
+                            "example": true
+                          },
+                          "from": {
+                            "type": "integer",
+                            "example": 13
+                          },
+                          "to": {
+                            "type": "integer",
+                            "example": 18
+                          }
+                        }
+                      },
+                      "expectedHours": {
+                        "type": "object",
+                        "properties": {
+                          "active": {
+                            "type": "boolean",
+                            "example": true
+                          },
+                          "hours": {
+                            "type": "number",
+                            "example": 8
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "limits": {
+                    "type": "object",
+                    "properties": {
+                      "volunteersCap": {
+                        "type": "object",
+                        "properties": {
+                          "active": {
+                            "type": "boolean",
+                            "example": true
+                          },
+                          "cap": {
+                            "type": "integer",
+                            "example": 50
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! An opportunity was created and the ID will be returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "opportunityId": {
+                          "type": "integer",
+                          "example": 123891831230103
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Something you sent was invalid, will be formatted as a standard invalid form error."
+          },
+          "500": {
+            "description": "Server error."
+          }
+        }
+      }
+    },
+    "/opportunities/{opportunityId}": {
+      "get": {
+        "tags": ["Opportunities"],
+        "summary": "Gets a single opportunity by ID.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "opportunityId",
+            "description": "The ID of the opportunity.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success! The opportunity was found and returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "example": "123913912309"
+                        },
+                        "organizationId": {
+                          "type": "string",
+                          "example": "213123123193"
+                        },
+                        "creatorId": {
+                          "type": "string",
+                          "example": "123913913921",
+                          "description": "Only visible if you manage the organization that owns the opportunity."
+                        },
+                        "profilePicture": {
+                          "type": "string",
+                          "example": "https://cdn.joinimpact.org/opportunity-banner-23492424449234-24234234.png"
+                        },
+                        "title": {
+                          "type": "string",
+                          "minimum": 4,
+                          "maximum": 128,
+                          "example": "Help code algorithms to fight climate change!"
+                        },
+                        "description": {
+                          "type": "string",
+                          "minimum": 64,
+                          "maximum": 1024,
+                          "example": "Your help is needed to fight climate change! This opportunity will require you to physically come to our offices in Palo Alto."
+                        },
+                        "public": {
+                          "type": "boolean",
+                          "description": "Whether or not the opportunity is public. Only visible as manager.",
+                          "example": true
+                        },
+                        "stats": {
+                          "type": "object",
+                          "description": "Only visible as manager.",
+                          "properties": {
+                            "volunteersEnrolled": {
+                              "type": "integer",
+                              "example": 30
+                            },
+                            "volunteersPending": {
+                              "type": "integer",
+                              "example": 5
+                            }
+                          }
+                        },
+                        "requirements": {
+                          "type": "object",
+                          "properties": {
+                            "ageLimit": {
+                              "type": "object",
+                              "properties": {
+                                "active": {
+                                  "type": "boolean",
+                                  "example": true
+                                },
+                                "from": {
+                                  "type": "integer",
+                                  "example": 13
+                                },
+                                "to": {
+                                  "type": "integer",
+                                  "example": 18
+                                }
+                              }
+                            },
+                            "expectedHours": {
+                              "type": "object",
+                              "properties": {
+                                "active": {
+                                  "type": "boolean",
+                                  "example": true
+                                },
+                                "hours": {
+                                  "type": "number",
+                                  "example": 8
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "limits": {
+                          "type": "object",
+                          "properties": {
+                            "volunteersCap": {
+                              "type": "object",
+                              "properties": {
+                                "active": {
+                                  "type": "boolean",
+                                  "example": true
+                                },
+                                "cap": {
+                                  "type": "integer",
+                                  "example": 50
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tags": {
+      "get": {
+        "tags": ["Tags"],
+        "summary": "Requires authentication. Gets tags from a search term (if present) or returns popular tags.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "query",
+            "description": "A search query for searching through tags.",
+            "schema": {
+              "type": "string",
+              "example": "Reserarch"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "description": "An integer that limits how many tags will be returned.",
+            "schema": {
+              "type": "integer",
+              "example": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success, the tags will be included in the response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "The name of the tag."
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        }
+      }
+    }
+  }
 }
