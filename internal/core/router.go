@@ -70,8 +70,8 @@ func (app *App) Router() *chi.Mux {
 				r.Use(idctx.Prepare("organizationID"))
 				r.Use(scopes.Middleware(organizations.ScopeProviderOrganizations(app.organizationsService)))
 
-				// r.Get("/", users.GetUserProfile(app.usersService))
-				// r.Patch("/", users.UpdateUserProfile(app.usersService))
+				r.Get("/", organizations.GetOrganizationProfile(app.organizationsService))
+				r.With(permissions.Require(scopes.ScopeAdmin)).Patch("/", organizations.UpdateOrganizationProfile(app.organizationsService))
 
 				r.Get("/tags", organizations.GetOrganizationTags(app.organizationsService))
 				r.With(permissions.Require(scopes.ScopeAdmin)).Post("/tags", organizations.PostOrganizationTags(app.organizationsService))

@@ -93,13 +93,14 @@ func main() {
 	organizationRepository := postgres.NewOrganizationRepository(db, &log.Logger)
 	organizationMembershipRepository := postgres.NewOrganizationMembershipRepository(db, &log.Logger)
 	organizationMembershipInviteRepository := postgres.NewOrganizationMembershipInviteRepository(db, &log.Logger)
+	organizationProfileFieldRepository := postgres.NewOrganizationProfileFieldRepository(db, &log.Logger)
 	organizationTagRepository := postgres.NewOrganizationTagRepository(db, &log.Logger)
 	opportunityRepository := postgres.NewOpportunityRepository(db, &log.Logger)
 
 	// Internal services
 	usersService := users.NewService(userRepository, userProfileFieldRepository, userTagRepository, tagRepository, config, &log.Logger, snowflakeService, locationService)
 	authenticationService := authentication.NewService(userRepository, passwordResetRepository, thirdPartyIdentityRepository, config, &log.Logger, snowflakeService, emailService)
-	organizationsService := organizations.NewService(organizationRepository, organizationMembershipRepository, organizationMembershipInviteRepository, organizationTagRepository, userRepository, tagRepository, config, &log.Logger, snowflakeService, emailService)
+	organizationsService := organizations.NewService(organizationRepository, organizationMembershipRepository, organizationMembershipInviteRepository, organizationProfileFieldRepository, organizationTagRepository, userRepository, tagRepository, config, &log.Logger, snowflakeService, emailService, locationService)
 	opportunitiesService := opportunities.NewService(opportunityRepository, tagRepository, config, &log.Logger, snowflakeService, emailService)
 	tagsService := tags.NewService(tagRepository, config, &log.Logger, snowflakeService)
 

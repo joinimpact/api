@@ -13,11 +13,112 @@ import (
 	"github.com/joinimpact/api/internal/core/middleware/auth"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/organizations"
+	"github.com/joinimpact/api/pkg/idctx"
 	"github.com/joinimpact/api/pkg/location"
 	"github.com/joinimpact/api/pkg/parse"
 	"github.com/joinimpact/api/pkg/resp"
 	"github.com/oliamb/cutter"
 )
+
+// GetOrganizationProfile gets a profile for an organization by ID.
+func GetOrganizationProfile(organizationsService organizations.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		organizationIDString := chi.URLParam(r, "organizationID")
+		organizationID, err := strconv.ParseInt(organizationIDString, 10, 64)
+		if err != nil {
+			resp.BadRequest(w, r, resp.Error(400, "invalid organization id"))
+			return
+		}
+
+		profile, err := organizationsService.GetOrganizationProfile(organizationID)
+		if err != nil {
+			switch err.(type) {
+			case *organizations.ErrOrganizationNotFound:
+				resp.NotFound(w, r, resp.Error(404, err.Error()))
+			case *organizations.ErrServerError:
+				resp.ServerError(w, r, resp.Error(500, err.Error()))
+			default:
+				resp.ServerError(w, r, resp.UnknownError)
+			}
+			return
+		}
+
+		resp.OK(w, r, profile)
+	}
+}
+
+// UpdateOrganizationProfile updates an organization's profile.
+func UpdateOrganizationProfile(organizationsService organizations.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		organizationID, err := idctx.Get(r, "organizationID")
+		if err != nil {
+			return
+		}
+
+		req := struct {
+			Name        string                            `json:"name" validate:"min=4,max=72"`
+			WebsiteURL  string                            `json:"websiteURL" validate:"url,omitempty"`
+			Location    *location.Coordinates             `json:"location"`
+			Description string                            `json:"description" validate:"max=800,omitempty"`
+			Profile     []models.OrganizationProfileField `json:"profile"`
+		}{}
+		err = parse.POST(w, r, &req)
+		if err != nil {
+			return
+		}
+
+		err = organizationsService.UpdateOrganizationProfile(organizationID, organizations.OrganizationProfile{
+			Name:        req.Name,
+			WebsiteURL:  req.WebsiteURL,
+			Description: req.Description,
+		})
+		if err != nil {
+			switch err.(type) {
+			case *organizations.ErrOrganizationNotFound:
+				resp.NotFound(w, r, resp.Error(404, err.Error()))
+			case *organizations.ErrServerError:
+				resp.ServerError(w, r, resp.Error(500, err.Error()))
+			default:
+				resp.ServerError(w, r, resp.UnknownError)
+			}
+			return
+		}
+
+		if req.Location != nil {
+			err = organizationsService.UpdateOrganizationLocation(organizationID, req.Location)
+			if err != nil {
+				switch err.(type) {
+				case *organizations.ErrOrganizationNotFound:
+					resp.NotFound(w, r, resp.Error(404, err.Error()))
+				case *organizations.ErrServerError:
+					resp.ServerError(w, r, resp.Error(500, err.Error()))
+				default:
+					resp.ServerError(w, r, resp.UnknownError)
+				}
+				return
+			}
+		}
+
+		for _, field := range req.Profile {
+			err := organizationsService.SetOrganizationProfileField(organizationID, field)
+			if err != nil {
+				switch err.(type) {
+				case *organizations.ErrOrganizationNotFound:
+					resp.NotFound(w, r, resp.Error(404, err.Error()))
+				case *organizations.ErrServerError:
+					resp.ServerError(w, r, resp.Error(500, err.Error()))
+				default:
+					resp.ServerError(w, r, resp.UnknownError)
+				}
+				return
+			}
+		}
+
+		resp.OK(w, r, map[string]bool{
+			"success": true,
+		})
+	}
+}
 
 type createOrganizationResponse struct {
 	OrganizationID int64 `json:"organizationId"`
@@ -48,7 +149,6 @@ func CreateOrganization(organizationsService organizations.Service) http.Handler
 			CreatorID:   userID,
 			Name:        req.Name,
 			WebsiteURL:  req.WebsiteURL,
-			Location:    "",
 			Description: req.Description,
 		})
 		if err != nil {

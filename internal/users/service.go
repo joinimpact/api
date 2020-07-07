@@ -80,6 +80,7 @@ func (s *service) GetUserProfile(userID int64, self bool) (*UserProfile, error) 
 	if self {
 		profile.Email = user.Email
 		profile.DateOfBirth = user.DateOfBirth
+		profile.CreatedAt = user.CreatedAt
 	}
 
 	tags, err := s.GetUserTags(userID)

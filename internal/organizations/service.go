@@ -11,16 +11,20 @@ import (
 	"github.com/joinimpact/api/internal/email/templates"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/snowflakes"
+	"github.com/joinimpact/api/pkg/location"
 	"github.com/rs/zerolog"
 )
 
 // Service represents a provider of Organization services.
 type Service interface {
-	// GetOrganizationProfile retrieves a single user's profile.
-	// GetOrganizationProfile(organizationID int64) (*OrganizationProfile, error)
+	// GetOrganizationProfile retrieves a single organization's profile.
+	GetOrganizationProfile(organizationID int64) (*OrganizationProfile, error)
 	// UpdateOrganizationProfile updates a user's profile.
-	// UpdateOrganizationProfile(userID int64, profile OrganizationProfile) error
-
+	UpdateOrganizationProfile(organizationID int64, profile OrganizationProfile) error
+	// UpdateOrganizationLocation updates an organization's location.
+	UpdateOrganizationLocation(organizationID int64, location *location.Coordinates) error
+	// SetOrganizationProfileField sets an organization's profile field by name.
+	SetOrganizationProfileField(organizationID int64, profileField models.OrganizationProfileField) error
 	// CreateOrganization creates a new organization and returns the ID on success.
 	CreateOrganization(organization models.Organization) (int64, error)
 	// GetOrganizationTags gets all of a user's tags.
@@ -43,6 +47,7 @@ type service struct {
 	organizationRepository                 models.OrganizationRepository
 	organizationMembershipRepository       models.OrganizationMembershipRepository
 	organizationMembershipInviteRepository models.OrganizationMembershipInviteRepository
+	organizationProfileFieldRepository     models.OrganizationProfileFieldRepository
 	organizationTagRepository              models.OrganizationTagRepository
 	userRepository                         models.UserRepository
 	tagRepository                          models.TagRepository
@@ -51,15 +56,17 @@ type service struct {
 	snowflakeService                       snowflakes.SnowflakeService
 	emailService                           email.Service
 	cdnClient                              *cdn.Client
+	locationService                        location.Service
 }
 
 // NewService creates and returns a new Users service with the provifded dependencies.
-func NewService(organizationRepository models.OrganizationRepository, organizationMembershipRepository models.OrganizationMembershipRepository, organizationMembershipInviteRepository models.OrganizationMembershipInviteRepository, organizationTagRepository models.OrganizationTagRepository,
-	userRepository models.UserRepository, tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service) Service {
+func NewService(organizationRepository models.OrganizationRepository, organizationMembershipRepository models.OrganizationMembershipRepository, organizationMembershipInviteRepository models.OrganizationMembershipInviteRepository, organizationProfileFieldRepository models.OrganizationProfileFieldRepository, organizationTagRepository models.OrganizationTagRepository,
+	userRepository models.UserRepository, tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service, locationService location.Service) Service {
 	return &service{
 		organizationRepository,
 		organizationMembershipRepository,
 		organizationMembershipInviteRepository,
+		organizationProfileFieldRepository,
 		organizationTagRepository,
 		userRepository,
 		tagRepository,
@@ -68,7 +75,97 @@ func NewService(organizationRepository models.OrganizationRepository, organizati
 		snowflakeService,
 		emailService,
 		cdn.NewCDNClient(config),
+		locationService,
 	}
+}
+
+// GetOrganizationProfile retrieves a single organization's profile.
+func (s *service) GetOrganizationProfile(organizationID int64) (*OrganizationProfile, error) {
+	profile := &OrganizationProfile{}
+	// Find the organization to verify that it is active.
+	organization, err := s.organizationRepository.FindByID(organizationID)
+	if err != nil {
+		return nil, NewErrOrganizationNotFound()
+	}
+
+	profile.ID = organization.ID
+	profile.CreatorID = organization.CreatorID
+	profile.Name = organization.Name
+	profile.Description = organization.Description
+	profile.ProfilePicture = organization.ProfilePicture
+	profile.WebsiteURL = organization.WebsiteURL
+
+	tags, err := s.GetOrganizationTags(organizationID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	profile.Tags = tags
+
+	// Location
+	if organization.LocationLatitude != 0.0 || organization.LocationLongitude != 0.0 {
+		coordinates := &location.Coordinates{
+			Latitude:  organization.LocationLatitude,
+			Longitude: organization.LocationLongitude,
+		}
+
+		location, err := s.locationService.CoordinatesToCity(coordinates)
+		if err == nil {
+			profile.Location = location
+		}
+	}
+
+	// Profile fields
+	fields, err := s.organizationProfileFieldRepository.FindByOrganizationID(organizationID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	profile.ProfileFields = []models.OrganizationProfileField{}
+	profile.ProfileFields = fields
+
+	return profile, nil
+}
+
+// UpdateOrganizationProfile updates a user's profile.
+func (s *service) UpdateOrganizationProfile(organizationID int64, profile OrganizationProfile) error {
+	return s.organizationRepository.Update(models.Organization{
+		Model: models.Model{
+			ID: organizationID,
+		},
+		Name:        profile.Name,
+		Description: profile.Description,
+		WebsiteURL:  profile.WebsiteURL,
+	})
+}
+
+// UpdateOrganizationLocation updates an organization's location.
+func (s *service) UpdateOrganizationLocation(organizationID int64, location *location.Coordinates) error {
+	return s.organizationRepository.Update(models.Organization{
+		Model: models.Model{
+			ID: organizationID,
+		},
+		LocationLatitude:  location.Latitude,
+		LocationLongitude: location.Longitude,
+	})
+}
+
+// SetOrganizationProfileField sets an organization's profile field by name.
+func (s *service) SetOrganizationProfileField(organizationID int64, profileField models.OrganizationProfileField) error {
+	field, err := s.organizationProfileFieldRepository.FindOrganizationFieldByName(organizationID, profileField.Name)
+	if err == nil {
+		profileField.ID = field.ID
+		return s.organizationProfileFieldRepository.Update(profileField)
+	}
+
+	profileField.OrganizationID = organizationID
+
+	// Create an ID and assign it to the profile field.
+	id := s.snowflakeService.GenerateID()
+	profileField.ID = id
+
+	// Create the profile field.
+	return s.organizationProfileFieldRepository.Create(profileField)
 }
 
 // CreateOrganization creates a new organization and returns the ID on success.

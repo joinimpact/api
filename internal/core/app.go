@@ -3,6 +3,8 @@ package core
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -47,19 +49,25 @@ func (app *App) Serve() error {
 	// Create a new router.
 	router := chi.NewRouter()
 
-	// JSON middleware
-	router.Use(middleware.SetHeader("Content-Type", "application/json"))
-
 	// Apply the Logger middleware if dev mode is enabled.
 	if app.config.DevMode {
 		router.Use(middleware.Logger)
 	}
 
-	// Add the healthcheck.
-	router.Get("/healthcheck", healthcheckHandler)
+	workDir, _ := os.Getwd()
+	filesDir := http.Dir(filepath.Join(workDir, "docs", "swagger-ui"))
+	FileServer(router, "/swagger-ui", filesDir)
 
-	// Mount the API router at /api/v1
-	router.Mount(fmt.Sprintf("/api/v%d", APIRevision), app.Router())
+	router.Group(func(router chi.Router) {
+		// JSON middleware
+		router.Use(middleware.SetHeader("Content-Type", "application/json"))
+
+		// Add the healthcheck.
+		router.Get("/healthcheck", healthcheckHandler)
+
+		// Mount the API router at /api/v1
+		router.Mount(fmt.Sprintf("/api/v%d", APIRevision), app.Router())
+	})
 
 	return http.ListenAndServe(fmt.Sprintf(":%d", app.config.Port), router)
 }

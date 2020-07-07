@@ -14,3 +14,19 @@ type OrganizationProfileField struct {
 	ValueJSON      postgres.Jsonb `json:"value,omitempty"` // the value of the profile field in JSON
 	MixedID        int64          `json:"-"`               // represents an ID for a relation to a mixed-type item in the database
 }
+
+// OrganizationProfileFieldRepository represents a repository of OrganizationProfileField.
+type OrganizationProfileFieldRepository interface {
+	// FindByID finds a single entity by ID.
+	FindByID(id int64) (*OrganizationProfileField, error)
+	// FindByOrganizationID finds entities by OrganizationID.
+	FindByOrganizationID(id int64) ([]OrganizationProfileField, error)
+	// FinOrganizationFieldByName finds a single entity by Organization ID and field name.
+	FindOrganizationFieldByName(id int64, name string) (*OrganizationProfileField, error)
+	// Create creates a new entity.
+	Create(profileField OrganizationProfileField) error
+	// Update updates an entity with the ID in the provided entity.
+	Update(profileField OrganizationProfileField) error
+	// DeleteByID deletes an entity by ID.
+	DeleteByID(id int64) error
+}
