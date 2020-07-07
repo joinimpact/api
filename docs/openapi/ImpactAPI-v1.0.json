@@ -1120,6 +1120,295 @@
 				}
 			}
 		},
+		"/organizations/{organizationId}": {
+			"get": {
+				"tags": [
+					"Organizations"
+				],
+				"summary": "Gets the profile of a single organization. Authentication required.",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "organizationId",
+						"description": "The ID of the organization who you are querying.",
+						"schema": {
+							"type": "integer"
+						},
+						"required": true
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Success! The organization profile was returned",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"required": [
+										"data"
+									],
+									"properties": {
+										"data": {
+											"required": [
+												"creatorId",
+												"description",
+												"id",
+												"name",
+												"tags",
+												"websiteUrl"
+											],
+											"properties": {
+												"creatorId": {
+													"type": "string",
+													"example": "1273884565403865088"
+												},
+												"description": {
+													"type": "string",
+													"example": "hi we watch bird"
+												},
+												"id": {
+													"type": "string",
+													"example": "1280407140296560640"
+												},
+												"name": {
+													"type": "string",
+													"example": "birdwatcher corp"
+												},
+												"tags": {
+													"type": "array",
+													"items": {
+														"type": "object",
+														"properties": {
+															"category": {
+																"type": "number",
+																"example": 0
+															},
+															"id": {
+																"type": "string",
+																"example": "1283918398189"
+															},
+															"name": {
+																"type": "string",
+																"example": "ant"
+															}
+														}
+													}
+												},
+												"profile": {
+													"type": "array",
+													"items": {
+														"type": "object",
+														"properties": {
+															"id": {
+																"type": "string",
+																"example": "128391283"
+															},
+															"name": {
+																"type": "string",
+																"example": "company_type"
+															},
+															"organizationId": {
+																"type": "string",
+																"example": "1280407140296560640"
+															},
+															"value": {
+																"type": "string",
+																"example": "401(c) non-profit"
+															}
+														}
+													}
+												},
+												"location": {
+													"type": "object",
+													"required": [
+														"city",
+														"state",
+														"country"
+													],
+													"properties": {
+														"city": {
+															"required": [
+																"shortName",
+																"longName"
+															],
+															"properties": {
+																"shortName": {
+																	"type": "string",
+																	"example": "Menlo Park"
+																},
+																"longName": {
+																	"type": "string",
+																	"example": "Menlo Park"
+																}
+															},
+															"type": "object"
+														},
+														"state": {
+															"required": [
+																"shortName",
+																"longName"
+															],
+															"properties": {
+																"shortName": {
+																	"type": "string",
+																	"example": "CA"
+																},
+																"longName": {
+																	"type": "string",
+																	"example": "California"
+																}
+															},
+															"type": "object"
+														},
+														"country": {
+															"required": [
+																"shortName",
+																"longName"
+															],
+															"properties": {
+																"shortName": {
+																	"type": "string",
+																	"example": "US"
+																},
+																"longName": {
+																	"type": "string",
+																	"example": "United States"
+																}
+															},
+															"type": "object"
+														}
+													}
+												},
+												"websiteURL": {
+													"type": "string",
+													"example": "http://birdwatcher.org"
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Organization not found."
+					},
+					"403": {
+						"description": "Forbidden to access this organization"
+					},
+					"500": {
+						"description": "Server error"
+					}
+				}
+			},
+			"patch": {
+				"tags": [
+					"Organizations"
+				],
+				"summary": "Gets the profile of a single organization. Authentication required.",
+				"parameters": [
+					{
+						"in": "path",
+						"name": "organizationId",
+						"description": "The ID of the organization who you are querying.",
+						"schema": {
+							"type": "integer"
+						},
+						"required": true
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"name": {
+										"type": "string",
+										"example": "Birdwatchers 2"
+									},
+									"description": {
+										"type": "string",
+										"example": "Birdwatchers 2 is amazing."
+									},
+									"websiteURL": {
+										"type": "string",
+										"example": "http://birdwatchers.net"
+									},
+									"location": {
+										"type": "object",
+										"properties": {
+											"lat": {
+												"type": "number",
+												"example": 36.12
+											},
+											"long": {
+												"type": "number",
+												"example": -112.159
+											}
+										}
+									},
+									"profile": {
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": {
+												"field": {
+													"type": "string",
+													"example": "company_type"
+												},
+												"value": {
+													"type": "string",
+													"example": "401(c) non profit"
+												},
+												"permissions": {
+													"type": "integer",
+													"example": 1
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Success! The organization profile was returned",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"required": [
+										"data"
+									],
+									"properties": {
+										"data": {
+											"properties": {
+												"success": {
+													"type": "boolean",
+													"example": true
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Organization not found."
+					},
+					"403": {
+						"description": "Forbidden to access this organization"
+					},
+					"500": {
+						"description": "Server error"
+					}
+				}
+			}
+		},
 		"/organizations/{organizationId}/tags": {
 			"get": {
 				"tags": [
