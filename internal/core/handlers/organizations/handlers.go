@@ -136,7 +136,7 @@ func CreateOrganization(organizationsService organizations.Service) http.Handler
 
 		req := struct {
 			Name        string                `json:"name" validate:"min=4,max=72"`
-			WebsiteURL  string                `json:"websiteURL" validate:"url,omitempty"`
+			WebsiteURL  string                `json:"websiteURL" validate:"omitempty,url"`
 			Location    *location.Coordinates `json:"location"`
 			Description string                `json:"description" validate:"max=800,omitempty"`
 		}{}

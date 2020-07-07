@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres" // postgres driver
 	"github.com/joinimpact/api/internal/config"
 	"github.com/rs/zerolog"
 )
