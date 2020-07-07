@@ -53,6 +53,7 @@ func ValidateEmail(service authentication.Service) http.HandlerFunc {
 		err = service.CheckEmail(req.Email)
 		if err != nil {
 			resp.BadRequest(w, r, resp.Error(400, err.Error()))
+			return
 		}
 
 		resp.OK(w, r, nil)
