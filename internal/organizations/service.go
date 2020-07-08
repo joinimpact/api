@@ -17,6 +17,9 @@ import (
 
 // Service represents a provider of Organization services.
 type Service interface {
+	// GetUserOrganizations gets all of a user's organizations as
+	// organization profile.
+	GetUserOrganizations(userID int64) ([]OrganizationProfile, error)
 	// GetOrganizationProfile retrieves a single organization's profile.
 	GetOrganizationProfile(organizationID int64) (*OrganizationProfile, error)
 	// UpdateOrganizationProfile updates a user's profile.
@@ -79,14 +82,45 @@ func NewService(organizationRepository models.OrganizationRepository, organizati
 	}
 }
 
-// GetOrganizationProfile retrieves a single organization's profile.
-func (s *service) GetOrganizationProfile(organizationID int64) (*OrganizationProfile, error) {
-	profile := &OrganizationProfile{}
+// GetUserOrganizations gets all of a user's organizations as
+// organization profile.
+func (s *service) GetUserOrganizations(userID int64) ([]OrganizationProfile, error) {
+	memberships, err := s.organizationMembershipRepository.FindByUserID(userID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	organizations := []OrganizationProfile{}
+	for _, membership := range memberships {
+		organization, err := s.getMinimumOrganizationProfile(membership.OrganizationID)
+		if err != nil {
+			// If there is an error, consider the organization to be
+			// unreachable and skip it.
+			continue
+		}
+
+		organizations = append(organizations, *organization)
+	}
+
+	return organizations, nil
+}
+
+// getMinimumOrganizationProfile gets an organization profile by ID without
+// extra profile fields, tags, or location.
+func (s *service) getMinimumOrganizationProfile(organizationID int64) (*OrganizationProfile, error) {
 	// Find the organization to verify that it is active.
 	organization, err := s.organizationRepository.FindByID(organizationID)
 	if err != nil {
 		return nil, NewErrOrganizationNotFound()
 	}
+
+	return s.organizationToProfile(organization), nil
+}
+
+// organizationToProfile gets an organization without extra profile fields,
+// tags, or location.
+func (s *service) organizationToProfile(organization *models.Organization) *OrganizationProfile {
+	profile := &OrganizationProfile{}
 
 	profile.ID = organization.ID
 	profile.CreatorID = organization.CreatorID
@@ -94,6 +128,19 @@ func (s *service) GetOrganizationProfile(organizationID int64) (*OrganizationPro
 	profile.Description = organization.Description
 	profile.ProfilePicture = organization.ProfilePicture
 	profile.WebsiteURL = organization.WebsiteURL
+
+	return profile
+}
+
+// GetOrganizationProfile retrieves a single organization's profile.
+func (s *service) GetOrganizationProfile(organizationID int64) (*OrganizationProfile, error) {
+	// Find the organization to verify that it is active.
+	organization, err := s.organizationRepository.FindByID(organizationID)
+	if err != nil {
+		return nil, NewErrOrganizationNotFound()
+	}
+
+	profile := s.organizationToProfile(organization)
 
 	tags, err := s.GetOrganizationTags(organizationID)
 	if err != nil {

@@ -20,6 +20,37 @@ import (
 	"github.com/oliamb/cutter"
 )
 
+// GetUserOrganizations gets organizations by User ID.
+func GetUserOrganizations(organizationsService organizations.Service) http.HandlerFunc {
+	type response struct {
+		Organizations []organizations.OrganizationProfile `json:"organizations"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, err := idctx.Get(r, "userID")
+		if err != nil {
+			return
+		}
+
+		res, err := organizationsService.GetUserOrganizations(userID)
+		if err != nil {
+			switch err.(type) {
+			case *organizations.ErrOrganizationNotFound:
+				resp.NotFound(w, r, resp.Error(404, err.Error()))
+			case *organizations.ErrServerError:
+				resp.ServerError(w, r, resp.Error(500, err.Error()))
+			default:
+				resp.ServerError(w, r, resp.UnknownError)
+			}
+			return
+		}
+
+		resp.OK(w, r, response{
+			Organizations: res,
+		})
+	}
+}
+
 // GetOrganizationProfile gets a profile for an organization by ID.
 func GetOrganizationProfile(organizationsService organizations.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

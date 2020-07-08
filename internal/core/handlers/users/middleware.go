@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/joinimpact/api/internal/authentication"
+	"github.com/joinimpact/api/pkg/idctx"
 	"github.com/joinimpact/api/pkg/resp"
 )
 
@@ -71,6 +72,9 @@ func Middleware(authService authentication.Service) func(next http.Handler) http
 				userID: queryUserID,
 				isSelf: queryUserID == userID,
 			})
+
+			// Inject the user ID into the idctx.
+			ctx = idctx.Inject(ctx, "userID", queryUserID)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

@@ -100,7 +100,12 @@ func Marshal(scope Scope, input interface{}) interface{} {
 		}
 
 		if isEmptyValue(value.Field(i)) {
-			output[name] = reflect.Zero(value.Field(i).Type()).Interface()
+			field := value.Field(i)
+			if field.Type().Kind() == reflect.Ptr {
+				field = value.Field(i).Elem()
+			}
+
+			output[name] = field.Interface()
 			continue
 		}
 

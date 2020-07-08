@@ -13,7 +13,7 @@ type OrganizationProfile struct {
 	Description    string                            `json:"description"`                    // a description of the organization
 	ProfilePicture string                            `json:"profilePicture,omitempty"`       // the url for the organization's profile picture
 	WebsiteURL     string                            `json:"websiteURL"`                     // the organization's website's URL
-	Tags           []models.Tag                      `json:"tags,omitempty"`                 // the model's tags
+	Tags           []models.Tag                      `json:"tags"`                           // the model's tags
 	Location       *location.Location                `json:"location,omitempty"`             // the location of the organization
-	ProfileFields  []models.OrganizationProfileField `json:"profile,omitempty"`              // fields of the organization's profile
+	ProfileFields  []models.OrganizationProfileField `json:"profile"`                        // fields of the organization's profile
 }
