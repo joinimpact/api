@@ -89,4 +89,23 @@ server {
 
         }
 
+        location /swagger-ui/ {
+                alias /docs/swagger-ui/;
+                add_header 'Access-Control-Allow-Origin' '*' always;
+                add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+                add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type' always;
+                add_header 'Access-Control-Max-Age' 1728000 always;
+
+                if ($request_method = OPTIONS) {
+                        return 204;
+                }
+
+                auth_basic "Restricted";
+                auth_basic_user_file conf.d/auth.pwd;
+        }
+
+        location /impact-api.json {
+                alias /docs/openapi/ImpactAPI-v1.0.json;
+        }        
+
 }
