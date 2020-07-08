@@ -83,14 +83,19 @@ func (app *App) Router() *chi.Mux {
 
 				r.Route("/opportunities", func(r chi.Router) {
 					r.With(permissions.Require(scopes.ScopeManager)).Post("/", opportunities.Post(app.opportunitiesService))
-
-					r.Route("/{opportunityID}", func(r chi.Router) {
-						r.Use(idctx.Prepare("opportunityID"))
-
-						r.Get("/", opportunities.Get(app.opportunitiesService))
-						r.With(permissions.Require(scopes.ScopeAdmin)).Patch("/", opportunities.Patch(app.opportunitiesService))
-					})
+					r.With(permissions.Require(scopes.ScopeAuthenticated)).Get("/", opportunities.Get(app.opportunitiesService))
 				})
+			})
+		})
+
+		router.Route("/opportunities", func(r chi.Router) {
+			r.Route("/{opportunityID}", func(r chi.Router) {
+				r.Use(idctx.Prepare("opportunityID"))
+
+				r.Get("/", opportunities.GetOne(app.opportunitiesService))
+				r.
+					With(permissions.Require(scopes.ScopeAuthenticated)).
+					Patch("/", opportunities.Patch(app.opportunitiesService))
 			})
 		})
 	})

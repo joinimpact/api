@@ -10,7 +10,7 @@ type Opportunity struct {
 	Creator        User         `json:"-" gorm:"foreignkey:CreatorID"` //
 	Public         bool         `json:"public"`                        // whether or not the opportunity should be shown to volunteers
 	Title          string       `json:"title"`                         // the title of the opportunity
-	Image          string       `json:"image"`                         // a url to the opportunity's banner image
+	ProfilePicture string       `json:"profilePicture"`                // a url to the opportunity's banner image
 	Description    string       `json:"description"`                   // a long description of the opportunity and its purpose
 }
 

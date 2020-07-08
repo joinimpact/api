@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/joinimpact/api/internal/core/middleware/auth"
-	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/opportunities"
 	"github.com/joinimpact/api/pkg/idctx"
 	"github.com/joinimpact/api/pkg/parse"
@@ -33,20 +32,23 @@ func Post(opportunitiesService opportunities.Service) http.HandlerFunc {
 		}
 
 		req := struct {
-			Title       string `json:"title" validate:"min=4,max=128"`
-			Description string `json:"description"`
+			Title        string                      `json:"title" validate:"omitempty,min=4,max=128"`
+			Description  string                      `json:"description"`
+			Requirements *opportunities.Requirements `json:"requirements"`
+			Limits       *opportunities.Limits       `json:"limits"`
 		}{}
 		err = parse.POST(w, r, &req)
 		if err != nil {
 			return
 		}
 
-		id, err := opportunitiesService.CreateOpportunity(ctx, models.Opportunity{
+		id, err := opportunitiesService.CreateOpportunity(ctx, opportunities.OpportunityView{
 			CreatorID:      userID,
 			OrganizationID: organizationID,
 			Title:          req.Title,
 			Description:    req.Description,
-			Public:         false,
+			Requirements:   req.Requirements,
+			Limits:         req.Limits,
 		})
 		if err != nil {
 			switch err.(type) {
