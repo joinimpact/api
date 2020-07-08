@@ -3,7 +3,6 @@ package opportunities
 import (
 	"net/http"
 
-	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/opportunities"
 	"github.com/joinimpact/api/pkg/idctx"
 	"github.com/joinimpact/api/pkg/parse"
@@ -25,20 +24,22 @@ func Patch(opportunitiesService opportunities.Service) http.HandlerFunc {
 		}
 
 		req := struct {
-			Title       string `json:"title" validate:"omitempty,min=4,max=128"`
-			Description string `json:"description"`
+			Title        string                      `json:"title" validate:"omitempty,min=4,max=128"`
+			Description  string                      `json:"description"`
+			Requirements *opportunities.Requirements `json:"requirements"`
+			Limits       *opportunities.Limits       `json:"limits"`
 		}{}
 		err = parse.POST(w, r, &req)
 		if err != nil {
 			return
 		}
 
-		err = opportunitiesService.UpdateOpportunity(ctx, models.Opportunity{
-			Model: models.Model{
-				ID: opportunityID,
-			},
-			Title:       req.Title,
-			Description: req.Description,
+		err = opportunitiesService.UpdateOpportunity(ctx, opportunities.OpportunityView{
+			ID:           opportunityID,
+			Title:        req.Title,
+			Description:  req.Description,
+			Requirements: req.Requirements,
+			Limits:       req.Limits,
 		})
 		if err != nil {
 			switch err.(type) {

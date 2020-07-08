@@ -8,17 +8,17 @@ import (
 	"github.com/joinimpact/api/pkg/resp"
 )
 
-// Get gets a single opportunity by ID.
+// Get gets opportunities by organization ID.
 func Get(opportunitiesService opportunities.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		opportunityID, err := idctx.Get(r, "opportunityID")
+		organizationID, err := idctx.Get(r, "organizationID")
 		if err != nil {
 			return
 		}
 
-		opportunity, err := opportunitiesService.GetOpportunity(ctx, opportunityID)
+		res, err := opportunitiesService.GetOrganizationOpportunities(ctx, organizationID)
 		if err != nil {
 			switch err.(type) {
 			case *opportunities.ErrOpportunityNotFound, *opportunities.ErrTagNotFound:
@@ -30,6 +30,6 @@ func Get(opportunitiesService opportunities.Service) http.HandlerFunc {
 			}
 		}
 
-		resp.OK(w, r, opportunity)
+		resp.OK(w, r, res)
 	}
 }
