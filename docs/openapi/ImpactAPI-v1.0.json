@@ -120,9 +120,7 @@
     "/auth/register": {
       "post": {
         "summary": "Creates a new user and returns a token pair on success.",
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "requestBody": {
           "description": "Contains information about the user.",
           "required": true,
@@ -176,9 +174,7 @@
                         {
                           "code": 98,
                           "message": "missing or invalid fields",
-                          "invalidFields": [
-                            "password"
-                          ]
+                          "invalidFields": ["password"]
                         }
                       ]
                     }
@@ -193,9 +189,7 @@
     "/auth/login": {
       "post": {
         "summary": "Attempts to login using the credentials provided. Returns a token pair on success.",
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "requestBody": {
           "description": "Contains a username and password used to authenticate the user.",
           "required": true,
@@ -203,10 +197,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "email",
-                  "password"
-                ],
+                "required": ["email", "password"],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -277,9 +268,7 @@
     },
     "/auth/tokens/refresh": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "summary": "Generates a new token pair from a refresh token.",
         "requestBody": {
           "description": "Contains a refresh token.",
@@ -288,9 +277,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "refreshToken"
-                ],
+                "required": ["refreshToken"],
                 "properties": {
                   "refreshToken": {
                     "type": "string",
@@ -320,9 +307,7 @@
     },
     "/auth/password-resets": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "summary": "Creates a new password reset request and emails the link to the user.",
         "requestBody": {
           "description": "Includes the users email to send the request to.",
@@ -331,9 +316,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "email"
-                ],
+                "required": ["email"],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -382,9 +365,7 @@
                         {
                           "code": 98,
                           "message": "missing or invalid fields",
-                          "invalidFields": [
-                            "email"
-                          ]
+                          "invalidFields": ["email"]
                         }
                       ]
                     }
@@ -401,9 +382,7 @@
     },
     "/auth/password-resets/{passwordResetKey}": {
       "get": {
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "summary": "Gets a password reset object. If valid, it returns a first name and email to render a form with.",
         "responses": {
           "200": {
@@ -434,9 +413,7 @@
     },
     "/auth/password-resets/{passwordResetKey}/reset": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "summary": "Resets the user's password from a password reset key.",
         "requestBody": {
           "content": {
@@ -494,9 +471,7 @@
                         {
                           "code": 98,
                           "message": "missing or invalid fields",
-                          "invalidFields": [
-                            "password"
-                          ]
+                          "invalidFields": ["password"]
                         }
                       ]
                     }
@@ -513,9 +488,7 @@
     },
     "/auth/oauth/google": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "summary": "Attempts to login with a Google Oauth code.",
         "requestBody": {
           "content": {
@@ -590,9 +563,7 @@
     },
     "/auth/oauth/facebook": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "summary": "Attempts to login with a Facebook Oauth code.",
         "requestBody": {
           "content": {
@@ -667,9 +638,7 @@
     },
     "/users/{userId}": {
       "get": {
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "summary": "Gets the profile of a single user by ID.",
         "parameters": [
           {
@@ -741,9 +710,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "summary": "Updates a user's profile. Non-filled fields will be ignored.",
         "parameters": [
           {
@@ -800,9 +767,7 @@
     },
     "/users/{userId}/profile-picture": {
       "post": {
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "summary": "Uploads a new profile picture to a user by ID.",
         "parameters": [
           {
@@ -846,9 +811,7 @@
     },
     "/users/{userId}/tags": {
       "get": {
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "summary": "Gets all of a user's tags. (Areas of Interest)",
         "parameters": [
           {
@@ -893,9 +856,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "summary": "Adds multiple tags to a user. Skips duplicates, so it's okay to send tags when unsure if they are already added.",
         "parameters": [
           {
@@ -969,9 +930,7 @@
     },
     "/users/{userId}/tags/{tagId}": {
       "delete": {
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "summary": "Deletes a tag from a user's profile.",
         "parameters": [
           {
@@ -1012,10 +971,7 @@
     },
     "/users/{userId}/organizations": {
       "get": {
-        "tags": [
-          "Users",
-          "Organizations"
-        ],
+        "tags": ["Users", "Organizations"],
         "description": "Gets all of a single user's organizations. Use 'me' for the current user.",
         "parameters": [
           {
@@ -1030,19 +986,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Success! A list of organizations will be returned. If none are found, it will be a blank array.",
+            "description": "Success! A list of organizations will be returned. If none are found, it will be a blank array. The organizations returned do not have all profile fields, only essential information to render a list of organizations with pictures. Use the /organizations endpoints to get full profiles.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
-                      "required": [
-                        "organizations"
-                      ],
+                      "required": ["organizations"],
                       "properties": {
                         "organizations": {
                           "type": "array",
@@ -1065,111 +1017,6 @@
                                 "type": "string",
                                 "example": "birdwatcher corp"
                               },
-                              "tags": {
-                                "type": "array",
-                                "items": {
-                                  "type": "object",
-                                  "properties": {
-                                    "category": {
-                                      "type": "number",
-                                      "example": 0
-                                    },
-                                    "id": {
-                                      "type": "string",
-                                      "example": "1283918398189"
-                                    },
-                                    "name": {
-                                      "type": "string",
-                                      "example": "ant"
-                                    }
-                                  }
-                                }
-                              },
-                              "profile": {
-                                "type": "array",
-                                "items": {
-                                  "type": "object",
-                                  "properties": {
-                                    "id": {
-                                      "type": "string",
-                                      "example": "128391283"
-                                    },
-                                    "name": {
-                                      "type": "string",
-                                      "example": "company_type"
-                                    },
-                                    "organizationId": {
-                                      "type": "string",
-                                      "example": "1280407140296560640"
-                                    },
-                                    "value": {
-                                      "type": "string",
-                                      "example": "401(c) non-profit"
-                                    }
-                                  }
-                                }
-                              },
-                              "location": {
-                                "required": [
-                                  "city",
-                                  "state",
-                                  "country"
-                                ],
-                                "properties": {
-                                  "city": {
-                                    "required": [
-                                      "shortName",
-                                      "longName"
-                                    ],
-                                    "properties": {
-                                      "shortName": {
-                                        "type": "string",
-                                        "example": "Menlo Park"
-                                      },
-                                      "longName": {
-                                        "type": "string",
-                                        "example": "Menlo Park"
-                                      }
-                                    },
-                                    "type": "object"
-                                  },
-                                  "state": {
-                                    "required": [
-                                      "shortName",
-                                      "longName"
-                                    ],
-                                    "properties": {
-                                      "shortName": {
-                                        "type": "string",
-                                        "example": "CA"
-                                      },
-                                      "longName": {
-                                        "type": "string",
-                                        "example": "California"
-                                      }
-                                    },
-                                    "type": "object"
-                                  },
-                                  "country": {
-                                    "required": [
-                                      "shortName",
-                                      "longName"
-                                    ],
-                                    "properties": {
-                                      "shortName": {
-                                        "type": "string",
-                                        "example": "US"
-                                      },
-                                      "longName": {
-                                        "type": "string",
-                                        "example": "United States"
-                                      }
-                                    },
-                                    "type": "object"
-                                  }
-                                },
-                                "type": "object"
-                              },
                               "websiteURL": {
                                 "type": "string",
                                 "example": "http://birdwatcher.org"
@@ -1190,18 +1037,14 @@
     },
     "/organizations": {
       "post": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Creates a new organization and adds the authenticated user as the owner.",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "name"
-                ],
+                "required": ["name"],
                 "properties": {
                   "name": {
                     "type": "string",
@@ -1312,9 +1155,7 @@
                         {
                           "code": 98,
                           "message": "missing or invalid fields",
-                          "invalidFields": [
-                            "name"
-                          ]
+                          "invalidFields": ["name"]
                         }
                       ]
                     }
@@ -1328,9 +1169,7 @@
     },
     "/organizations/{organizationId}": {
       "get": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Gets the profile of a single organization. Authentication required.",
         "parameters": [
           {
@@ -1350,9 +1189,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "required": [
@@ -1426,17 +1263,10 @@
                         },
                         "location": {
                           "type": "object",
-                          "required": [
-                            "city",
-                            "state",
-                            "country"
-                          ],
+                          "required": ["city", "state", "country"],
                           "properties": {
                             "city": {
-                              "required": [
-                                "shortName",
-                                "longName"
-                              ],
+                              "required": ["shortName", "longName"],
                               "properties": {
                                 "shortName": {
                                   "type": "string",
@@ -1450,10 +1280,7 @@
                               "type": "object"
                             },
                             "state": {
-                              "required": [
-                                "shortName",
-                                "longName"
-                              ],
+                              "required": ["shortName", "longName"],
                               "properties": {
                                 "shortName": {
                                   "type": "string",
@@ -1467,10 +1294,7 @@
                               "type": "object"
                             },
                             "country": {
-                              "required": [
-                                "shortName",
-                                "longName"
-                              ],
+                              "required": ["shortName", "longName"],
                               "properties": {
                                 "shortName": {
                                   "type": "string",
@@ -1508,9 +1332,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Gets the profile of a single organization. Authentication required.",
         "parameters": [
           {
@@ -1586,9 +1408,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "properties": {
@@ -1615,9 +1435,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Deletes a single organization. Requires owner permissions.",
         "parameters": [
           {
@@ -1645,9 +1463,7 @@
     },
     "/organizations/{organizationId}/tags": {
       "get": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Gets all of an organization's tags. (Areas of Interest)",
         "parameters": [
           {
@@ -1693,9 +1509,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Adds multiple tags to an organization. Skips duplicates, so it's okay to send tags when unsure if they are already added.",
         "parameters": [
           {
@@ -1769,9 +1583,7 @@
     },
     "/organizations/{organizationId}/tags/{tagId}": {
       "delete": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Deletes a tag from an organization's profile.",
         "parameters": [
           {
@@ -1812,9 +1624,7 @@
     },
     "/organizations/{organizationId}/profile-picture": {
       "post": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Uploads a new profile picture to an organization by ID.",
         "parameters": [
           {
@@ -1858,9 +1668,7 @@
     },
     "/organizations/{organizationId}/invite": {
       "post": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Sends invites to multiple organization members by email address.",
         "parameters": [
           {
@@ -1884,9 +1692,7 @@
                     "description": "An array of invite objects.",
                     "items": {
                       "type": "object",
-                      "required": [
-                        "email"
-                      ],
+                      "required": ["email"],
                       "properties": {
                         "email": {
                           "type": "string",
@@ -1916,10 +1722,7 @@
     },
     "/organizations/{organizationId}/opportunities": {
       "post": {
-        "tags": [
-          "Opportunities",
-          "Organizations"
-        ],
+        "tags": ["Opportunities", "Organizations"],
         "summary": "Creates a new opportunity under the specified organization. Requires manager status of organization.",
         "parameters": [
           {
@@ -2046,9 +1849,7 @@
     },
     "/opportunities/{opportunityId}": {
       "get": {
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "summary": "Gets a single opportunity by ID.",
         "parameters": [
           {
@@ -2195,9 +1996,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "summary": "Creates a new opportunity under the specified organization. Requires manager status of organization.",
         "parameters": [
           {
@@ -2318,9 +2117,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "summary": "Deletes an opportunity.",
         "parameters": [
           {
@@ -2348,9 +2145,7 @@
     },
     "/opportunities/{opportunityId}/tags": {
       "get": {
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "summary": "Gets all of an opportunity's tags. (Areas of Interest)",
         "parameters": [
           {
@@ -2396,9 +2191,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "summary": "Adds multiple tags to an opportunity. Skips duplicates, so it's okay to send tags when unsure if they are already added.",
         "parameters": [
           {
@@ -2472,9 +2265,7 @@
     },
     "/opportunities/{opportunityId}/tags/{tagId}": {
       "delete": {
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "summary": "Deletes a tag from an opportunity's profile.",
         "parameters": [
           {
@@ -2518,9 +2309,7 @@
     },
     "/tags": {
       "get": {
-        "tags": [
-          "Tags"
-        ],
+        "tags": ["Tags"],
         "summary": "Requires authentication. Gets tags from a search term (if present) or returns popular tags.",
         "parameters": [
           {
