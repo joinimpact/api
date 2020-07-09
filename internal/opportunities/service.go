@@ -3,6 +3,8 @@ package opportunities
 import (
 	"context"
 	"fmt"
+	"io"
+	"time"
 
 	"github.com/joinimpact/api/internal/cdn"
 	"github.com/joinimpact/api/internal/config"
@@ -30,6 +32,8 @@ type Service interface {
 	AddOpportunityTags(ctx context.Context, opportunityID int64, tags []string) (int, error)
 	// RemoveOpportunityTag removes a tag from an opportunity by id.
 	RemoveOpportunityTag(ctx context.Context, opportunityID, tagID int64) error
+	// UploadProfilePicture uploads a profile picture to the CDN and adds it to the opportunity.
+	UploadProfilePicture(opportunityID int64, fileReader io.Reader) (string, error)
 }
 
 // service represents the intenral implementation of the opportunities Service.
@@ -336,4 +340,19 @@ func (s *service) RemoveOpportunityTag(ctx context.Context, opportunityID, tagID
 	}
 
 	return s.opportunityTagRepository.DeleteByID(opportunityTag.ID)
+}
+
+// UploadProfilePicture uploads a profile picture to the CDN and adds it to the opportunity.
+func (s *service) UploadProfilePicture(opportunityID int64, fileReader io.Reader) (string, error) {
+	url, err := s.cdnClient.UploadImage(fmt.Sprintf("opportunity-picture-%d-%d.png", opportunityID, time.Now().UTC().Unix()), fileReader)
+	if err != nil {
+		return "", err
+	}
+
+	return url, s.opportunityRepository.Update(models.Opportunity{
+		Model: models.Model{
+			ID: opportunityID,
+		},
+		ProfilePicture: url,
+	})
 }

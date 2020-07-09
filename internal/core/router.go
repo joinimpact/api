@@ -103,6 +103,10 @@ func (app *App) Router() *chi.Mux {
 					With(permissions.Require(scopes.ScopeAuthenticated)).
 					Delete("/", opportunities.Delete(app.opportunitiesService))
 
+				r.
+					With(permissions.Require(scopes.ScopeAuthenticated)).
+					Post("/profile-picture", opportunities.ProfilePicturePost(app.opportunitiesService))
+
 				r.Route("/tags", func(r chi.Router) {
 					r.Get("/", opportunities.TagsGet(app.opportunitiesService))
 					r.
