@@ -74,6 +74,7 @@ func (app *App) Router() *chi.Mux {
 
 				r.Get("/", organizations.GetOrganizationProfile(app.organizationsService))
 				r.With(permissions.Require(scopes.ScopeAdmin)).Patch("/", organizations.UpdateOrganizationProfile(app.organizationsService))
+				r.With(permissions.Require(scopes.ScopeAdmin)).Delete("/", organizations.DeleteOrganization(app.organizationsService))
 
 				r.Get("/tags", organizations.GetOrganizationTags(app.organizationsService))
 				r.With(permissions.Require(scopes.ScopeAdmin)).Post("/tags", organizations.PostOrganizationTags(app.organizationsService))
@@ -98,6 +99,24 @@ func (app *App) Router() *chi.Mux {
 				r.
 					With(permissions.Require(scopes.ScopeAuthenticated)).
 					Patch("/", opportunities.Patch(app.opportunitiesService))
+				r.
+					With(permissions.Require(scopes.ScopeAuthenticated)).
+					Delete("/", opportunities.Delete(app.opportunitiesService))
+
+				r.Route("/tags", func(r chi.Router) {
+					r.Get("/", opportunities.TagsGet(app.opportunitiesService))
+					r.
+						With(permissions.Require(scopes.ScopeAuthenticated)).
+						Post("/", opportunities.TagsPost(app.opportunitiesService))
+
+					r.Route("/{tagID}", func(r chi.Router) {
+						r.Use(idctx.Prepare("tagID"))
+
+						r.
+							With(permissions.Require(scopes.ScopeAuthenticated)).
+							Delete("/", opportunities.TagsDelete(app.opportunitiesService))
+					})
+				})
 			})
 		})
 	})

@@ -200,6 +200,35 @@ func CreateOrganization(organizationsService organizations.Service) http.Handler
 	}
 }
 
+// DeleteOrganization deletes a single organization by ID.
+func DeleteOrganization(organizationsService organizations.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		organizationIDString := chi.URLParam(r, "organizationID")
+		organizationID, err := strconv.ParseInt(organizationIDString, 10, 64)
+		if err != nil {
+			resp.BadRequest(w, r, resp.Error(400, "invalid organization id"))
+			return
+		}
+
+		err = organizationsService.DeleteOrganization(organizationID)
+		if err != nil {
+			switch err.(type) {
+			case *organizations.ErrOrganizationNotFound:
+				resp.NotFound(w, r, resp.Error(404, err.Error()))
+			case *organizations.ErrServerError:
+				resp.ServerError(w, r, resp.Error(500, err.Error()))
+			default:
+				resp.ServerError(w, r, resp.UnknownError)
+			}
+			return
+		}
+
+		resp.OK(w, r, map[string]bool{
+			"success": true,
+		})
+	}
+}
+
 type organizationTagsResponse struct {
 	Tags []models.Tag `json:"tags"`
 }

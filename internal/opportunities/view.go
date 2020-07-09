@@ -1,5 +1,7 @@
 package opportunities
 
+import "github.com/joinimpact/api/internal/models"
+
 // OpportunityView is a representation of how the opportunities will be returned by the API.
 type OpportunityView struct {
 	ID             int64         `json:"id"`
@@ -9,6 +11,7 @@ type OpportunityView struct {
 	Title          string        `json:"title"`
 	Description    string        `json:"description"`
 	Public         bool          `json:"public" scope:"manager"`
+	Tags           []models.Tag  `json:"tags"` // the model's tags
 	Stats          *Stats        `json:"stats" scope:"manager"`
 	Requirements   *Requirements `json:"requirements"`
 	Limits         *Limits       `json:"limits"`
