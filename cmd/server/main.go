@@ -59,6 +59,7 @@ func main() {
 		&models.Opportunity{},
 		&models.OpportunityLimits{},
 		&models.OpportunityRequirements{},
+		&models.OpportunityTag{},
 		&models.PasswordResetKey{},
 		&models.UserTag{},
 		&models.Tag{},
@@ -100,12 +101,13 @@ func main() {
 	opportunityRepository := postgres.NewOpportunityRepository(db, &log.Logger)
 	opportunityRequirementsRepository := postgres.NewOpportunityRequirementsRepository(db, &log.Logger)
 	opportunityLimitsRepository := postgres.NewOpportunityLimitsRepository(db, &log.Logger)
+	opportunityTagRepository := postgres.NewOpportunityTagRepository(db, &log.Logger)
 
 	// Internal services
 	usersService := users.NewService(userRepository, userProfileFieldRepository, userTagRepository, tagRepository, config, &log.Logger, snowflakeService, locationService)
 	authenticationService := authentication.NewService(userRepository, passwordResetRepository, thirdPartyIdentityRepository, config, &log.Logger, snowflakeService, emailService)
 	organizationsService := organizations.NewService(organizationRepository, organizationMembershipRepository, organizationMembershipInviteRepository, organizationProfileFieldRepository, organizationTagRepository, userRepository, tagRepository, config, &log.Logger, snowflakeService, emailService, locationService)
-	opportunitiesService := opportunities.NewService(opportunityRepository, opportunityRequirementsRepository, opportunityLimitsRepository, tagRepository, config, &log.Logger, snowflakeService, emailService)
+	opportunitiesService := opportunities.NewService(opportunityRepository, opportunityRequirementsRepository, opportunityLimitsRepository, opportunityTagRepository, tagRepository, config, &log.Logger, snowflakeService, emailService)
 	tagsService := tags.NewService(tagRepository, config, &log.Logger, snowflakeService)
 
 	// Create a new app using the new config.

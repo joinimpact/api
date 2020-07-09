@@ -30,6 +30,8 @@ type Service interface {
 	SetOrganizationProfileField(organizationID int64, profileField models.OrganizationProfileField) error
 	// CreateOrganization creates a new organization and returns the ID on success.
 	CreateOrganization(organization models.Organization) (int64, error)
+	// DeleteOrganization deletes a single organization by ID.
+	DeleteOrganization(id int64) error
 	// GetOrganizationTags gets all of a user's tags.
 	GetOrganizationTags(organizationID int64) ([]models.Tag, error)
 	// AddOrganizationTags adds tags to a user by tag name.
@@ -251,6 +253,16 @@ func (s *service) CreateOrganization(organization models.Organization) (int64, e
 	}
 
 	return organization.ID, nil
+}
+
+// DeleteOrganization deletes a single organization by ID.
+func (s *service) DeleteOrganization(id int64) error {
+	err := s.organizationRepository.DeleteByID(id)
+	if err != nil {
+		return NewErrOrganizationNotFound()
+	}
+
+	return nil
 }
 
 // GetOrganizationTags gets all of a user's tags.

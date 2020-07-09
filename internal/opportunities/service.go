@@ -20,8 +20,16 @@ type Service interface {
 	GetOpportunity(ctx context.Context, id int64) (*OpportunityView, error)
 	// CreateOpportunity creates a new opportunity and returns the ID on success.
 	CreateOpportunity(ctx context.Context, opportunity OpportunityView) (int64, error)
+	// DeleteOpportunity deletes a single opportunity by ID.
+	DeleteOpportunity(ctx context.Context, id int64) error
 	// UpdateOpportunity updates changed fields on an opportunity entity.
 	UpdateOpportunity(ctx context.Context, opportunity OpportunityView) error
+	// GetOpportunityTags gets all of a user's tags.
+	GetOpportunityTags(ctx context.Context, opportunityID int64) ([]models.Tag, error)
+	// AddOpportunityTags adds tags to a user by tag name.
+	AddOpportunityTags(ctx context.Context, opportunityID int64, tags []string) (int, error)
+	// RemoveOpportunityTag removes a tag from an opportunity by id.
+	RemoveOpportunityTag(ctx context.Context, opportunityID, tagID int64) error
 }
 
 // service represents the intenral implementation of the opportunities Service.
@@ -29,6 +37,7 @@ type service struct {
 	opportunityRepository             models.OpportunityRepository
 	opportunityRequirementsRepository models.OpportunityRequirementsRepository
 	opportunityLimitsRepository       models.OpportunityLimitsRepository
+	opportunityTagRepository          models.OpportunityTagRepository
 	tagRepository                     models.TagRepository
 	config                            *config.Config
 	logger                            *zerolog.Logger
@@ -38,11 +47,12 @@ type service struct {
 }
 
 // NewService creates and returns a new Opportunities service with the provifded dependencies.
-func NewService(opportunityRepository models.OpportunityRepository, opportunityRequirementsRepository models.OpportunityRequirementsRepository, opportunityLimitsRepository models.OpportunityLimitsRepository, tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service) Service {
+func NewService(opportunityRepository models.OpportunityRepository, opportunityRequirementsRepository models.OpportunityRequirementsRepository, opportunityLimitsRepository models.OpportunityLimitsRepository, opportunityTagRepository models.OpportunityTagRepository, tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service) Service {
 	return &service{
 		opportunityRepository,
 		opportunityRequirementsRepository,
 		opportunityLimitsRepository,
+		opportunityTagRepository,
 		tagRepository,
 		config,
 		logger,
@@ -118,6 +128,8 @@ func (s *service) GetOpportunity(ctx context.Context, id int64) (*OpportunityVie
 			}
 		}
 	}
+
+	view.Tags, _ = s.GetOpportunityTags(ctx, opportunity.ID)
 
 	return view, nil
 }
@@ -228,4 +240,100 @@ func (s *service) UpdateOpportunity(ctx context.Context, view OpportunityView) e
 	}
 
 	return nil
+}
+
+// DeleteOpportunity deletes a single opportunity by ID.
+func (s *service) DeleteOpportunity(ctx context.Context, id int64) error {
+	err := s.opportunityRepository.DeleteByID(id)
+	if err != nil {
+		return NewErrOpportunityNotFound()
+	}
+
+	return nil
+}
+
+// GetOpportunityTags gets all of an opportunity's tags.
+func (s *service) GetOpportunityTags(ctx context.Context, opportunityID int64) ([]models.Tag, error) {
+	_, err := s.opportunityRepository.FindByID(opportunityID)
+	if err != nil {
+		return nil, NewErrOrganizationNotFound()
+	}
+
+	// Find all OpportunityTag objects by organization ID.
+	opportunityTags, err := s.opportunityTagRepository.FindByOpportunityID(opportunityID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	tags := []models.Tag{}
+	for _, opportunityTag := range opportunityTags {
+		// Get the tag by ID.
+		tag, err := s.tagRepository.FindByID(opportunityTag.TagID)
+		if err != nil {
+			// Tag not found, skip.
+			s.logger.Error().Err(err).Msg("Error in GetOpportunityTags: OpportunityTag object missing valid Tag")
+			continue
+		}
+
+		// Append the tag to the tags array.
+		tags = append(tags, *tag)
+	}
+
+	return tags, nil
+}
+
+// AddOpportunityTags adds tags to a user by tag name.
+func (s *service) AddOpportunityTags(ctx context.Context, opportunityID int64, tags []string) (int, error) {
+	// successfulTags counts how many tags were inserted correctly.
+	successfulTags := 0
+
+	_, err := s.opportunityRepository.FindByID(opportunityID)
+	if err != nil {
+		return successfulTags, NewErrOrganizationNotFound()
+	}
+
+	for _, tag := range tags {
+		tag, err := s.tagRepository.FindByName(tag)
+		if err != nil {
+			// Log the error and skip the tag.
+			s.logger.Error().Err(err).Msg("Error in AddOpportunityTags finding a tag")
+			continue
+		}
+
+		// Increment the successful tags value as the tag was found.
+		successfulTags++
+
+		// Check to see if the organization already has this tag.
+		_, err = s.opportunityTagRepository.FindOpportunityTagByID(opportunityID, tag.ID)
+		if err == nil {
+			// The organization already has this tag, skip.
+			continue
+		}
+
+		// Create a new UserTag entity.
+		id := s.snowflakeService.GenerateID()
+		err = s.opportunityTagRepository.Create(models.OpportunityTag{
+			Model: models.Model{
+				ID: id,
+			},
+			OpportunityID: opportunityID,
+			TagID:         tag.ID,
+		})
+		if err != nil {
+			s.logger.Error().Err(err).Msg("Error in AddOpportunityTags creating a OpportunityTag")
+			return successfulTags - 1, NewErrServerError()
+		}
+	}
+
+	return successfulTags, nil
+}
+
+// RemoveOpportunityTag removes a tag from an organization by id.
+func (s *service) RemoveOpportunityTag(ctx context.Context, opportunityID, tagID int64) error {
+	opportunityTag, err := s.opportunityTagRepository.FindOpportunityTagByID(opportunityID, tagID)
+	if err != nil {
+		return NewErrTagNotFound()
+	}
+
+	return s.opportunityTagRepository.DeleteByID(opportunityTag.ID)
 }

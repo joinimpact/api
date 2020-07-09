@@ -20,7 +20,7 @@ func Marshal(scope Scope, input interface{}) interface{} {
 		value = value.Elem()
 	}
 
-	if isEmptyValue(value) || !value.CanInterface() {
+	if isEmptyValue(value) || !value.IsValid() || !value.CanInterface() {
 		return input
 	}
 
@@ -97,20 +97,6 @@ func Marshal(scope Scope, input interface{}) interface{} {
 		if name == "" {
 			// If there is no json tag, use the field name.
 			name = inputType.Field(i).Name
-		}
-
-		if isEmptyValue(value.Field(i)) {
-			field := value.Field(i)
-			if field.Type().Kind() == reflect.Ptr {
-				field = value.Field(i).Elem()
-			}
-
-			output[name] = field.Interface()
-			continue
-		}
-
-		if !value.Field(i).CanInterface() {
-			continue
 		}
 
 		item := value.Field(i).Interface()
