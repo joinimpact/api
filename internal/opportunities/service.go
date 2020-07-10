@@ -3,6 +3,8 @@ package opportunities
 import (
 	"context"
 	"fmt"
+	"io"
+	"time"
 
 	"github.com/joinimpact/api/internal/cdn"
 	"github.com/joinimpact/api/internal/config"
@@ -30,29 +32,41 @@ type Service interface {
 	AddOpportunityTags(ctx context.Context, opportunityID int64, tags []string) (int, error)
 	// RemoveOpportunityTag removes a tag from an opportunity by id.
 	RemoveOpportunityTag(ctx context.Context, opportunityID, tagID int64) error
+	// UploadProfilePicture uploads a profile picture to the CDN and adds it to the opportunity.
+	UploadProfilePicture(opportunityID int64, fileReader io.Reader) (string, error)
+	// RequestOpportunityMembership creates a membership request (as a volunteer) to join an opportunity.
+	RequestOpportunityMembership(ctx context.Context, opportunityID int64, volunteerID int64) error
+	// GetOpportunityVolunteers returns an array of OpportunityMembership volunteer objects for a specified opportunity by ID.
+	GetOpportunityVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembership, error)
 }
 
 // service represents the intenral implementation of the opportunities Service.
 type service struct {
-	opportunityRepository             models.OpportunityRepository
-	opportunityRequirementsRepository models.OpportunityRequirementsRepository
-	opportunityLimitsRepository       models.OpportunityLimitsRepository
-	opportunityTagRepository          models.OpportunityTagRepository
-	tagRepository                     models.TagRepository
-	config                            *config.Config
-	logger                            *zerolog.Logger
-	snowflakeService                  snowflakes.SnowflakeService
-	emailService                      email.Service
-	cdnClient                         *cdn.Client
+	opportunityRepository                  models.OpportunityRepository
+	opportunityRequirementsRepository      models.OpportunityRequirementsRepository
+	opportunityLimitsRepository            models.OpportunityLimitsRepository
+	opportunityTagRepository               models.OpportunityTagRepository
+	opportunityMembershipRepository        models.OpportunityMembershipRepository
+	opportunityMembershipRequestRepository models.OpportunityMembershipRequestRepository
+	opportunityMembershipInviteRepository  models.OpportunityMembershipInviteRepository
+	tagRepository                          models.TagRepository
+	config                                 *config.Config
+	logger                                 *zerolog.Logger
+	snowflakeService                       snowflakes.SnowflakeService
+	emailService                           email.Service
+	cdnClient                              *cdn.Client
 }
 
 // NewService creates and returns a new Opportunities service with the provifded dependencies.
-func NewService(opportunityRepository models.OpportunityRepository, opportunityRequirementsRepository models.OpportunityRequirementsRepository, opportunityLimitsRepository models.OpportunityLimitsRepository, opportunityTagRepository models.OpportunityTagRepository, tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service) Service {
+func NewService(opportunityRepository models.OpportunityRepository, opportunityRequirementsRepository models.OpportunityRequirementsRepository, opportunityLimitsRepository models.OpportunityLimitsRepository, opportunityTagRepository models.OpportunityTagRepository, opportunityMembershipRepository models.OpportunityMembershipRepository, opportunityMembershipRequestRepository models.OpportunityMembershipRequestRepository, opportunityMembershipInviteRepository models.OpportunityMembershipInviteRepository, tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service) Service {
 	return &service{
 		opportunityRepository,
 		opportunityRequirementsRepository,
 		opportunityLimitsRepository,
 		opportunityTagRepository,
+		opportunityMembershipRepository,
+		opportunityMembershipRequestRepository,
+		opportunityMembershipInviteRepository,
 		tagRepository,
 		config,
 		logger,
@@ -336,4 +350,54 @@ func (s *service) RemoveOpportunityTag(ctx context.Context, opportunityID, tagID
 	}
 
 	return s.opportunityTagRepository.DeleteByID(opportunityTag.ID)
+}
+
+// UploadProfilePicture uploads a profile picture to the CDN and adds it to the opportunity.
+func (s *service) UploadProfilePicture(opportunityID int64, fileReader io.Reader) (string, error) {
+	url, err := s.cdnClient.UploadImage(fmt.Sprintf("opportunity-picture-%d-%d.png", opportunityID, time.Now().UTC().Unix()), fileReader)
+	if err != nil {
+		return "", err
+	}
+
+	return url, s.opportunityRepository.Update(models.Opportunity{
+		Model: models.Model{
+			ID: opportunityID,
+		},
+		ProfilePicture: url,
+	})
+}
+
+// RequestOpportunityMembership creates a membership request (as a volunteer) to join an opportunity.
+func (s *service) RequestOpportunityMembership(ctx context.Context, opportunityID int64, volunteerID int64) error {
+	// Create an ID for the request.
+	id := s.snowflakeService.GenerateID()
+
+	// Cretae the membership request entity.
+	opportunityMembershipRequest := models.OpportunityMembershipRequest{
+		Model: models.Model{
+			ID: id,
+		},
+		Accepted:      false,
+		VolunteerID:   volunteerID,
+		OpportunityID: opportunityID,
+	}
+
+	// Attempt to create the entity.
+	err := s.opportunityMembershipRequestRepository.Create(opportunityMembershipRequest)
+	if err != nil {
+		return NewErrServerError()
+	}
+
+	return nil
+}
+
+// GetOpportunityVolunteers returns an array of OpportunityMembership volunteer objects for a specified opportunity by ID.
+func (s *service) GetOpportunityVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembership, error) {
+	// Get all memberships.
+	memberships, err := s.opportunityMembershipRepository.FindByOpportunityID(opportunityID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	return memberships, nil
 }

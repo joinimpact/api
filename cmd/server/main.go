@@ -60,6 +60,11 @@ func main() {
 		&models.OpportunityLimits{},
 		&models.OpportunityRequirements{},
 		&models.OpportunityTag{},
+		&models.OpportunityMembership{},
+		&models.OpportunityMembershipRequest{},
+		&models.OpportunityMembershipInvite{},
+		&models.Conversation{},
+		&models.ConversationOpportunityMembershipRequest{},
 		&models.PasswordResetKey{},
 		&models.UserTag{},
 		&models.Tag{},
@@ -102,12 +107,15 @@ func main() {
 	opportunityRequirementsRepository := postgres.NewOpportunityRequirementsRepository(db, &log.Logger)
 	opportunityLimitsRepository := postgres.NewOpportunityLimitsRepository(db, &log.Logger)
 	opportunityTagRepository := postgres.NewOpportunityTagRepository(db, &log.Logger)
+	opportunityMembershipRepository := postgres.NewOpportunityMembershipRepository(db, &log.Logger)
+	opportunityMembershipRequestRepository := postgres.NewOpportunityMembershipRequestRepository(db, &log.Logger)
+	opportunityMembershipInviteRepository := postgres.NewOpportunityMembershipInviteRepository(db, &log.Logger)
 
 	// Internal services
 	usersService := users.NewService(userRepository, userProfileFieldRepository, userTagRepository, tagRepository, config, &log.Logger, snowflakeService, locationService)
 	authenticationService := authentication.NewService(userRepository, passwordResetRepository, thirdPartyIdentityRepository, config, &log.Logger, snowflakeService, emailService)
 	organizationsService := organizations.NewService(organizationRepository, organizationMembershipRepository, organizationMembershipInviteRepository, organizationProfileFieldRepository, organizationTagRepository, userRepository, tagRepository, config, &log.Logger, snowflakeService, emailService, locationService)
-	opportunitiesService := opportunities.NewService(opportunityRepository, opportunityRequirementsRepository, opportunityLimitsRepository, opportunityTagRepository, tagRepository, config, &log.Logger, snowflakeService, emailService)
+	opportunitiesService := opportunities.NewService(opportunityRepository, opportunityRequirementsRepository, opportunityLimitsRepository, opportunityTagRepository, opportunityMembershipRepository, opportunityMembershipRequestRepository, opportunityMembershipInviteRepository, tagRepository, config, &log.Logger, snowflakeService, emailService)
 	tagsService := tags.NewService(tagRepository, config, &log.Logger, snowflakeService)
 
 	// Create a new app using the new config.
