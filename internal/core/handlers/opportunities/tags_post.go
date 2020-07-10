@@ -9,7 +9,7 @@ import (
 	"github.com/joinimpact/api/pkg/resp"
 )
 
-// TagsPost adds tags to an organization's profile.
+// TagsPost adds tags to an opportunity's profile.
 func TagsPost(opportunitiesService opportunities.Service) http.HandlerFunc {
 	type request struct {
 		Name string `json:"name" validate:"min=2,max=24"`
