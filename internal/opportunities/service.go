@@ -36,6 +36,8 @@ type Service interface {
 	UploadProfilePicture(opportunityID int64, fileReader io.Reader) (string, error)
 	// RequestOpportunityMembership creates a membership request (as a volunteer) to join an opportunity.
 	RequestOpportunityMembership(ctx context.Context, opportunityID int64, volunteerID int64) error
+	// GetOpportunityVolunteers returns an array of OpportunityMembership volunteer objects for a specified opportunity by ID.
+	GetOpportunityVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembership, error)
 }
 
 // service represents the intenral implementation of the opportunities Service.
@@ -387,4 +389,15 @@ func (s *service) RequestOpportunityMembership(ctx context.Context, opportunityI
 	}
 
 	return nil
+}
+
+// GetOpportunityVolunteers returns an array of OpportunityMembership volunteer objects for a specified opportunity by ID.
+func (s *service) GetOpportunityVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembership, error) {
+	// Get all memberships.
+	memberships, err := s.opportunityMembershipRepository.FindByOpportunityID(opportunityID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	return memberships, nil
 }
