@@ -34,6 +34,8 @@ type Service interface {
 	RemoveOpportunityTag(ctx context.Context, opportunityID, tagID int64) error
 	// UploadProfilePicture uploads a profile picture to the CDN and adds it to the opportunity.
 	UploadProfilePicture(opportunityID int64, fileReader io.Reader) (string, error)
+	// RequestOpportunityMembership creates a membership request (as a volunteer) to join an opportunity.
+	RequestOpportunityMembership(ctx context.Context, opportunityID int64, volunteerID int64) error
 }
 
 // service represents the intenral implementation of the opportunities Service.
@@ -361,4 +363,28 @@ func (s *service) UploadProfilePicture(opportunityID int64, fileReader io.Reader
 		},
 		ProfilePicture: url,
 	})
+}
+
+// RequestOpportunityMembership creates a membership request (as a volunteer) to join an opportunity.
+func (s *service) RequestOpportunityMembership(ctx context.Context, opportunityID int64, volunteerID int64) error {
+	// Create an ID for the request.
+	id := s.snowflakeService.GenerateID()
+
+	// Cretae the membership request entity.
+	opportunityMembershipRequest := models.OpportunityMembershipRequest{
+		Model: models.Model{
+			ID: id,
+		},
+		Accepted:      false,
+		VolunteerID:   volunteerID,
+		OpportunityID: opportunityID,
+	}
+
+	// Attempt to create the entity.
+	err := s.opportunityMembershipRequestRepository.Create(opportunityMembershipRequest)
+	if err != nil {
+		return NewErrServerError()
+	}
+
+	return nil
 }
