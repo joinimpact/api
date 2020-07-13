@@ -2822,6 +2822,99 @@
         }
       }
     },
+    "/opportunities/{opportunityId}/publish": {
+      "post": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "Attempts to publish an opportunity. Will return an error if the opportunity is not publishable. Requires manager status.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "opportunityId",
+            "description": "The ID of the opportunity.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success! The opportunity was published."
+          },
+          "400": {
+            "description": "The opportunity is currently unpublishable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "errors"
+                  ],
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "number",
+                            "example": 98
+                          },
+                          "invalidFields": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "example": [
+                              "description"
+                            ]
+                          },
+                          "msg": {
+                            "type": "string",
+                            "example": "missing or invalid fields"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
+    "/opportunities/{opportunityId}/unpublish": {
+      "post": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "Unpublishes a published opportunity. Requires manager status.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "opportunityId",
+            "description": "The ID of the opportunity.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success! The opportunity was unpublished."
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
     "/tags": {
       "get": {
         "tags": [
