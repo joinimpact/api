@@ -119,6 +119,13 @@ func (app *App) Router() *chi.Mux {
 						Get("/", opportunities.VolunteersGet(app.opportunitiesService, app.usersService))
 				})
 
+				r.
+					With(permissions.Require(scopes.ScopeAuthenticated)).
+					Post("/publish", opportunities.PublishPost(app.opportunitiesService))
+				r.
+					With(permissions.Require(scopes.ScopeAuthenticated)).
+					Post("/unpublish", opportunities.UnpublishPost(app.opportunitiesService))
+
 				r.Route("/tags", func(r chi.Router) {
 					r.Get("/", opportunities.TagsGet(app.opportunitiesService))
 					r.

@@ -54,6 +54,11 @@ func (r *opportunityRepository) Update(opportunity models.Opportunity) error {
 	return r.db.Model(&models.Opportunity{}).Updates(opportunity).Error
 }
 
+// Save saves all fields in the provided entity.
+func (r *opportunityRepository) Save(opportunity models.Opportunity) error {
+	return r.db.Save(opportunity).Error
+}
+
 // DeleteByID deletes a User by ID.
 func (r *opportunityRepository) DeleteByID(id int64) error {
 	return r.db.Delete(&models.Opportunity{

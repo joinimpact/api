@@ -26,6 +26,8 @@ type OpportunityRepository interface {
 	Create(opportunity Opportunity) error
 	// Update updates an entity with the ID in the provided entity.
 	Update(opportunity Opportunity) error
+	// Save saves all fields in the provided entity.
+	Save(opportunity Opportunity) error
 	// DeleteByID deletes an entity by ID.
 	DeleteByID(id int64) error
 }

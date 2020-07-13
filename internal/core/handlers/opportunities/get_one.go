@@ -28,6 +28,7 @@ func GetOne(opportunitiesService opportunities.Service) http.HandlerFunc {
 			default:
 				resp.ServerError(w, r, resp.UnknownError)
 			}
+			return
 		}
 
 		resp.OK(w, r, opportunity)

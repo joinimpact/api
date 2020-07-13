@@ -72,11 +72,12 @@ func (e *ErrOpportunityNotFound) Error() string {
 
 // ErrOpportunityNotPublishable is thrown when an opportunity is missing required fields and is unable to be published.
 type ErrOpportunityNotPublishable struct {
+	InvalidFields []string
 }
 
 // NewErrOpportunityNotPublishable creates and returns a ErrOpportunityNotPublishable.
-func NewErrOpportunityNotPublishable() error {
-	return &ErrOpportunityNotPublishable{}
+func NewErrOpportunityNotPublishable(invalidFields []string) error {
+	return &ErrOpportunityNotPublishable{invalidFields}
 }
 
 // Error provides a string representation of the error.

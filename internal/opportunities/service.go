@@ -40,6 +40,10 @@ type Service interface {
 	GetOpportunityVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembership, error)
 	// GetOpportunityPendingVolunteers returns an array of OpportunityMembershipRequest objects for a specified opportunity by ID.
 	GetOpportunityPendingVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembershipRequest, error)
+	// PublishOpportunity attempts to publish an opportunity and returns an error if the opportunity is unpublishable.
+	PublishOpportunity(ctx context.Context, opportunityID int64) error
+	// UnpublishOpportunity unpublishes an opportunity.
+	UnpublishOpportunity(ctx context.Context, opportunityID int64) error
 }
 
 // service represents the intenral implementation of the opportunities Service.
@@ -230,7 +234,7 @@ func (s *service) UpdateOpportunity(ctx context.Context, view OpportunityView) e
 		limits.VolunteersCapActive = view.Limits.VolunteersCap.Active
 		limits.VolunteersCap = view.Limits.VolunteersCap.Cap
 
-		err = s.opportunityLimitsRepository.Update(*limits)
+		err = s.opportunityLimitsRepository.Save(*limits)
 		if err != nil {
 			return NewErrServerError()
 		}
@@ -249,7 +253,7 @@ func (s *service) UpdateOpportunity(ctx context.Context, view OpportunityView) e
 		requirements.ExpectedHoursActive = view.Requirements.ExpectedHours.Active
 		requirements.ExpectedHours = view.Requirements.ExpectedHours.Hours
 
-		err = s.opportunityRequirementsRepository.Update(*requirements)
+		err = s.opportunityRequirementsRepository.Save(*requirements)
 		if err != nil {
 			return NewErrServerError()
 		}
@@ -423,4 +427,43 @@ func (s *service) GetOpportunityPendingVolunteers(ctx context.Context, opportuni
 	}
 
 	return requests, nil
+}
+
+// PublishOpportunity attempts to publish an opportunity and returns an error if the opportunity is unpublishable.
+func (s *service) PublishOpportunity(ctx context.Context, opportunityID int64) error {
+	opportunity, err := s.opportunityRepository.FindByID(opportunityID)
+	if err != nil {
+		return NewErrOpportunityNotFound()
+	}
+
+	// Validate that the opportunity is publishable.
+	if invalidFields, ok := isPublishable(*opportunity); !ok {
+		return NewErrOpportunityNotPublishable(invalidFields)
+	}
+
+	opportunity.Public = true
+
+	err = s.opportunityRepository.Save(*opportunity)
+	if err != nil {
+		return NewErrServerError()
+	}
+
+	return nil
+}
+
+// UnpublishOpportunity unpublishes an opportunity.
+func (s *service) UnpublishOpportunity(ctx context.Context, opportunityID int64) error {
+	opportunity, err := s.opportunityRepository.FindByID(opportunityID)
+	if err != nil {
+		return NewErrOpportunityNotFound()
+	}
+
+	opportunity.Public = false
+
+	err = s.opportunityRepository.Save(*opportunity)
+	if err != nil {
+		return NewErrServerError()
+	}
+
+	return nil
 }

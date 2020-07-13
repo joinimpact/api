@@ -18,6 +18,8 @@ type OpportunityLimitsRepository interface {
 	Create(opportunityLimits OpportunityLimits) error
 	// Update updates an entity with the ID in the provided entity.
 	Update(opportunityLimits OpportunityLimits) error
+	// Save saves all fields in the provided entity.
+	Save(opportunityLimits OpportunityLimits) error
 	// DeleteByID deletes an entity by ID.
 	DeleteByID(id int64) error
 }
