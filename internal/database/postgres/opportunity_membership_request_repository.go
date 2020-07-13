@@ -32,7 +32,7 @@ func (r *opportunityMembershipRequestRepository) FindByID(id int64) (*models.Opp
 // FindByVolunteerID finds multiple entities by the volunteer ID.
 func (r *opportunityMembershipRequestRepository) FindByVolunteerID(volunteerID int64) ([]models.OpportunityMembershipRequest, error) {
 	var opportunityMembershipRequests []models.OpportunityMembershipRequest
-	if err := r.db.Where("invitee_id = ? AND accepted = False", volunteerID).Find(&opportunityMembershipRequests).Error; err != nil {
+	if err := r.db.Where("volunteer_id = ? AND accepted = False", volunteerID).Find(&opportunityMembershipRequests).Error; err != nil {
 		return opportunityMembershipRequests, err
 	}
 	return opportunityMembershipRequests, nil
@@ -45,6 +45,15 @@ func (r *opportunityMembershipRequestRepository) FindByOpportunityID(opportunity
 		return opportunityMembershipRequests, err
 	}
 	return opportunityMembershipRequests, nil
+}
+
+// FindInOpportunityByVolunteerID finds a single entity by opportunity and volunteer ID.
+func (r *opportunityMembershipRequestRepository) FindInOpportunityByVolunteerID(opportunityID, volunteerID int64) (*models.OpportunityMembershipRequest, error) {
+	var opportunityMembership models.OpportunityMembershipRequest
+	if err := r.db.Where("opportunity_id = ? AND volunteer_id = ?", opportunityID, volunteerID).First(&opportunityMembership).Error; err != nil {
+		return &opportunityMembership, err
+	}
+	return &opportunityMembership, nil
 }
 
 // Create creates a new entity.

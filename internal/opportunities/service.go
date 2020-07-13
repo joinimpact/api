@@ -35,9 +35,11 @@ type Service interface {
 	// UploadProfilePicture uploads a profile picture to the CDN and adds it to the opportunity.
 	UploadProfilePicture(opportunityID int64, fileReader io.Reader) (string, error)
 	// RequestOpportunityMembership creates a membership request (as a volunteer) to join an opportunity.
-	RequestOpportunityMembership(ctx context.Context, opportunityID int64, volunteerID int64) error
+	RequestOpportunityMembership(ctx context.Context, opportunityID int64, volunteerID int64) (int64, error)
 	// GetOpportunityVolunteers returns an array of OpportunityMembership volunteer objects for a specified opportunity by ID.
 	GetOpportunityVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembership, error)
+	// GetOpportunityPendingVolunteers returns an array of OpportunityMembershipRequest objects for a specified opportunity by ID.
+	GetOpportunityPendingVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembershipRequest, error)
 }
 
 // service represents the intenral implementation of the opportunities Service.
@@ -368,7 +370,17 @@ func (s *service) UploadProfilePicture(opportunityID int64, fileReader io.Reader
 }
 
 // RequestOpportunityMembership creates a membership request (as a volunteer) to join an opportunity.
-func (s *service) RequestOpportunityMembership(ctx context.Context, opportunityID int64, volunteerID int64) error {
+func (s *service) RequestOpportunityMembership(ctx context.Context, opportunityID int64, volunteerID int64) (int64, error) {
+	_, err := s.opportunityMembershipRepository.FindUserInOpportunity(opportunityID, volunteerID)
+	if err == nil {
+		return 0, NewErrMembershipAlreadyRequested()
+	}
+
+	_, err = s.opportunityMembershipRequestRepository.FindInOpportunityByVolunteerID(opportunityID, volunteerID)
+	if err == nil {
+		return 0, NewErrMembershipAlreadyRequested()
+	}
+
 	// Create an ID for the request.
 	id := s.snowflakeService.GenerateID()
 
@@ -383,12 +395,12 @@ func (s *service) RequestOpportunityMembership(ctx context.Context, opportunityI
 	}
 
 	// Attempt to create the entity.
-	err := s.opportunityMembershipRequestRepository.Create(opportunityMembershipRequest)
+	err = s.opportunityMembershipRequestRepository.Create(opportunityMembershipRequest)
 	if err != nil {
-		return NewErrServerError()
+		return 0, NewErrServerError()
 	}
 
-	return nil
+	return id, nil
 }
 
 // GetOpportunityVolunteers returns an array of OpportunityMembership volunteer objects for a specified opportunity by ID.
@@ -400,4 +412,15 @@ func (s *service) GetOpportunityVolunteers(ctx context.Context, opportunityID in
 	}
 
 	return memberships, nil
+}
+
+// GetOpportunityPendingVolunteers returns an array of OpportunityMembershipRequest objects for a specified opportunity by ID.
+func (s *service) GetOpportunityPendingVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembershipRequest, error) {
+	// Get all membership requests by opportunity ID.
+	requests, err := s.opportunityMembershipRequestRepository.FindByOpportunityID(opportunityID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	return requests, nil
 }

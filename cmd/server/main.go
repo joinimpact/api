@@ -5,6 +5,7 @@ import (
 
 	"github.com/joinimpact/api/internal/authentication"
 	"github.com/joinimpact/api/internal/config"
+	"github.com/joinimpact/api/internal/conversations"
 	"github.com/joinimpact/api/internal/database/postgres"
 	"github.com/joinimpact/api/internal/email"
 	"github.com/joinimpact/api/internal/models"
@@ -65,6 +66,8 @@ func main() {
 		&models.OpportunityMembershipInvite{},
 		&models.Conversation{},
 		&models.ConversationOpportunityMembershipRequest{},
+		&models.ConversationMembership{},
+		&models.Message{},
 		&models.PasswordResetKey{},
 		&models.UserTag{},
 		&models.Tag{},
@@ -110,16 +113,22 @@ func main() {
 	opportunityMembershipRepository := postgres.NewOpportunityMembershipRepository(db, &log.Logger)
 	opportunityMembershipRequestRepository := postgres.NewOpportunityMembershipRequestRepository(db, &log.Logger)
 	opportunityMembershipInviteRepository := postgres.NewOpportunityMembershipInviteRepository(db, &log.Logger)
+	conversationRepository := postgres.NewConversationRepository(db, &log.Logger)
+	conversationMembershipRepository := postgres.NewConversationMembershipRepository(db, &log.Logger)
+	conversationOpportunityMembershipRequestRepository := postgres.NewConversationOpportunityMembershipRequestRepository(db, &log.Logger)
+	conversationOrganizationMembershipRepository := postgres.NewConversationOrganizationMembershipRepository(db, &log.Logger)
+	messageRepository := postgres.NewMessageRepository(db, &log.Logger)
 
 	// Internal services
 	usersService := users.NewService(userRepository, userProfileFieldRepository, userTagRepository, tagRepository, config, &log.Logger, snowflakeService, locationService)
 	authenticationService := authentication.NewService(userRepository, passwordResetRepository, thirdPartyIdentityRepository, config, &log.Logger, snowflakeService, emailService)
 	organizationsService := organizations.NewService(organizationRepository, organizationMembershipRepository, organizationMembershipInviteRepository, organizationProfileFieldRepository, organizationTagRepository, userRepository, tagRepository, config, &log.Logger, snowflakeService, emailService, locationService)
 	opportunitiesService := opportunities.NewService(opportunityRepository, opportunityRequirementsRepository, opportunityLimitsRepository, opportunityTagRepository, opportunityMembershipRepository, opportunityMembershipRequestRepository, opportunityMembershipInviteRepository, tagRepository, config, &log.Logger, snowflakeService, emailService)
+	conversationsService := conversations.NewService(conversationRepository, conversationMembershipRepository, conversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository, messageRepository, usersService, config, &log.Logger, snowflakeService, emailService)
 	tagsService := tags.NewService(tagRepository, config, &log.Logger, snowflakeService)
 
 	// Create a new app using the new config.
-	app := core.NewApp(config, &log.Logger, authenticationService, usersService, organizationsService, tagsService, opportunitiesService)
+	app := core.NewApp(config, &log.Logger, authenticationService, usersService, organizationsService, tagsService, opportunitiesService, conversationsService)
 
 	// Print a message.
 	log.Info().Int("port", int(config.Port)).Str("version", APIVersion).Msg("Listening")

@@ -1811,6 +1811,175 @@
       }
     },
     "/organizations/{organizationId}/opportunities": {
+      "get": {
+        "tags": [
+          "Opportunities",
+          "Organizations"
+        ],
+        "summary": "Gets opportunities by organization ID. Requires manager status of organization.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "description": "The ID of the organization who you are querying.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success, opportunities returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "opportunities": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "example": "123913912309"
+                                  },
+                                  "organizationId": {
+                                    "type": "string",
+                                    "example": "213123123193"
+                                  },
+                                  "creatorId": {
+                                    "type": "string",
+                                    "example": "123913913921",
+                                    "description": "Only visible if you manage the organization that owns the opportunity."
+                                  },
+                                  "profilePicture": {
+                                    "type": "string",
+                                    "example": "https://cdn.joinimpact.org/opportunity-banner-23492424449234-24234234.png"
+                                  },
+                                  "title": {
+                                    "type": "string",
+                                    "minimum": 4,
+                                    "maximum": 128,
+                                    "example": "Help code algorithms to fight climate change!"
+                                  },
+                                  "description": {
+                                    "type": "string",
+                                    "minimum": 64,
+                                    "maximum": 1024,
+                                    "example": "Your help is needed to fight climate change! This opportunity will require you to physically come to our offices in Palo Alto."
+                                  },
+                                  "public": {
+                                    "type": "boolean",
+                                    "description": "Whether or not the opportunity is public. Only visible as manager.",
+                                    "example": true
+                                  },
+                                  "tags": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "name": {
+                                          "type": "string",
+                                          "description": "The name of the tag."
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "stats": {
+                                    "type": "object",
+                                    "description": "Only visible as manager.",
+                                    "properties": {
+                                      "volunteersEnrolled": {
+                                        "type": "integer",
+                                        "example": 30
+                                      },
+                                      "volunteersPending": {
+                                        "type": "integer",
+                                        "example": 5
+                                      }
+                                    }
+                                  },
+                                  "requirements": {
+                                    "type": "object",
+                                    "properties": {
+                                      "ageLimit": {
+                                        "type": "object",
+                                        "properties": {
+                                          "active": {
+                                            "type": "boolean",
+                                            "example": true
+                                          },
+                                          "from": {
+                                            "type": "integer",
+                                            "example": 13
+                                          },
+                                          "to": {
+                                            "type": "integer",
+                                            "example": 18
+                                          }
+                                        }
+                                      },
+                                      "expectedHours": {
+                                        "type": "object",
+                                        "properties": {
+                                          "active": {
+                                            "type": "boolean",
+                                            "example": true
+                                          },
+                                          "hours": {
+                                            "type": "number",
+                                            "example": 8
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "limits": {
+                                    "type": "object",
+                                    "properties": {
+                                      "volunteersCap": {
+                                        "type": "object",
+                                        "properties": {
+                                          "active": {
+                                            "type": "boolean",
+                                            "example": true
+                                          },
+                                          "cap": {
+                                            "type": "integer",
+                                            "example": 50
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error finding organization."
+          },
+          "500": {
+            "description": "A server error occurred while fetching opportunities."
+          }
+        }
+      },
       "post": {
         "tags": [
           "Opportunities",
@@ -2454,6 +2623,201 @@
           },
           "500": {
             "description": "There was an error encoding the image or uploading it to the CDN. Please try again."
+          }
+        }
+      }
+    },
+    "/opportunities/{opportunityId}/volunteers": {
+      "get": {
+        "tags": [
+          "Opportunities"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "opportunityId",
+            "description": "The ID of the opportunity.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "summary": "Gets all volunteers in a single opportunity by opportunity ID. Requires manager status of organization.",
+        "responses": {
+          "200": {
+            "description": "Success! Volunteers will be returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "required": [
+                        "pending",
+                        "volunteers"
+                      ],
+                      "properties": {
+                        "pending": {
+                          "type": "array",
+                          "description": "Volunteers with pending requests to join.",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "accepted": {
+                                "type": "boolean",
+                                "example": false
+                              },
+                              "firstName": {
+                                "type": "string",
+                                "example": "Ky"
+                              },
+                              "id": {
+                                "type": "string",
+                                "example": "18239123"
+                              },
+                              "lastName": {
+                                "type": "string",
+                                "example": "Foog"
+                              },
+                              "opportunityId": {
+                                "type": "string",
+                                "example": "1280766037612040192"
+                              },
+                              "volunteerID": {
+                                "type": "string",
+                                "example": "1275334727808585728"
+                              }
+                            }
+                          }
+                        },
+                        "volunteers": {
+                          "type": "array",
+                          "description": "Currently enrolled volunteers.",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "firstName": {
+                                "type": "string",
+                                "example": "tyler"
+                              },
+                              "id": {
+                                "type": "string",
+                                "example": "19827378"
+                              },
+                              "inviterId": {
+                                "type": "string",
+                                "example": "1280766037612040192"
+                              },
+                              "lastName": {
+                                "type": "string",
+                                "example": "Lafayette"
+                              },
+                              "permissionsFlag": {
+                                "type": "number",
+                                "example": 0
+                              },
+                              "profilePicture": {
+                                "type": "string",
+                                "example": "https://cdn.joinimpact.org/profile-picture-1273884565403865088-1593076042.png"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Opportunity not found."
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
+    "/opportunities/{opportunityId}/request": {
+      "post": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "Attempts to request membership from an opportunity by ID. Creates and returns a conversation for chatting with the organization.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "opportunityId",
+            "description": "The ID of the opportunity.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "The message which will be sent along with the volunteer profile. Leave blank for the default message.",
+                    "minLength": 6,
+                    "maxLength": 128,
+                    "example": "Hi! I'd like to join your opportunity. Here is my profile:"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! The request and conversation were created, and the conversation ID will be returned so the client can redirect to the new conversation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "required": [
+                        "conversationId",
+                        "success"
+                      ],
+                      "properties": {
+                        "conversationId": {
+                          "type": "string",
+                          "example": "1282560245918339072"
+                        },
+                        "success": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      },
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "You have already applied to this opportunity, or the message field is invalid. Will have an invalid fields error on the second case."
+          },
+          "404": {
+            "description": "Opportunity not found."
+          },
+          "500": {
+            "description": "Server error, please try again."
           }
         }
       }

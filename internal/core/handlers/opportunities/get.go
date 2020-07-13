@@ -10,6 +10,9 @@ import (
 
 // Get gets opportunities by organization ID.
 func Get(opportunitiesService opportunities.Service) http.HandlerFunc {
+	type response struct {
+		Opportunities []opportunities.OpportunityView `json:"opportunities"`
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -30,6 +33,6 @@ func Get(opportunitiesService opportunities.Service) http.HandlerFunc {
 			}
 		}
 
-		resp.OK(w, r, res)
+		resp.OK(w, r, response{res})
 	}
 }
