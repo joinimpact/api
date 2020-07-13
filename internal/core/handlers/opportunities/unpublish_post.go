@@ -3,16 +3,15 @@ package opportunities
 import (
 	"net/http"
 
-	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/opportunities"
 	"github.com/joinimpact/api/pkg/idctx"
 	"github.com/joinimpact/api/pkg/resp"
 )
 
-// TagsGet gets a single opportunity's tags by ID.
-func TagsGet(opportunitiesService opportunities.Service) http.HandlerFunc {
+// UnpublishPost unpublishes an opportunity by ID.
+func UnpublishPost(opportunitiesService opportunities.Service) http.HandlerFunc {
 	type response struct {
-		Tags []models.Tag `json:"tags"`
+		Success bool `json:"success"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -22,9 +21,11 @@ func TagsGet(opportunitiesService opportunities.Service) http.HandlerFunc {
 			return
 		}
 
-		tags, err := opportunitiesService.GetOpportunityTags(ctx, opportunityID)
+		err = opportunitiesService.UnpublishOpportunity(ctx, opportunityID)
 		if err != nil {
 			switch err.(type) {
+			case *opportunities.ErrOpportunityNotPublishable:
+				resp.BadRequest(w, r, resp.ErrorInvalidFields(98, "missing or invalid fields", err.(*opportunities.ErrOpportunityNotPublishable).InvalidFields))
 			case *opportunities.ErrOpportunityNotFound, *opportunities.ErrTagNotFound:
 				resp.NotFound(w, r, resp.Error(404, err.Error()))
 			case *opportunities.ErrServerError:
@@ -35,6 +36,6 @@ func TagsGet(opportunitiesService opportunities.Service) http.HandlerFunc {
 			return
 		}
 
-		resp.OK(w, r, response{tags})
+		resp.OK(w, r, response{true})
 	}
 }
