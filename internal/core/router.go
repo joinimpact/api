@@ -10,6 +10,7 @@ import (
 	"github.com/joinimpact/api/internal/core/handlers/tags"
 	"github.com/joinimpact/api/internal/core/handlers/users"
 	authm "github.com/joinimpact/api/internal/core/middleware/auth"
+	"github.com/joinimpact/api/internal/core/middleware/db"
 	"github.com/joinimpact/api/internal/core/middleware/permissions"
 	"github.com/joinimpact/api/pkg/idctx"
 	"github.com/joinimpact/api/pkg/scopes"
@@ -45,6 +46,8 @@ func (app *App) Router() *chi.Mux {
 		router.Use(scopes.Middleware(func(ctx context.Context) scopes.Scope {
 			return scopes.ScopeAuthenticated
 		}))
+		// Gets limit and other database query parameters from the URL.
+		router.Use(db.ContextMiddleware())
 
 		router.Route("/users", func(r chi.Router) {
 			r.Route("/{userID}", func(r chi.Router) {
@@ -106,6 +109,15 @@ func (app *App) Router() *chi.Mux {
 				r.
 					With(permissions.Require(scopes.ScopeAuthenticated)).
 					Post("/profile-picture", opportunities.ProfilePicturePost(app.opportunitiesService))
+
+				r.
+					Post("/request", opportunities.RequestPost(app.opportunitiesService, app.conversationsService))
+
+				r.Route("/volunteers", func(r chi.Router) {
+					r.
+						With(permissions.Require(scopes.ScopeAuthenticated)).
+						Get("/", opportunities.VolunteersGet(app.opportunitiesService, app.usersService))
+				})
 
 				r.Route("/tags", func(r chi.Router) {
 					r.Get("/", opportunities.TagsGet(app.opportunitiesService))

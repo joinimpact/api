@@ -83,3 +83,17 @@ func NewErrOpportunityNotPublishable() error {
 func (e *ErrOpportunityNotPublishable) Error() string {
 	return "opportunity not found"
 }
+
+// ErrMembershipAlreadyRequested is thrown when a user has already requested to join an opportunity.
+type ErrMembershipAlreadyRequested struct {
+}
+
+// NewErrMembershipAlreadyRequested creates and returns a ErrMembershipAlreadyRequested.
+func NewErrMembershipAlreadyRequested() error {
+	return &ErrMembershipAlreadyRequested{}
+}
+
+// Error provides a string representation of the error.
+func (e *ErrMembershipAlreadyRequested) Error() string {
+	return "opportunity membership already requested"
+}

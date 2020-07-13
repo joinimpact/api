@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/joinimpact/api/internal/authentication"
 	"github.com/joinimpact/api/internal/config"
+	"github.com/joinimpact/api/internal/conversations"
 	"github.com/joinimpact/api/internal/opportunities"
 	"github.com/joinimpact/api/internal/organizations"
 	"github.com/joinimpact/api/internal/tags"
@@ -29,10 +30,11 @@ type App struct {
 	organizationsService  organizations.Service
 	tagsService           tags.Service
 	opportunitiesService  opportunities.Service
+	conversationsService  conversations.Service
 }
 
 // NewApp creates and returns a new *App with the provided Config.
-func NewApp(config *config.Config, logger *zerolog.Logger, authenticationService authentication.Service, usersService users.Service, organizationsService organizations.Service, tagsService tags.Service, opportunitiesService opportunities.Service) *App {
+func NewApp(config *config.Config, logger *zerolog.Logger, authenticationService authentication.Service, usersService users.Service, organizationsService organizations.Service, tagsService tags.Service, opportunitiesService opportunities.Service, conversationsService conversations.Service) *App {
 	return &App{
 		config,
 		logger,
@@ -41,6 +43,7 @@ func NewApp(config *config.Config, logger *zerolog.Logger, authenticationService
 		organizationsService,
 		tagsService,
 		opportunitiesService,
+		conversationsService,
 	}
 }
 

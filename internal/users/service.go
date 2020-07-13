@@ -17,6 +17,8 @@ import (
 type Service interface {
 	// GetUserProfile retrieves a single user's profile.
 	GetUserProfile(userID int64, self bool) (*UserProfile, error)
+	// GetMinimalUserProfile retrieves a single user's profile but skips extra fields such as tags and profile.
+	GetMinimalUserProfile(userID int64) (*UserProfile, error)
 	// UpdateUserProfile updates a user's profile.
 	UpdateUserProfile(userID int64, profile UserProfile) error
 	// UpdateUserLocation updates a user's location.
@@ -121,6 +123,23 @@ func (s *service) GetUserProfile(userID int64, self bool) (*UserProfile, error) 
 			}
 		}
 	}
+
+	return profile, nil
+}
+
+// GetMinimalUserProfile retrieves a single user's profile but skips extra fields such as tags and profile.
+func (s *service) GetMinimalUserProfile(userID int64) (*UserProfile, error) {
+	profile := &UserProfile{}
+	// Find the user to verify that it is active.
+	user, err := s.userRepository.FindByID(userID)
+	if err != nil {
+		return nil, NewErrUserNotFound()
+	}
+
+	profile.ID = user.ID
+	profile.FirstName = user.FirstName
+	profile.LastName = user.LastName
+	profile.ProfilePicture = user.ProfilePicture
 
 	return profile, nil
 }
