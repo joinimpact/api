@@ -11,11 +11,15 @@ const (
 // Defaults
 const (
 	DefaultLimit = 20
+	DefaultPage  = 0
+	DefaultQuery = ""
 )
 
 // Request provides different options for returning database results.
 type Request struct {
 	Limit int
+	Page  int
+	Query string
 }
 
 // Inject adds a dbctx.Request to a context and returns it.
@@ -29,6 +33,8 @@ func Get(ctx context.Context) *Request {
 	if !ok {
 		return &Request{
 			DefaultLimit,
+			DefaultPage,
+			DefaultQuery,
 		}
 	}
 

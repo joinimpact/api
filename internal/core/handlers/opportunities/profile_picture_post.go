@@ -17,6 +17,8 @@ import (
 // ProfilePicturePost uploads a profile picture to an opportunity.
 func ProfilePicturePost(opportunitiesService opportunities.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
 		opportunityID, err := idctx.Get(r, "opportunityID")
 		if err != nil {
 			return
@@ -76,7 +78,7 @@ func ProfilePicturePost(opportunitiesService opportunities.Service) http.Handler
 			return
 		}
 
-		url, err := opportunitiesService.UploadProfilePicture(opportunityID, f)
+		url, err := opportunitiesService.UploadProfilePicture(ctx, opportunityID, f)
 		if err != nil {
 			resp.ServerError(w, r, resp.Error(500, err.Error()))
 			return

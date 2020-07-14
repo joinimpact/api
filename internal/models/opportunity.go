@@ -1,5 +1,7 @@
 package models
 
+import "context"
+
 // Opportunity represents an organization's opportunity.
 type Opportunity struct {
 	Model
@@ -17,17 +19,17 @@ type Opportunity struct {
 // OpportunityRepository represents a repository of opportunities.
 type OpportunityRepository interface {
 	// FindByID finds a single entity by ID.
-	FindByID(id int64) (*Opportunity, error)
+	FindByID(ctx context.Context, id int64) (*Opportunity, error)
 	// FindByOrganizationID finds multiple entities by the organization ID.
-	FindByOrganizationID(organizationID int64) ([]Opportunity, error)
+	FindByOrganizationID(ctx context.Context, organizationID int64) ([]Opportunity, error)
 	// FindByCreatorID finds multiple entities by the creator ID.
-	FindByCreatorID(creatorID int64) ([]Opportunity, error)
+	FindByCreatorID(ctx context.Context, creatorID int64) ([]Opportunity, error)
 	// Create creates a new entity.
-	Create(opportunity Opportunity) error
+	Create(ctx context.Context, opportunity Opportunity) error
 	// Update updates an entity with the ID in the provided entity.
-	Update(opportunity Opportunity) error
+	Update(ctx context.Context, opportunity Opportunity) error
 	// Save saves all fields in the provided entity.
-	Save(opportunity Opportunity) error
+	Save(ctx context.Context, opportunity Opportunity) error
 	// DeleteByID deletes an entity by ID.
-	DeleteByID(id int64) error
+	DeleteByID(ctx context.Context, id int64) error
 }

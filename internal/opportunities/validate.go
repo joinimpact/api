@@ -21,3 +21,9 @@ func isPublishable(opportunity models.Opportunity) ([]string, bool) {
 
 	return nil, true
 }
+
+// shouldAppear returns a boolean of whether or not an opportunity should appear in internal dashboards.
+func shouldAppear(view *OpportunityView) bool {
+	// For now, we only want to check whether or not the opportunity has a title.
+	return len(view.Title) > 1
+}

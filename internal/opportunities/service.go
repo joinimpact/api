@@ -33,7 +33,7 @@ type Service interface {
 	// RemoveOpportunityTag removes a tag from an opportunity by id.
 	RemoveOpportunityTag(ctx context.Context, opportunityID, tagID int64) error
 	// UploadProfilePicture uploads a profile picture to the CDN and adds it to the opportunity.
-	UploadProfilePicture(opportunityID int64, fileReader io.Reader) (string, error)
+	UploadProfilePicture(ctx context.Context, opportunityID int64, fileReader io.Reader) (string, error)
 	// RequestOpportunityMembership creates a membership request (as a volunteer) to join an opportunity.
 	RequestOpportunityMembership(ctx context.Context, opportunityID int64, volunteerID int64) (int64, error)
 	// GetOpportunityVolunteers returns an array of OpportunityMembership volunteer objects for a specified opportunity by ID.
@@ -86,7 +86,7 @@ func NewService(opportunityRepository models.OpportunityRepository, opportunityR
 func (s *service) GetOrganizationOpportunities(ctx context.Context, organizationID int64) ([]OpportunityView, error) {
 	views := []OpportunityView{}
 
-	opportunities, err := s.opportunityRepository.FindByOrganizationID(organizationID)
+	opportunities, err := s.opportunityRepository.FindByOrganizationID(ctx, organizationID)
 	if err != nil {
 		return views, NewErrServerError()
 	}
@@ -94,6 +94,10 @@ func (s *service) GetOrganizationOpportunities(ctx context.Context, organization
 	for _, opportunity := range opportunities {
 		view, err := s.GetOpportunity(ctx, opportunity.ID)
 		if err != nil {
+			continue
+		}
+
+		if !shouldAppear(view) {
 			continue
 		}
 
@@ -109,7 +113,7 @@ func (s *service) GetOpportunity(ctx context.Context, id int64) (*OpportunityVie
 	view.Requirements = &Requirements{}
 	view.Limits = &Limits{}
 
-	opportunity, err := s.opportunityRepository.FindByID(id)
+	opportunity, err := s.opportunityRepository.FindByID(ctx, id)
 	if err != nil {
 		return nil, NewErrOpportunityNotFound()
 	}
@@ -167,7 +171,7 @@ func (s *service) CreateOpportunity(ctx context.Context, view OpportunityView) (
 
 	// Generate a new ID for the opportunity.
 	opportunity.ID = s.snowflakeService.GenerateID()
-	err := s.opportunityRepository.Create(opportunity)
+	err := s.opportunityRepository.Create(ctx, opportunity)
 	if err != nil {
 		return 0, NewErrServerError()
 	}
@@ -179,7 +183,7 @@ func (s *service) CreateOpportunity(ctx context.Context, view OpportunityView) (
 		limits.VolunteersCapActive = view.Limits.VolunteersCap.Active
 		limits.VolunteersCap = view.Limits.VolunteersCap.Cap
 	}
-	fmt.Println(limits)
+
 	err = s.opportunityLimitsRepository.Create(limits)
 	if err != nil {
 		return 0, NewErrServerError()
@@ -196,7 +200,7 @@ func (s *service) CreateOpportunity(ctx context.Context, view OpportunityView) (
 		requirements.ExpectedHoursActive = view.Requirements.ExpectedHours.Active
 		requirements.ExpectedHours = view.Requirements.ExpectedHours.Hours
 	}
-	fmt.Println(requirements)
+
 	err = s.opportunityRequirementsRepository.Create(requirements)
 	if err != nil {
 		return 0, NewErrServerError()
@@ -207,7 +211,7 @@ func (s *service) CreateOpportunity(ctx context.Context, view OpportunityView) (
 
 // UpdateOpportunity updates changed fields on an opportunity entity.
 func (s *service) UpdateOpportunity(ctx context.Context, view OpportunityView) error {
-	existingOpportunity, err := s.opportunityRepository.FindByID(view.ID)
+	existingOpportunity, err := s.opportunityRepository.FindByID(ctx, view.ID)
 	if err != nil {
 		return NewErrOpportunityNotFound()
 	}
@@ -220,7 +224,7 @@ func (s *service) UpdateOpportunity(ctx context.Context, view OpportunityView) e
 	opportunity.Description = view.Description
 	opportunity.Public = view.Public
 
-	err = s.opportunityRepository.Update(opportunity)
+	err = s.opportunityRepository.Update(ctx, opportunity)
 	if err != nil {
 		return NewErrServerError()
 	}
@@ -264,7 +268,7 @@ func (s *service) UpdateOpportunity(ctx context.Context, view OpportunityView) e
 
 // DeleteOpportunity deletes a single opportunity by ID.
 func (s *service) DeleteOpportunity(ctx context.Context, id int64) error {
-	err := s.opportunityRepository.DeleteByID(id)
+	err := s.opportunityRepository.DeleteByID(ctx, id)
 	if err != nil {
 		return NewErrOpportunityNotFound()
 	}
@@ -274,7 +278,7 @@ func (s *service) DeleteOpportunity(ctx context.Context, id int64) error {
 
 // GetOpportunityTags gets all of an opportunity's tags.
 func (s *service) GetOpportunityTags(ctx context.Context, opportunityID int64) ([]models.Tag, error) {
-	_, err := s.opportunityRepository.FindByID(opportunityID)
+	_, err := s.opportunityRepository.FindByID(ctx, opportunityID)
 	if err != nil {
 		return nil, NewErrOrganizationNotFound()
 	}
@@ -307,7 +311,7 @@ func (s *service) AddOpportunityTags(ctx context.Context, opportunityID int64, t
 	// successfulTags counts how many tags were inserted correctly.
 	successfulTags := 0
 
-	_, err := s.opportunityRepository.FindByID(opportunityID)
+	_, err := s.opportunityRepository.FindByID(ctx, opportunityID)
 	if err != nil {
 		return successfulTags, NewErrOrganizationNotFound()
 	}
@@ -359,13 +363,13 @@ func (s *service) RemoveOpportunityTag(ctx context.Context, opportunityID, tagID
 }
 
 // UploadProfilePicture uploads a profile picture to the CDN and adds it to the opportunity.
-func (s *service) UploadProfilePicture(opportunityID int64, fileReader io.Reader) (string, error) {
+func (s *service) UploadProfilePicture(ctx context.Context, opportunityID int64, fileReader io.Reader) (string, error) {
 	url, err := s.cdnClient.UploadImage(fmt.Sprintf("opportunity-picture-%d-%d.png", opportunityID, time.Now().UTC().Unix()), fileReader)
 	if err != nil {
 		return "", err
 	}
 
-	return url, s.opportunityRepository.Update(models.Opportunity{
+	return url, s.opportunityRepository.Update(ctx, models.Opportunity{
 		Model: models.Model{
 			ID: opportunityID,
 		},
@@ -431,7 +435,7 @@ func (s *service) GetOpportunityPendingVolunteers(ctx context.Context, opportuni
 
 // PublishOpportunity attempts to publish an opportunity and returns an error if the opportunity is unpublishable.
 func (s *service) PublishOpportunity(ctx context.Context, opportunityID int64) error {
-	opportunity, err := s.opportunityRepository.FindByID(opportunityID)
+	opportunity, err := s.opportunityRepository.FindByID(ctx, opportunityID)
 	if err != nil {
 		return NewErrOpportunityNotFound()
 	}
@@ -443,7 +447,7 @@ func (s *service) PublishOpportunity(ctx context.Context, opportunityID int64) e
 
 	opportunity.Public = true
 
-	err = s.opportunityRepository.Save(*opportunity)
+	err = s.opportunityRepository.Save(ctx, *opportunity)
 	if err != nil {
 		return NewErrServerError()
 	}
@@ -453,14 +457,14 @@ func (s *service) PublishOpportunity(ctx context.Context, opportunityID int64) e
 
 // UnpublishOpportunity unpublishes an opportunity.
 func (s *service) UnpublishOpportunity(ctx context.Context, opportunityID int64) error {
-	opportunity, err := s.opportunityRepository.FindByID(opportunityID)
+	opportunity, err := s.opportunityRepository.FindByID(ctx, opportunityID)
 	if err != nil {
 		return NewErrOpportunityNotFound()
 	}
 
 	opportunity.Public = false
 
-	err = s.opportunityRepository.Save(*opportunity)
+	err = s.opportunityRepository.Save(ctx, *opportunity)
 	if err != nil {
 		return NewErrServerError()
 	}
