@@ -10,9 +10,9 @@ type OpportunityView struct {
 	ProfilePicture string        `json:"profilePicture"`
 	Title          string        `json:"title"`
 	Description    string        `json:"description"`
-	Public         bool          `json:"public" scope:"manager"`
+	Public         bool          `json:"public" scope:"authenticated"`
 	Tags           []models.Tag  `json:"tags"` // the model's tags
-	Stats          *Stats        `json:"stats" scope:"manager"`
+	Stats          *Stats        `json:"stats" scope:"authenticated"`
 	Requirements   *Requirements `json:"requirements"`
 	Limits         *Limits       `json:"limits"`
 }
