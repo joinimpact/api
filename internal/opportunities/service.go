@@ -97,6 +97,10 @@ func (s *service) GetOrganizationOpportunities(ctx context.Context, organization
 			continue
 		}
 
+		if !shouldAppear(view) {
+			continue
+		}
+
 		views = append(views, *view)
 	}
 
