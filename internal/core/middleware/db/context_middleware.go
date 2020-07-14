@@ -27,12 +27,31 @@ func ContextMiddleware() func(next http.Handler) http.Handler {
 				}
 
 				// Clamp the limit between 1 and 100.
-				limit = int(math.Max(math.Min(float64(limInt), 1), 100))
+				limit = int(math.Min(math.Max(float64(limInt), 1), 100))
 			}
+
+			// Set default page.
+			page := 0
+			// Get the page from the query.
+			pageString := r.URL.Query().Get("page")
+			if pageString != "" {
+				pageInt, err := strconv.ParseInt(pageString, 10, 8)
+				if err != nil {
+					resp.BadRequest(w, r, resp.Error(400, "invalid page parameter, must be an integer"))
+					return
+				}
+
+				page = int(pageInt)
+			}
+
+			// Get the query parameter.
+			queryString := r.URL.Query().Get("query")
 
 			// Inject the limit value.
 			ctx = dbctx.Inject(ctx, dbctx.Request{
 				Limit: limit,
+				Page:  page,
+				Query: queryString,
 			})
 
 			next.ServeHTTP(w, r.WithContext(ctx))
