@@ -12,14 +12,14 @@ import (
 
 // OpportunityVolunteer represents a volunteer in an opportunity.
 type OpportunityVolunteer struct {
-	users.UserProfile
 	models.OpportunityMembership
+	users.UserProfile
 }
 
 // OpportunityPendingVolunteer represents a pending volunteer in an opportunity.
 type OpportunityPendingVolunteer struct {
-	users.UserProfile
 	models.OpportunityMembershipRequest
+	users.UserProfile
 }
 
 // VolunteersGet gets all volunteers in a specified opportunity.
@@ -64,7 +64,7 @@ func VolunteersGet(opportunitiesService opportunities.Service, usersService user
 				return
 			}
 
-			volunteers = append(volunteers, OpportunityVolunteer{*profile, membership})
+			volunteers = append(volunteers, OpportunityVolunteer{membership, *profile})
 		}
 
 		pendingMemberships, err := opportunitiesService.GetOpportunityPendingVolunteers(ctx, opportunityID)
@@ -95,7 +95,7 @@ func VolunteersGet(opportunitiesService opportunities.Service, usersService user
 				return
 			}
 
-			pendingVolunteers = append(pendingVolunteers, OpportunityPendingVolunteer{*profile, membership})
+			pendingVolunteers = append(pendingVolunteers, OpportunityPendingVolunteer{membership, *profile})
 		}
 
 		resp.OK(w, r, response{volunteers, pendingVolunteers})
