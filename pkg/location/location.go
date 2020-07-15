@@ -3,9 +3,10 @@ package location
 // Location represents the name of a single location, broken up into
 // different subsections.
 type Location struct {
-	City    *LocationName `json:"city"`
-	State   *LocationName `json:"state"`
-	Country *LocationName `json:"country"`
+	StreetAddress *LocationName `json:"streetAddress,omitempty"`
+	City          *LocationName `json:"city,omitempty"`
+	State         *LocationName `json:"state,omitempty"`
+	Country       *LocationName `json:"country,omitempty"`
 }
 
 // LocationName contains a short and long name for a location.

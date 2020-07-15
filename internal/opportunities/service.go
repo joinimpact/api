@@ -58,6 +58,8 @@ type Service interface {
 	AcceptInvite(ctx context.Context, opportunityID int64, userID, inviteID int64, inviteKey string) error
 	// DeclineInvite declines an invite.
 	DeclineInvite(ctx context.Context, opportunityID int64, userID, inviteID int64, inviteKey string) error
+	// GetOpportunityMembership returns the permissions level of a single user's relationship with an opportunity.
+	GetOpportunityMembership(ctx context.Context, opportunityID, userID int64) (int, error)
 }
 
 // service represents the intenral implementation of the opportunities Service.
@@ -686,4 +688,14 @@ func (s *service) createVolunteerMembership(ctx context.Context, inviterID int64
 // invalidateInvite invalidates an opportunity invite by ID.
 func (s *service) invalidateInvite(ctx context.Context, inviteID int64) error {
 	return s.opportunityMembershipInviteRepository.DeleteByID(inviteID)
+}
+
+// GetOpportunityMembership returns the permissions level of a single user's relationship with an opportunity.
+func (s *service) GetOpportunityMembership(ctx context.Context, opportunityID, userID int64) (int, error) {
+	membership, err := s.opportunityMembershipRepository.FindUserInOpportunity(ctx, opportunityID, userID)
+	if err != nil {
+		return 0, err
+	}
+
+	return membership.PermissionsFlag, nil
 }
