@@ -11,15 +11,15 @@ type EventBase struct {
 	ID            int64  `json:"id"`
 	OpportunityID int64  `json:"opportunityId"`
 	CreatorID     int64  `json:"creatorId" scope:"manager"`
-	Title         string `json:"title"`
+	Title         string `json:"title" validate:"min=4,max=128"`
 	Description   string `json:"description"`
 	Hours         int    `json:"hours"`
 }
 
 // EventView is the view in which event entities will be passed through the Service.
 type EventView struct {
-	EventBase
-	EventSchedule *EventSchedule     `json:"schedule"`
+	EventBase     `validator:"dive"`
+	EventSchedule *EventSchedule     `json:"schedule" validator:"dive"`
 	Location      *location.Location `json:"location"`
 }
 

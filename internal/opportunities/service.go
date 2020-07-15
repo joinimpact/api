@@ -44,6 +44,8 @@ type Service interface {
 	PublishOpportunity(ctx context.Context, opportunityID int64) error
 	// UnpublishOpportunity unpublishes an opportunity.
 	UnpublishOpportunity(ctx context.Context, opportunityID int64) error
+	// GetOpportunityMembership returns the permissions level of a single user's relationship with an opportunity.
+	GetOpportunityMembership(ctx context.Context, opportunityID, userID int64) (int, error)
 }
 
 // service represents the intenral implementation of the opportunities Service.
@@ -470,4 +472,14 @@ func (s *service) UnpublishOpportunity(ctx context.Context, opportunityID int64)
 	}
 
 	return nil
+}
+
+// GetOpportunityMembership returns the permissions level of a single user's relationship with an opportunity.
+func (s *service) GetOpportunityMembership(ctx context.Context, opportunityID, userID int64) (int, error) {
+	membership, err := s.opportunityMembershipRepository.FindUserInOpportunity(opportunityID, userID)
+	if err != nil {
+		return 0, err
+	}
+
+	return membership.PermissionsFlag, nil
 }
