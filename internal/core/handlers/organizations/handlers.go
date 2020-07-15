@@ -152,6 +152,7 @@ func UpdateOrganizationProfile(organizationsService organizations.Service) http.
 }
 
 type createOrganizationResponse struct {
+	Success        bool  `json:"success"`
 	OrganizationID int64 `json:"organizationId"`
 }
 
@@ -166,10 +167,11 @@ func CreateOrganization(organizationsService organizations.Service) http.Handler
 		}
 
 		req := struct {
-			Name        string                `json:"name" validate:"min=4,max=72"`
-			WebsiteURL  string                `json:"websiteURL" validate:"omitempty,url"`
-			Location    *location.Coordinates `json:"location"`
-			Description string                `json:"description" validate:"max=800,omitempty"`
+			Name        string                            `json:"name" validate:"min=4,max=72"`
+			WebsiteURL  string                            `json:"websiteURL" validate:"omitempty,url"`
+			Location    *location.Coordinates             `json:"location"`
+			Description string                            `json:"description" validate:"max=800,omitempty"`
+			Profile     []models.OrganizationProfileField `json:"profile"`
 		}{}
 		err := parse.POST(w, r, &req)
 		if err != nil {
@@ -194,7 +196,38 @@ func CreateOrganization(organizationsService organizations.Service) http.Handler
 			return
 		}
 
+		if req.Location != nil {
+			err = organizationsService.UpdateOrganizationLocation(id, req.Location)
+			if err != nil {
+				switch err.(type) {
+				case *organizations.ErrOrganizationNotFound:
+					resp.NotFound(w, r, resp.Error(404, err.Error()))
+				case *organizations.ErrServerError:
+					resp.ServerError(w, r, resp.Error(500, err.Error()))
+				default:
+					resp.ServerError(w, r, resp.UnknownError)
+				}
+				return
+			}
+		}
+
+		for _, field := range req.Profile {
+			err := organizationsService.SetOrganizationProfileField(id, field)
+			if err != nil {
+				switch err.(type) {
+				case *organizations.ErrOrganizationNotFound:
+					resp.NotFound(w, r, resp.Error(404, err.Error()))
+				case *organizations.ErrServerError:
+					resp.ServerError(w, r, resp.Error(500, err.Error()))
+				default:
+					resp.ServerError(w, r, resp.UnknownError)
+				}
+				return
+			}
+		}
+
 		resp.OK(w, r, createOrganizationResponse{
+			true,
 			id,
 		})
 	}
