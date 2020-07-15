@@ -18,6 +18,9 @@ import (
 type Service interface {
 	// GetOrganizationOpportunities gets all opportunities by organization ID.
 	GetOrganizationOpportunities(ctx context.Context, organizationID int64) ([]OpportunityView, error)
+	// GetVolunteerOpportunities gets all opportunities by user ID where
+	// user is a registered volunteer.
+	GetVolunteerOpportunities(ctx context.Context, userID int64) ([]OpportunityView, error)
 	// GetOpportunity returns an opportunity by ID.
 	GetOpportunity(ctx context.Context, id int64) (*OpportunityView, error)
 	// CreateOpportunity creates a new opportunity and returns the ID on success.
@@ -93,6 +96,32 @@ func (s *service) GetOrganizationOpportunities(ctx context.Context, organization
 
 	for _, opportunity := range opportunities {
 		view, err := s.GetOpportunity(ctx, opportunity.ID)
+		if err != nil {
+			continue
+		}
+
+		if !shouldAppear(view) {
+			continue
+		}
+
+		views = append(views, *view)
+	}
+
+	return views, nil
+}
+
+// GetVolunteerOpportunities gets all opportunities by user ID where
+// user is a registered volunteer.
+func (s *service) GetVolunteerOpportunities(ctx context.Context, userID int64) ([]OpportunityView, error) {
+	views := []OpportunityView{}
+
+	memberships, err := s.opportunityMembershipRepository.FindByUserID(ctx, userID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	for _, membership := range memberships {
+		view, err := s.GetOpportunity(ctx, membership.OpportunityID)
 		if err != nil {
 			continue
 		}
@@ -379,7 +408,7 @@ func (s *service) UploadProfilePicture(ctx context.Context, opportunityID int64,
 
 // RequestOpportunityMembership creates a membership request (as a volunteer) to join an opportunity.
 func (s *service) RequestOpportunityMembership(ctx context.Context, opportunityID int64, volunteerID int64) (int64, error) {
-	_, err := s.opportunityMembershipRepository.FindUserInOpportunity(opportunityID, volunteerID)
+	_, err := s.opportunityMembershipRepository.FindUserInOpportunity(ctx, opportunityID, volunteerID)
 	if err == nil {
 		return 0, NewErrMembershipAlreadyRequested()
 	}
@@ -414,7 +443,7 @@ func (s *service) RequestOpportunityMembership(ctx context.Context, opportunityI
 // GetOpportunityVolunteers returns an array of OpportunityMembership volunteer objects for a specified opportunity by ID.
 func (s *service) GetOpportunityVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembership, error) {
 	// Get all memberships.
-	memberships, err := s.opportunityMembershipRepository.FindByOpportunityID(opportunityID)
+	memberships, err := s.opportunityMembershipRepository.FindByOpportunityID(ctx, opportunityID)
 	if err != nil {
 		return nil, NewErrServerError()
 	}
