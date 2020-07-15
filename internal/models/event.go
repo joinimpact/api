@@ -13,6 +13,8 @@ type Event struct {
 	CreatorID         int64     `json:"creatorId"`
 	Title             string    `json:"title"`
 	Description       string    `json:"description"`
+	Hours             int       `json:"hours"`
+	DateOnly          *bool     `json:"dateOnly"`
 	FromDate          time.Time `json:"from"`
 	ToDate            time.Time `json:"to"`
 	LocationLatitude  float64   `json:"-"` // the latitude of the events's location
@@ -31,6 +33,7 @@ type EventRepository interface {
 	Create(ctx context.Context, event Event) error
 	// Update updates an entity with the ID in the provided entity.
 	Update(ctx context.Context, event Event) error
+
 	// DeleteByID deletes an entity by ID.
 	DeleteByID(ctx context.Context, id int64) error
 }
