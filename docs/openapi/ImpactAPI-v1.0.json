@@ -2942,6 +2942,314 @@
         }
       }
     },
+    "/opportunities/{opportunityId}/events": {
+      "post": {
+        "tags": [
+          "Opportunities",
+          "Events"
+        ],
+        "summary": "Creates a new event under the specified organization. Requires manager status.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "opportunityId",
+            "description": "The ID of the opportunity.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "title",
+                  "schedule",
+                  "hours"
+                ],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 4,
+                    "maxLength": 128,
+                    "example": "Hello world!"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "This is a test event."
+                  },
+                  "location": {
+                    "required": [
+                      "lat",
+                      "long"
+                    ],
+                    "description": "A latitude and longitude of a specific location. This will show a street number, not just a city.",
+                    "properties": {
+                      "lat": {
+                        "type": "number",
+                        "example": 43.87910249999999
+                      },
+                      "long": {
+                        "type": "number",
+                        "example": -103.4590667
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "schedule": {
+                    "required": [
+                      "from",
+                      "to",
+                      "dateOnly"
+                    ],
+                    "properties": {
+                      "from": {
+                        "type": "string",
+                        "example": "2003-07-28T00:00:00Z"
+                      },
+                      "to": {
+                        "type": "string",
+                        "example": "2003-07-28T00:00:00Z"
+                      },
+                      "dateOnly": {
+                        "type": "boolean",
+                        "description": "This controls whether or not there is a time range associated with the event, or just a date range.",
+                        "example": true
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "hours": {
+                    "type": "number",
+                    "example": 5,
+                    "description": "Hours that will be awarded to event participants."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! An event was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "required": [
+                        "eventId",
+                        "success"
+                      ],
+                      "properties": {
+                        "eventId": {
+                          "type": "string",
+                          "example": "1283266052775481344"
+                        },
+                        "success": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      },
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "An invalid fields error occurred."
+          },
+          "500": {
+            "description": "Server error, try again."
+          }
+        }
+      }
+    },
+    "/events/{eventId}": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "Gets a single event by ID. Must be either a volunteer enrolled in the parent opportunity, or a manager of the organization controlling the parent opportunity.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "description": "The ID of the event.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success! The event was returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "required": [
+                        "description",
+                        "hours",
+                        "id",
+                        "location",
+                        "opportunityId",
+                        "schedule",
+                        "title"
+                      ],
+                      "properties": {
+                        "description": {
+                          "type": "string",
+                          "example": "This is a test event."
+                        },
+                        "hours": {
+                          "type": "number",
+                          "example": 5
+                        },
+                        "id": {
+                          "type": "string",
+                          "example": "1283266052775481344"
+                        },
+                        "location": {
+                          "required": [
+                            "city",
+                            "country",
+                            "state",
+                            "streetAddress"
+                          ],
+                          "properties": {
+                            "city": {
+                              "required": [
+                                "longName",
+                                "shortName"
+                              ],
+                              "properties": {
+                                "longName": {
+                                  "type": "string",
+                                  "example": "Keystone"
+                                },
+                                "shortName": {
+                                  "type": "string",
+                                  "example": "Keystone"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "country": {
+                              "required": [
+                                "longName",
+                                "shortName"
+                              ],
+                              "properties": {
+                                "longName": {
+                                  "type": "string",
+                                  "example": "United States"
+                                },
+                                "shortName": {
+                                  "type": "string",
+                                  "example": "US"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "state": {
+                              "required": [
+                                "longName",
+                                "shortName"
+                              ],
+                              "properties": {
+                                "longName": {
+                                  "type": "string",
+                                  "example": "South Dakota"
+                                },
+                                "shortName": {
+                                  "type": "string",
+                                  "example": "SD"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "streetAddress": {
+                              "required": [
+                                "longName",
+                                "shortName"
+                              ],
+                              "properties": {
+                                "longName": {
+                                  "type": "string",
+                                  "example": "64 Presidential Trail, Keystone, SD 57751, USA"
+                                },
+                                "shortName": {
+                                  "type": "string",
+                                  "example": "64 Presidential Trail, Keystone, SD 57751, USA"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "opportunityId": {
+                          "type": "string",
+                          "example": "1282893821989883904"
+                        },
+                        "schedule": {
+                          "required": [
+                            "dateOnly",
+                            "from",
+                            "singleDate",
+                            "to"
+                          ],
+                          "properties": {
+                            "dateOnly": {
+                              "type": "boolean",
+                              "example": true
+                            },
+                            "from": {
+                              "type": "string",
+                              "example": "2003-07-27T17:00:00-07:00"
+                            },
+                            "singleDate": {
+                              "type": "boolean",
+                              "example": true
+                            },
+                            "to": {
+                              "type": "string",
+                              "example": "2003-07-27T17:00:00-07:00"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "title": {
+                          "type": "string",
+                          "example": "Hello world!"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error getting event."
+          }
+        }
+      }
+    },
     "/tags": {
       "get": {
         "tags": [
