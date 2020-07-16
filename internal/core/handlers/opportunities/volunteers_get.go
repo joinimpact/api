@@ -22,11 +22,19 @@ type OpportunityPendingVolunteer struct {
 	users.UserProfile
 }
 
+// OpportunityInvitedVolunteer represents a pending volunteer in an opportunity.
+type OpportunityInvitedVolunteer struct {
+	EmailOnly bool `json:"emailOnly"`
+	models.OpportunityMembershipInvite
+	users.UserProfile
+}
+
 // VolunteersGet gets all volunteers in a specified opportunity.
 func VolunteersGet(opportunitiesService opportunities.Service, usersService users.Service) http.HandlerFunc {
 	type response struct {
 		Volunteers []OpportunityVolunteer        `json:"volunteers"`
 		Pending    []OpportunityPendingVolunteer `json:"pending"`
+		Invited    []OpportunityInvitedVolunteer `json:"invited"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -98,6 +106,30 @@ func VolunteersGet(opportunitiesService opportunities.Service, usersService user
 			pendingVolunteers = append(pendingVolunteers, OpportunityPendingVolunteer{membership, *profile})
 		}
 
-		resp.OK(w, r, response{volunteers, pendingVolunteers})
+		invites, err := opportunitiesService.GetOpportunityInvitedVolunteers(ctx, opportunityID)
+		if err != nil {
+			switch err.(type) {
+			case *opportunities.ErrOpportunityNotFound, *opportunities.ErrTagNotFound:
+				resp.NotFound(w, r, resp.Error(404, err.Error()))
+			case *opportunities.ErrServerError:
+				resp.ServerError(w, r, resp.Error(500, err.Error()))
+			default:
+				resp.ServerError(w, r, resp.UnknownError)
+			}
+		}
+
+		invitedVolunteers := []OpportunityInvitedVolunteer{}
+
+		for _, invite := range invites {
+			profile, err := usersService.GetMinimalUserProfile(invite.InviteeID)
+			if err != nil {
+				invitedVolunteers = append(invitedVolunteers, OpportunityInvitedVolunteer{true, invite, users.UserProfile{}})
+				continue
+			}
+
+			invitedVolunteers = append(invitedVolunteers, OpportunityInvitedVolunteer{false, invite, *profile})
+		}
+
+		resp.OK(w, r, response{volunteers, pendingVolunteers, invitedVolunteers})
 	}
 }

@@ -44,6 +44,8 @@ type Service interface {
 	GetOpportunityVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembership, error)
 	// GetOpportunityPendingVolunteers returns an array of OpportunityMembershipRequest objects for a specified opportunity by ID.
 	GetOpportunityPendingVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembershipRequest, error)
+	// GetOpportunityInvitedVolunteers returns an array of OpportunityMembershipInvite objects for a specified opportunity by ID.
+	GetOpportunityInvitedVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembershipInvite, error)
 	// PublishOpportunity attempts to publish an opportunity and returns an error if the opportunity is unpublishable.
 	PublishOpportunity(ctx context.Context, opportunityID int64) error
 	// UnpublishOpportunity unpublishes an opportunity.
@@ -473,6 +475,17 @@ func (s *service) GetOpportunityPendingVolunteers(ctx context.Context, opportuni
 	}
 
 	return requests, nil
+}
+
+// GetOpportunityInvitedVolunteers returns an array of OpportunityMembershipRequest objects for a specified opportunity by ID.
+func (s *service) GetOpportunityInvitedVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembershipInvite, error) {
+	// Get all membership invites by opportunity ID.
+	invites, err := s.opportunityMembershipInviteRepository.FindByOpportunityID(opportunityID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	return invites, nil
 }
 
 // PublishOpportunity attempts to publish an opportunity and returns an error if the opportunity is unpublishable.

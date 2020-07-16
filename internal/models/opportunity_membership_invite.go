@@ -3,15 +3,15 @@ package models
 // OpportunityMembershipInvite represents an active invite to be a member in an opportunity.
 type OpportunityMembershipInvite struct {
 	Model
-	Accepted      bool   `json:"accepted"`
-	InviteeEmail  string `json:"inviteeEmail,omitempty"`
-	InviteeID     int64  `json:"inviteeId"`
-	Invitee       User   `gorm:"foreignkey:InviteeID"`
-	OpportunityID int64  `json:"opportunityId"`
-	Opportunity   Opportunity
-	InviterID     int64  `json:"inviterId"`
-	Inviter       User   `gorm:"foreignkey:InviterID"`
-	Key           string `json:"-"` // the secret key which is sent to the invitee for authorization
+	Accepted      bool        `json:"accepted"`
+	InviteeEmail  string      `json:"inviteeEmail,omitempty"`
+	InviteeID     int64       `json:"inviteeId"`
+	Invitee       User        `json:"-" gorm:"foreignkey:InviteeID"`
+	OpportunityID int64       `json:"opportunityId"`
+	Opportunity   Opportunity `json:"-"`
+	InviterID     int64       `json:"inviterId"`
+	Inviter       User        `json:"-" gorm:"foreignkey:InviterID"`
+	Key           string      `json:"-"` // the secret key which is sent to the invitee for authorization
 }
 
 // OpportunityMembershipInviteRepository represents the interface for a repository of membership invite entities.
