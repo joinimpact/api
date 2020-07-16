@@ -120,9 +120,7 @@
     "/auth/register": {
       "post": {
         "summary": "Creates a new user and returns a token pair on success.",
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "requestBody": {
           "description": "Contains information about the user.",
           "required": true,
@@ -176,9 +174,7 @@
                         {
                           "code": 98,
                           "message": "missing or invalid fields",
-                          "invalidFields": [
-                            "password"
-                          ]
+                          "invalidFields": ["password"]
                         }
                       ]
                     }
@@ -193,9 +189,7 @@
     "/auth/login": {
       "post": {
         "summary": "Attempts to login using the credentials provided. Returns a token pair on success.",
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "requestBody": {
           "description": "Contains a username and password used to authenticate the user.",
           "required": true,
@@ -203,10 +197,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "email",
-                  "password"
-                ],
+                "required": ["email", "password"],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -277,9 +268,7 @@
     },
     "/auth/tokens/refresh": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "summary": "Generates a new token pair from a refresh token.",
         "requestBody": {
           "description": "Contains a refresh token.",
@@ -288,9 +277,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "refreshToken"
-                ],
+                "required": ["refreshToken"],
                 "properties": {
                   "refreshToken": {
                     "type": "string",
@@ -320,9 +307,7 @@
     },
     "/auth/password-resets": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "summary": "Creates a new password reset request and emails the link to the user.",
         "requestBody": {
           "description": "Includes the users email to send the request to.",
@@ -331,9 +316,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "email"
-                ],
+                "required": ["email"],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -382,9 +365,7 @@
                         {
                           "code": 98,
                           "message": "missing or invalid fields",
-                          "invalidFields": [
-                            "email"
-                          ]
+                          "invalidFields": ["email"]
                         }
                       ]
                     }
@@ -401,9 +382,7 @@
     },
     "/auth/password-resets/{passwordResetKey}": {
       "get": {
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "summary": "Gets a password reset object. If valid, it returns a first name and email to render a form with.",
         "responses": {
           "200": {
@@ -434,9 +413,7 @@
     },
     "/auth/password-resets/{passwordResetKey}/reset": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "summary": "Resets the user's password from a password reset key.",
         "requestBody": {
           "content": {
@@ -494,9 +471,7 @@
                         {
                           "code": 98,
                           "message": "missing or invalid fields",
-                          "invalidFields": [
-                            "password"
-                          ]
+                          "invalidFields": ["password"]
                         }
                       ]
                     }
@@ -513,9 +488,7 @@
     },
     "/auth/oauth/google": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "summary": "Attempts to login with a Google Oauth code.",
         "requestBody": {
           "content": {
@@ -590,9 +563,7 @@
     },
     "/auth/oauth/facebook": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "summary": "Attempts to login with a Facebook Oauth code.",
         "requestBody": {
           "content": {
@@ -667,9 +638,7 @@
     },
     "/users/{userId}": {
       "get": {
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "summary": "Gets the profile of a single user by ID.",
         "parameters": [
           {
@@ -741,9 +710,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "summary": "Updates a user's profile. Non-filled fields will be ignored.",
         "parameters": [
           {
@@ -800,9 +767,7 @@
     },
     "/users/{userId}/profile-picture": {
       "post": {
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "summary": "Uploads a new profile picture to a user by ID.",
         "parameters": [
           {
@@ -846,9 +811,7 @@
     },
     "/users/{userId}/tags": {
       "get": {
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "summary": "Gets all of a user's tags. (Areas of Interest)",
         "parameters": [
           {
@@ -894,9 +857,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "summary": "Adds multiple tags to a user. Skips duplicates, so it's okay to send tags when unsure if they are already added.",
         "parameters": [
           {
@@ -970,9 +931,7 @@
     },
     "/users/{userId}/tags/{tagId}": {
       "delete": {
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "summary": "Deletes a tag from a user's profile.",
         "parameters": [
           {
@@ -1013,10 +972,7 @@
     },
     "/users/{userId}/organizations": {
       "get": {
-        "tags": [
-          "Users",
-          "Organizations"
-        ],
+        "tags": ["Users", "Organizations"],
         "description": "Gets all of a single user's organizations. Use 'me' for the current user.",
         "parameters": [
           {
@@ -1036,14 +992,10 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
-                      "required": [
-                        "organizations"
-                      ],
+                      "required": ["organizations"],
                       "properties": {
                         "organizations": {
                           "type": "array",
@@ -1084,20 +1036,211 @@
         }
       }
     },
+    "/users/{userId}/opportunities": {
+      "get": {
+        "tags": ["Opportunities", "Users"],
+        "summary": "Gets enrolled opportunities by user ID.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "description": "The ID of the user who you are querying. Use 'me' to reference the current user.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "description": "An integer that limits how many items will be returned. Default 20.",
+            "schema": {
+              "type": "integer",
+              "example": 10
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "A page index (starting from 0). With each increasing number, it shifts the offset back (1 * the limit).",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "query",
+            "description": "A search term to filter items by. If not set, returns all opportunities.",
+            "schema": {
+              "type": "string",
+              "example": "code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success, opportunities returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "opportunities": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "example": "123913912309"
+                                  },
+                                  "organizationId": {
+                                    "type": "string",
+                                    "example": "213123123193"
+                                  },
+                                  "creatorId": {
+                                    "type": "string",
+                                    "example": "123913913921",
+                                    "description": "Only visible if you manage the organization that owns the opportunity."
+                                  },
+                                  "profilePicture": {
+                                    "type": "string",
+                                    "example": "https://cdn.joinimpact.org/opportunity-banner-23492424449234-24234234.png"
+                                  },
+                                  "title": {
+                                    "type": "string",
+                                    "minimum": 4,
+                                    "maximum": 128,
+                                    "example": "Help code algorithms to fight climate change!"
+                                  },
+                                  "description": {
+                                    "type": "string",
+                                    "minimum": 64,
+                                    "maximum": 1024,
+                                    "example": "Your help is needed to fight climate change! This opportunity will require you to physically come to our offices in Palo Alto."
+                                  },
+                                  "public": {
+                                    "type": "boolean",
+                                    "description": "Whether or not the opportunity is public. Only visible as manager.",
+                                    "example": true
+                                  },
+                                  "tags": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "name": {
+                                          "type": "string",
+                                          "description": "The name of the tag."
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "stats": {
+                                    "type": "object",
+                                    "description": "Only visible as manager.",
+                                    "properties": {
+                                      "volunteersEnrolled": {
+                                        "type": "integer",
+                                        "example": 30
+                                      },
+                                      "volunteersPending": {
+                                        "type": "integer",
+                                        "example": 5
+                                      }
+                                    }
+                                  },
+                                  "requirements": {
+                                    "type": "object",
+                                    "properties": {
+                                      "ageLimit": {
+                                        "type": "object",
+                                        "properties": {
+                                          "active": {
+                                            "type": "boolean",
+                                            "example": true
+                                          },
+                                          "from": {
+                                            "type": "integer",
+                                            "example": 13
+                                          },
+                                          "to": {
+                                            "type": "integer",
+                                            "example": 18
+                                          }
+                                        }
+                                      },
+                                      "expectedHours": {
+                                        "type": "object",
+                                        "properties": {
+                                          "active": {
+                                            "type": "boolean",
+                                            "example": true
+                                          },
+                                          "hours": {
+                                            "type": "number",
+                                            "example": 8
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "limits": {
+                                    "type": "object",
+                                    "properties": {
+                                      "volunteersCap": {
+                                        "type": "object",
+                                        "properties": {
+                                          "active": {
+                                            "type": "boolean",
+                                            "example": true
+                                          },
+                                          "cap": {
+                                            "type": "integer",
+                                            "example": 50
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error finding user."
+          },
+          "500": {
+            "description": "A server error occurred while fetching opportunities."
+          }
+        }
+      }
+    },
     "/organizations": {
       "post": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Creates a new organization and adds the authenticated user as the owner.",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "name"
-                ],
+                "required": ["name"],
                 "properties": {
                   "name": {
                     "type": "string",
@@ -1208,9 +1351,7 @@
                         {
                           "code": 98,
                           "message": "missing or invalid fields",
-                          "invalidFields": [
-                            "name"
-                          ]
+                          "invalidFields": ["name"]
                         }
                       ]
                     }
@@ -1224,9 +1365,7 @@
     },
     "/organizations/{organizationId}": {
       "get": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Gets the profile of a single organization. Authentication required.",
         "parameters": [
           {
@@ -1246,9 +1385,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "required": [
@@ -1322,17 +1459,10 @@
                         },
                         "location": {
                           "type": "object",
-                          "required": [
-                            "city",
-                            "state",
-                            "country"
-                          ],
+                          "required": ["city", "state", "country"],
                           "properties": {
                             "city": {
-                              "required": [
-                                "shortName",
-                                "longName"
-                              ],
+                              "required": ["shortName", "longName"],
                               "properties": {
                                 "shortName": {
                                   "type": "string",
@@ -1346,10 +1476,7 @@
                               "type": "object"
                             },
                             "state": {
-                              "required": [
-                                "shortName",
-                                "longName"
-                              ],
+                              "required": ["shortName", "longName"],
                               "properties": {
                                 "shortName": {
                                   "type": "string",
@@ -1363,10 +1490,7 @@
                               "type": "object"
                             },
                             "country": {
-                              "required": [
-                                "shortName",
-                                "longName"
-                              ],
+                              "required": ["shortName", "longName"],
                               "properties": {
                                 "shortName": {
                                   "type": "string",
@@ -1404,9 +1528,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Gets the profile of a single organization. Authentication required.",
         "parameters": [
           {
@@ -1482,9 +1604,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "properties": {
@@ -1511,9 +1631,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Deletes a single organization. Requires owner permissions.",
         "parameters": [
           {
@@ -1541,9 +1659,7 @@
     },
     "/organizations/{organizationId}/tags": {
       "get": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Gets all of an organization's tags. (Areas of Interest)",
         "parameters": [
           {
@@ -1589,9 +1705,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Adds multiple tags to an organization. Skips duplicates, so it's okay to send tags when unsure if they are already added.",
         "parameters": [
           {
@@ -1665,9 +1779,7 @@
     },
     "/organizations/{organizationId}/tags/{tagId}": {
       "delete": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Deletes a tag from an organization's profile.",
         "parameters": [
           {
@@ -1708,9 +1820,7 @@
     },
     "/organizations/{organizationId}/profile-picture": {
       "post": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Uploads a new profile picture to an organization by ID.",
         "parameters": [
           {
@@ -1754,9 +1864,7 @@
     },
     "/organizations/{organizationId}/invite": {
       "post": {
-        "tags": [
-          "Organizations"
-        ],
+        "tags": ["Organizations"],
         "summary": "Sends invites to multiple organization members by email address.",
         "parameters": [
           {
@@ -1780,9 +1888,7 @@
                     "description": "An array of invite objects.",
                     "items": {
                       "type": "object",
-                      "required": [
-                        "email"
-                      ],
+                      "required": ["email"],
                       "properties": {
                         "email": {
                           "type": "string",
@@ -1812,10 +1918,7 @@
     },
     "/organizations/{organizationId}/opportunities": {
       "get": {
-        "tags": [
-          "Opportunities",
-          "Organizations"
-        ],
+        "tags": ["Opportunities", "Organizations"],
         "summary": "Gets opportunities by organization ID. Requires manager status of organization.",
         "parameters": [
           {
@@ -2008,10 +2111,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Opportunities",
-          "Organizations"
-        ],
+        "tags": ["Opportunities", "Organizations"],
         "summary": "Creates a new opportunity under the specified organization. Requires manager status of organization.",
         "parameters": [
           {
@@ -2138,9 +2238,7 @@
     },
     "/opportunities/{opportunityId}": {
       "get": {
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "summary": "Gets a single opportunity by ID.",
         "parameters": [
           {
@@ -2287,9 +2385,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "summary": "Creates a new opportunity under the specified organization. Requires manager status of organization.",
         "parameters": [
           {
@@ -2410,9 +2506,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "summary": "Deletes an opportunity.",
         "parameters": [
           {
@@ -2440,9 +2534,7 @@
     },
     "/opportunities/{opportunityId}/tags": {
       "get": {
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "summary": "Gets all of an opportunity's tags. (Areas of Interest)",
         "parameters": [
           {
@@ -2488,9 +2580,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "summary": "Adds multiple tags to an opportunity. Skips duplicates, so it's okay to send tags when unsure if they are already added.",
         "parameters": [
           {
@@ -2564,9 +2654,7 @@
     },
     "/opportunities/{opportunityId}/tags/{tagId}": {
       "delete": {
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "summary": "Deletes a tag from an opportunity's profile.",
         "parameters": [
           {
@@ -2610,9 +2698,7 @@
     },
     "/opportunities/{opportunityId}/profile-picture": {
       "post": {
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "summary": "Uploads a new profile picture to a user by ID.",
         "parameters": [
           {
@@ -2656,9 +2742,7 @@
     },
     "/opportunities/{opportunityId}/volunteers": {
       "get": {
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "parameters": [
           {
             "in": "path",
@@ -2677,15 +2761,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
-                      "required": [
-                        "pending",
-                        "volunteers"
-                      ],
+                      "required": ["pending", "volunteers"],
                       "properties": {
                         "pending": {
                           "type": "array",
@@ -2772,9 +2851,7 @@
     },
     "/opportunities/{opportunityId}/request": {
       "post": {
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "summary": "Attempts to request membership from an opportunity by ID. Creates and returns a conversation for chatting with the organization.",
         "parameters": [
           {
@@ -2811,15 +2888,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
-                      "required": [
-                        "conversationId",
-                        "success"
-                      ],
+                      "required": ["conversationId", "success"],
                       "properties": {
                         "conversationId": {
                           "type": "string",
@@ -2851,9 +2923,7 @@
     },
     "/opportunities/{opportunityId}/publish": {
       "post": {
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "summary": "Attempts to publish an opportunity. Will return an error if the opportunity is not publishable. Requires manager status.",
         "parameters": [
           {
@@ -2875,9 +2945,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "required": [
-                    "errors"
-                  ],
+                  "required": ["errors"],
                   "properties": {
                     "errors": {
                       "type": "array",
@@ -2893,9 +2961,7 @@
                             "items": {
                               "type": "string"
                             },
-                            "example": [
-                              "description"
-                            ]
+                            "example": ["description"]
                           },
                           "msg": {
                             "type": "string",
@@ -2917,9 +2983,7 @@
     },
     "/opportunities/{opportunityId}/unpublish": {
       "post": {
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "summary": "Unpublishes a published opportunity. Requires manager status.",
         "parameters": [
           {
@@ -2944,9 +3008,7 @@
     },
     "/tags": {
       "get": {
-        "tags": [
-          "Tags"
-        ],
+        "tags": ["Tags"],
         "summary": "Requires authentication. Gets tags from a search term (if present) or returns popular tags.",
         "parameters": [
           {
