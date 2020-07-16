@@ -12,6 +12,9 @@ type Service interface {
 	// CoordinatesToCity converts a Coordinates struct to a legible city, state
 	// format.
 	CoordinatesToCity(coordinates *Coordinates) (*Location, error)
+	// CoordinatesToStreetAddress converts a Coordinates struct to a legible address, city, state
+	// format.
+	CoordinatesToStreetAddress(coordinates *Coordinates) (*Location, error)
 }
 
 // Options represents the options available for the Service.
@@ -81,6 +84,54 @@ func (s *service) CoordinatesToCity(coordinates *Coordinates) (*Location, error)
 				LongName:  piece.LongName,
 			}
 		}
+	}
+
+	return &location, nil
+}
+
+// CoordinatesToStreetAddress converts a Coordinates struct to a legible address, city, state
+// format.
+func (s *service) CoordinatesToStreetAddress(coordinates *Coordinates) (*Location, error) {
+	res, err := s.client.ReverseGeocode(context.Background(), &maps.GeocodingRequest{
+		LatLng: &maps.LatLng{
+			Lat: coordinates.Latitude,
+			Lng: coordinates.Longitude,
+		},
+		ResultType: []string{"street_address"},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(res) < 1 {
+		return nil, errors.New("could not find address")
+	}
+
+	location := Location{}
+
+	for _, piece := range res[0].AddressComponents {
+		switch piece.Types[0] {
+		case "locality":
+			location.City = &LocationName{
+				ShortName: piece.ShortName,
+				LongName:  piece.LongName,
+			}
+		case "administrative_area_level_1":
+			location.State = &LocationName{
+				ShortName: piece.ShortName,
+				LongName:  piece.LongName,
+			}
+		case "country":
+			location.Country = &LocationName{
+				ShortName: piece.ShortName,
+				LongName:  piece.LongName,
+			}
+		}
+	}
+
+	location.StreetAddress = &LocationName{
+		ShortName: res[0].FormattedAddress,
+		LongName:  res[0].FormattedAddress,
 	}
 
 	return &location, nil

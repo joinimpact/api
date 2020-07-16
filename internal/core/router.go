@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/joinimpact/api/internal/core/handlers/auth"
+	"github.com/joinimpact/api/internal/core/handlers/events"
 	"github.com/joinimpact/api/internal/core/handlers/opportunities"
 	"github.com/joinimpact/api/internal/core/handlers/organizations"
 	"github.com/joinimpact/api/internal/core/handlers/tags"
@@ -98,17 +99,18 @@ func (app *App) Router() *chi.Mux {
 		router.Route("/opportunities", func(r chi.Router) {
 			r.Route("/{opportunityID}", func(r chi.Router) {
 				r.Use(idctx.Prepare("opportunityID"))
+				r.Use(scopes.Middleware(opportunities.ScopeProviderOpportunities(app.organizationsService, app.opportunitiesService)))
 
 				r.Get("/", opportunities.GetOne(app.opportunitiesService))
 				r.
-					With(permissions.Require(scopes.ScopeAuthenticated)).
+					With(permissions.Require(scopes.ScopeManager)).
 					Patch("/", opportunities.Patch(app.opportunitiesService))
 				r.
-					With(permissions.Require(scopes.ScopeAuthenticated)).
+					With(permissions.Require(scopes.ScopeManager)).
 					Delete("/", opportunities.Delete(app.opportunitiesService))
 
 				r.
-					With(permissions.Require(scopes.ScopeAuthenticated)).
+					With(permissions.Require(scopes.ScopeManager)).
 					Post("/profile-picture", opportunities.ProfilePicturePost(app.opportunitiesService))
 
 				r.
@@ -116,7 +118,7 @@ func (app *App) Router() *chi.Mux {
 
 				r.Route("/volunteers", func(r chi.Router) {
 					r.
-						With(permissions.Require(scopes.ScopeAuthenticated)).
+						With(permissions.Require(scopes.ScopeManager)).
 						Get("/", opportunities.VolunteersGet(app.opportunitiesService, app.usersService))
 				})
 
@@ -133,26 +135,36 @@ func (app *App) Router() *chi.Mux {
 				})
 
 				r.
-					With(permissions.Require(scopes.ScopeAuthenticated)).
+					With(permissions.Require(scopes.ScopeManager)).
 					Post("/publish", opportunities.PublishPost(app.opportunitiesService))
 				r.
-					With(permissions.Require(scopes.ScopeAuthenticated)).
+					With(permissions.Require(scopes.ScopeManager)).
 					Post("/unpublish", opportunities.UnpublishPost(app.opportunitiesService))
 
 				r.Route("/tags", func(r chi.Router) {
 					r.Get("/", opportunities.TagsGet(app.opportunitiesService))
 					r.
-						With(permissions.Require(scopes.ScopeAuthenticated)).
+						With(permissions.Require(scopes.ScopeManager)).
 						Post("/", opportunities.TagsPost(app.opportunitiesService))
 
 					r.Route("/{tagID}", func(r chi.Router) {
 						r.Use(idctx.Prepare("tagID"))
 
 						r.
-							With(permissions.Require(scopes.ScopeAuthenticated)).
+							With(permissions.Require(scopes.ScopeManager)).
 							Delete("/", opportunities.TagsDelete(app.opportunitiesService))
 					})
 				})
+
+				r.Post("/events", events.Post(app.eventsService))
+			})
+		})
+
+		router.Route("/events", func(r chi.Router) {
+			r.Route("/{eventID}", func(r chi.Router) {
+				r.Use(idctx.Prepare("eventID"))
+
+				r.Get("/", events.GetOne(app.eventsService))
 			})
 		})
 	})
