@@ -56,6 +56,24 @@ func (r *opportunityMembershipInviteRepository) FindByOpportunityID(opportunityI
 	return opportunityMembershipInvites, nil
 }
 
+// FindInOpportunityByUserID finds a membership invite in an opportunity by user ID.
+func (r *opportunityMembershipInviteRepository) FindInOpportunityByUserID(opportunityID, userID int64) (*models.OpportunityMembershipInvite, error) {
+	var opportunityMembershipInvite models.OpportunityMembershipInvite
+	if err := r.db.Where("opportunity_id = ? AND invitee_id = ? AND accepted = False", opportunityID, userID).First(&opportunityMembershipInvite).Error; err != nil {
+		return &opportunityMembershipInvite, err
+	}
+	return &opportunityMembershipInvite, nil
+}
+
+// FindInOpportunityByEmail finds a membership invite in an opportunity by user email.
+func (r *opportunityMembershipInviteRepository) FindInOpportunityByEmail(opportunityID int64, email string) (*models.OpportunityMembershipInvite, error) {
+	var opportunityMembershipInvite models.OpportunityMembershipInvite
+	if err := r.db.Where("opportunity_id = ? AND invitee_email = ? AND accepted = False", opportunityID, email).First(&opportunityMembershipInvite).Error; err != nil {
+		return &opportunityMembershipInvite, err
+	}
+	return &opportunityMembershipInvite, nil
+}
+
 // Create creates a new entity.
 func (r *opportunityMembershipInviteRepository) Create(opportunityMembershipInvite models.OpportunityMembershipInvite) error {
 	return r.db.Create(&opportunityMembershipInvite).Error

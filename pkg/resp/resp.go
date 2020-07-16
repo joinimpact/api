@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
+	"github.com/joinimpact/api/pkg/apierr"
 	"github.com/joinimpact/api/pkg/scopes"
 	"github.com/liip/sheriff"
 )
@@ -17,6 +18,7 @@ type response struct {
 type Err struct {
 	Code          int         `json:"code"`
 	Message       string      `json:"msg"`
+	Ref           string      `json:"ref"`
 	Data          interface{} `json:"data,omitempty"`
 	InvalidFields []string    `json:"invalidFields,omitempty"`
 }
@@ -123,12 +125,33 @@ func ErrorData(code int, message string, data interface{}) Err {
 	}
 }
 
+// ErrorRef returns a client-facing error with data.
+func ErrorRef(code int, message string, ref string, data interface{}) Err {
+	return Err{
+		Code:    code,
+		Message: message,
+		Ref:     ref,
+		Data:    data,
+	}
+}
+
+// APIError returns a client-facing error that auto detects refs.
+func APIError(err interface{}, data interface{}) Err {
+	return Err{
+		Code:    20,
+		Message: err.(error).Error(),
+		Ref:     apierr.Ref(err),
+		Data:    data,
+	}
+}
+
 // ErrorInvalidFields returns a client-facing error with invalid fields.
 func ErrorInvalidFields(code int, message string, invalidFields []string) Err {
 	return Err{
 		Code:          code,
 		Message:       message,
 		InvalidFields: invalidFields,
+		Ref:           "form.invalid_fields",
 	}
 }
 

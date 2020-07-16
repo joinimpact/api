@@ -120,6 +120,18 @@ func (app *App) Router() *chi.Mux {
 						Get("/", opportunities.VolunteersGet(app.opportunitiesService, app.usersService))
 				})
 
+				r.Route("/invites", func(r chi.Router) {
+					r.With(permissions.Require(scopes.ScopeAuthenticated)).Post("/", opportunities.InvitesPost(app.opportunitiesService))
+
+					r.Route("/{inviteID}", func(r chi.Router) {
+						r.Use(idctx.Prepare("inviteID"))
+
+						r.Post("/validate", opportunities.InviteValidatePost(app.opportunitiesService))
+						r.Post("/accept", opportunities.InviteAcceptPost(app.opportunitiesService))
+						r.Post("/decline", opportunities.InviteDeclinePost(app.opportunitiesService))
+					})
+				})
+
 				r.
 					With(permissions.Require(scopes.ScopeAuthenticated)).
 					Post("/publish", opportunities.PublishPost(app.opportunitiesService))
