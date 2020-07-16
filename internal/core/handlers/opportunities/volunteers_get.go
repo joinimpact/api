@@ -12,14 +12,21 @@ import (
 
 // OpportunityVolunteer represents a volunteer in an opportunity.
 type OpportunityVolunteer struct {
-	users.UserProfile
 	models.OpportunityMembership
+	users.UserProfile
 }
 
 // OpportunityPendingVolunteer represents a pending volunteer in an opportunity.
 type OpportunityPendingVolunteer struct {
-	users.UserProfile
 	models.OpportunityMembershipRequest
+	users.UserProfile
+}
+
+// OpportunityInvitedVolunteer represents a pending volunteer in an opportunity.
+type OpportunityInvitedVolunteer struct {
+	EmailOnly bool `json:"emailOnly"`
+	models.OpportunityMembershipInvite
+	users.UserProfile
 }
 
 // VolunteersGet gets all volunteers in a specified opportunity.
@@ -27,6 +34,7 @@ func VolunteersGet(opportunitiesService opportunities.Service, usersService user
 	type response struct {
 		Volunteers []OpportunityVolunteer        `json:"volunteers"`
 		Pending    []OpportunityPendingVolunteer `json:"pending"`
+		Invited    []OpportunityInvitedVolunteer `json:"invited"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -64,7 +72,7 @@ func VolunteersGet(opportunitiesService opportunities.Service, usersService user
 				return
 			}
 
-			volunteers = append(volunteers, OpportunityVolunteer{*profile, membership})
+			volunteers = append(volunteers, OpportunityVolunteer{membership, *profile})
 		}
 
 		pendingMemberships, err := opportunitiesService.GetOpportunityPendingVolunteers(ctx, opportunityID)
@@ -95,9 +103,33 @@ func VolunteersGet(opportunitiesService opportunities.Service, usersService user
 				return
 			}
 
-			pendingVolunteers = append(pendingVolunteers, OpportunityPendingVolunteer{*profile, membership})
+			pendingVolunteers = append(pendingVolunteers, OpportunityPendingVolunteer{membership, *profile})
 		}
 
-		resp.OK(w, r, response{volunteers, pendingVolunteers})
+		invites, err := opportunitiesService.GetOpportunityInvitedVolunteers(ctx, opportunityID)
+		if err != nil {
+			switch err.(type) {
+			case *opportunities.ErrOpportunityNotFound, *opportunities.ErrTagNotFound:
+				resp.NotFound(w, r, resp.Error(404, err.Error()))
+			case *opportunities.ErrServerError:
+				resp.ServerError(w, r, resp.Error(500, err.Error()))
+			default:
+				resp.ServerError(w, r, resp.UnknownError)
+			}
+		}
+
+		invitedVolunteers := []OpportunityInvitedVolunteer{}
+
+		for _, invite := range invites {
+			profile, err := usersService.GetMinimalUserProfile(invite.InviteeID)
+			if err != nil {
+				invitedVolunteers = append(invitedVolunteers, OpportunityInvitedVolunteer{true, invite, users.UserProfile{}})
+				continue
+			}
+
+			invitedVolunteers = append(invitedVolunteers, OpportunityInvitedVolunteer{false, invite, *profile})
+		}
+
+		resp.OK(w, r, response{volunteers, pendingVolunteers, invitedVolunteers})
 	}
 }

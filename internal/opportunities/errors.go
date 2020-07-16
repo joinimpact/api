@@ -56,6 +56,11 @@ func (e *ErrServerError) Error() string {
 	return "internal error processing request, please try again"
 }
 
+// Ref provides a representation of the error.
+func (e *ErrServerError) Ref() string {
+	return "generic.server_error"
+}
+
 // ErrOpportunityNotFound is thrown when an opportunity is not found.
 type ErrOpportunityNotFound struct {
 }
@@ -68,6 +73,11 @@ func NewErrOpportunityNotFound() error {
 // Error provides a string representation of the error.
 func (e *ErrOpportunityNotFound) Error() string {
 	return "opportunity not found"
+}
+
+// Ref provides a representation of the error.
+func (e *ErrOpportunityNotFound) Ref() string {
+	return "opportunities.opportunity_not_found"
 }
 
 // ErrOpportunityNotPublishable is thrown when an opportunity is missing required fields and is unable to be published.
@@ -85,6 +95,11 @@ func (e *ErrOpportunityNotPublishable) Error() string {
 	return "opportunity not found"
 }
 
+// Ref provides a representation of the error.
+func (e *ErrOpportunityNotPublishable) Ref() string {
+	return "opportunities.opportunity_not_publishable"
+}
+
 // ErrMembershipAlreadyRequested is thrown when a user has already requested to join an opportunity.
 type ErrMembershipAlreadyRequested struct {
 }
@@ -97,4 +112,47 @@ func NewErrMembershipAlreadyRequested() error {
 // Error provides a string representation of the error.
 func (e *ErrMembershipAlreadyRequested) Error() string {
 	return "opportunity membership already requested"
+}
+
+// Ref provides a representation of the error.
+func (e *ErrMembershipAlreadyRequested) Ref() string {
+	return "opportunities.membership_already_requested"
+}
+
+// ErrUserAlreadyInvited is thrown when a user has already been invited to an opportunity.
+type ErrUserAlreadyInvited struct {
+}
+
+// NewErrUserAlreadyInvited creates and returns a ErrUserAlreadyInvited.
+func NewErrUserAlreadyInvited() error {
+	return &ErrUserAlreadyInvited{}
+}
+
+// Error provides a string representation of the error.
+func (e *ErrUserAlreadyInvited) Error() string {
+	return "user already invited"
+}
+
+// Ref provides a representation of the error.
+func (e *ErrUserAlreadyInvited) Ref() string {
+	return "opportunities.user_already_invited"
+}
+
+// ErrInviteInvalid is thrown when an invite is invalid in any way.
+type ErrInviteInvalid struct {
+}
+
+// NewErrInviteInvalid creates and returns a ErrInviteInvalid.
+func NewErrInviteInvalid() error {
+	return &ErrInviteInvalid{}
+}
+
+// Error provides a string representation of the error.
+func (e *ErrInviteInvalid) Error() string {
+	return "invite invalid"
+}
+
+// Ref provides a representation of the error.
+func (e *ErrInviteInvalid) Ref() string {
+	return "opportunities.invite_invalid"
 }

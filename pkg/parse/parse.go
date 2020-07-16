@@ -65,6 +65,7 @@ func POST(w http.ResponseWriter, r *http.Request, s interface{}) error {
 
 	fieldErr.Code = 98
 	fieldErr.Message = "missing or invalid fields"
+	fieldErr.Ref = "form.invalid_fields"
 	fieldErr.InvalidFields = []string{}
 
 	for _, err := range err.(validator.ValidationErrors) {

@@ -9,6 +9,7 @@ import (
 	"github.com/joinimpact/api/internal/cdn"
 	"github.com/joinimpact/api/internal/config"
 	"github.com/joinimpact/api/internal/email"
+	"github.com/joinimpact/api/internal/email/templates"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/snowflakes"
 	"github.com/rs/zerolog"
@@ -43,10 +44,20 @@ type Service interface {
 	GetOpportunityVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembership, error)
 	// GetOpportunityPendingVolunteers returns an array of OpportunityMembershipRequest objects for a specified opportunity by ID.
 	GetOpportunityPendingVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembershipRequest, error)
+	// GetOpportunityInvitedVolunteers returns an array of OpportunityMembershipInvite objects for a specified opportunity by ID.
+	GetOpportunityInvitedVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembershipInvite, error)
 	// PublishOpportunity attempts to publish an opportunity and returns an error if the opportunity is unpublishable.
 	PublishOpportunity(ctx context.Context, opportunityID int64) error
 	// UnpublishOpportunity unpublishes an opportunity.
 	UnpublishOpportunity(ctx context.Context, opportunityID int64) error
+	// InviteVolunteer invites a volunteer by user email to an opportunity.
+	InviteVolunteer(ctx context.Context, inviterID, opportunityID int64, userEmail string) error
+	// GetOpportunityFromInvite gets an opportunity view from an invite for UI use.
+	GetOpportunityFromInvite(ctx context.Context, opportunityID int64, userID, inviteID int64, inviteKey string) (*OpportunityView, error)
+	// AcceptInvite accepts an invite.
+	AcceptInvite(ctx context.Context, opportunityID int64, userID, inviteID int64, inviteKey string) error
+	// DeclineInvite declines an invite.
+	DeclineInvite(ctx context.Context, opportunityID int64, userID, inviteID int64, inviteKey string) error
 }
 
 // service represents the intenral implementation of the opportunities Service.
@@ -59,6 +70,8 @@ type service struct {
 	opportunityMembershipRequestRepository models.OpportunityMembershipRequestRepository
 	opportunityMembershipInviteRepository  models.OpportunityMembershipInviteRepository
 	tagRepository                          models.TagRepository
+	userRepository                         models.UserRepository
+	organizationRepository                 models.OrganizationRepository
 	config                                 *config.Config
 	logger                                 *zerolog.Logger
 	snowflakeService                       snowflakes.SnowflakeService
@@ -67,7 +80,7 @@ type service struct {
 }
 
 // NewService creates and returns a new Opportunities service with the provifded dependencies.
-func NewService(opportunityRepository models.OpportunityRepository, opportunityRequirementsRepository models.OpportunityRequirementsRepository, opportunityLimitsRepository models.OpportunityLimitsRepository, opportunityTagRepository models.OpportunityTagRepository, opportunityMembershipRepository models.OpportunityMembershipRepository, opportunityMembershipRequestRepository models.OpportunityMembershipRequestRepository, opportunityMembershipInviteRepository models.OpportunityMembershipInviteRepository, tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service) Service {
+func NewService(opportunityRepository models.OpportunityRepository, opportunityRequirementsRepository models.OpportunityRequirementsRepository, opportunityLimitsRepository models.OpportunityLimitsRepository, opportunityTagRepository models.OpportunityTagRepository, opportunityMembershipRepository models.OpportunityMembershipRepository, opportunityMembershipRequestRepository models.OpportunityMembershipRequestRepository, opportunityMembershipInviteRepository models.OpportunityMembershipInviteRepository, tagRepository models.TagRepository, userRepository models.UserRepository, organizationRepository models.OrganizationRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service) Service {
 	return &service{
 		opportunityRepository,
 		opportunityRequirementsRepository,
@@ -77,6 +90,8 @@ func NewService(opportunityRepository models.OpportunityRepository, opportunityR
 		opportunityMembershipRequestRepository,
 		opportunityMembershipInviteRepository,
 		tagRepository,
+		userRepository,
+		organizationRepository,
 		config,
 		logger,
 		snowflakeService,
@@ -462,6 +477,17 @@ func (s *service) GetOpportunityPendingVolunteers(ctx context.Context, opportuni
 	return requests, nil
 }
 
+// GetOpportunityInvitedVolunteers returns an array of OpportunityMembershipRequest objects for a specified opportunity by ID.
+func (s *service) GetOpportunityInvitedVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembershipInvite, error) {
+	// Get all membership invites by opportunity ID.
+	invites, err := s.opportunityMembershipInviteRepository.FindByOpportunityID(opportunityID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	return invites, nil
+}
+
 // PublishOpportunity attempts to publish an opportunity and returns an error if the opportunity is unpublishable.
 func (s *service) PublishOpportunity(ctx context.Context, opportunityID int64) error {
 	opportunity, err := s.opportunityRepository.FindByID(ctx, opportunityID)
@@ -499,4 +525,165 @@ func (s *service) UnpublishOpportunity(ctx context.Context, opportunityID int64)
 	}
 
 	return nil
+}
+
+// InviteVolunteer invites a volunteer by user email to an opportunity.
+func (s *service) InviteVolunteer(ctx context.Context, inviterID, opportunityID int64, userEmail string) error {
+	_, err := s.opportunityMembershipInviteRepository.FindInOpportunityByEmail(opportunityID, userEmail)
+	if err == nil {
+		return NewErrUserAlreadyInvited()
+	}
+
+	opportunity, err := s.opportunityRepository.FindByID(ctx, opportunityID)
+	if err != nil {
+		return NewErrOpportunityNotFound()
+	}
+
+	organization, err := s.organizationRepository.FindByID(opportunity.OrganizationID)
+	if err != nil {
+		return NewErrServerError()
+	}
+
+	invite := models.OpportunityMembershipInvite{}
+
+	// Generate an ID for the invite.
+	invite.ID = s.snowflakeService.GenerateID()
+	invite.InviteeEmail = userEmail
+
+	userFirstName := "Impact"
+	userLastName := "User"
+
+	user, err := s.userRepository.FindByEmail(userEmail)
+	if err == nil {
+		// If a user was found, add their ID to the invite.
+		invite.InviteeID = user.ID
+		userFirstName = user.FirstName
+		userLastName = user.LastName
+	}
+
+	invite.InviterID = inviterID
+	invite.OpportunityID = opportunityID
+
+	// Generate a key.
+	invite.Key = generateKey()
+
+	err = s.opportunityMembershipInviteRepository.Create(invite)
+	if err != nil {
+		return NewErrServerError()
+	}
+
+	salutationName := "friend"
+
+	if userFirstName != "Impact" {
+		salutationName = userFirstName
+	}
+
+	// Create a new email with the reset password template.
+	email := s.emailService.NewEmail(
+		email.NewRecipient(fmt.Sprintf("%s %s", userFirstName, userLastName), userEmail),
+		fmt.Sprintf("You've been invited to join %s on Impact!", opportunity.Title),
+		templates.OpportunityInvitationTemplate(salutationName, opportunity.Title, organization.Name, opportunity.ID, invite.ID, invite.Key),
+	)
+	err = s.emailService.Send(email)
+	if err != nil {
+		return NewErrServerError()
+	}
+
+	return nil
+}
+
+// GetOpportunityFromInvite gets an opportunity view from an invite for UI use.
+func (s *service) GetOpportunityFromInvite(ctx context.Context, opportunityID int64, userID, inviteID int64, inviteKey string) (*OpportunityView, error) {
+	// Get the invite by ID.
+	invite, err := s.opportunityMembershipInviteRepository.FindByID(inviteID)
+	if err != nil {
+		return nil, NewErrInviteInvalid()
+	}
+
+	// Get the user by ID to check the email.
+	user, err := s.userRepository.FindByID(userID)
+	if err != nil {
+		return nil, NewErrInviteInvalid()
+	}
+
+	// Check if the invite is valid.
+	if invite.InviteeEmail != user.Email || invite.Key != inviteKey || invite.OpportunityID != opportunityID {
+		return nil, NewErrInviteInvalid()
+	}
+
+	return s.GetOpportunity(ctx, invite.OpportunityID)
+}
+
+// AcceptInvite accepts an invite.
+func (s *service) AcceptInvite(ctx context.Context, opportunityID int64, userID, inviteID int64, inviteKey string) error {
+	// Get the invite by ID.
+	invite, err := s.opportunityMembershipInviteRepository.FindByID(inviteID)
+	if err != nil {
+		return NewErrInviteInvalid()
+	}
+
+	// Get the user by ID to check the email.
+	user, err := s.userRepository.FindByID(userID)
+	if err != nil {
+		return NewErrInviteInvalid()
+	}
+
+	// Check if the invite is valid.
+	if invite.InviteeEmail != user.Email || invite.Key != inviteKey || invite.OpportunityID != opportunityID {
+		return NewErrInviteInvalid()
+	}
+
+	if err := s.createVolunteerMembership(ctx, invite.InviterID, invite.OpportunityID, userID); err != nil {
+		return NewErrServerError()
+	}
+
+	if err := s.invalidateInvite(ctx, invite.ID); err != nil {
+		return NewErrServerError()
+	}
+
+	return nil
+}
+
+// DeclineInvite declines an invite.
+func (s *service) DeclineInvite(ctx context.Context, opportunityID int64, userID, inviteID int64, inviteKey string) error {
+	// Get the invite by ID.
+	invite, err := s.opportunityMembershipInviteRepository.FindByID(inviteID)
+	if err != nil {
+		return NewErrInviteInvalid()
+	}
+
+	// Get the user by ID to check the email.
+	user, err := s.userRepository.FindByID(userID)
+	if err != nil {
+		return NewErrInviteInvalid()
+	}
+
+	// Check if the invite is valid.
+	if invite.InviteeEmail != user.Email || invite.Key != inviteKey || invite.OpportunityID != opportunityID {
+		return NewErrInviteInvalid()
+	}
+
+	if err := s.invalidateInvite(ctx, invite.ID); err != nil {
+		return NewErrServerError()
+	}
+
+	return nil
+}
+
+// createVolunteerMembership creates a volunteer membership in an opportunity.
+func (s *service) createVolunteerMembership(ctx context.Context, inviterID int64, opportunityID, userID int64) error {
+	membership := models.OpportunityMembership{}
+
+	membership.ID = s.snowflakeService.GenerateID()
+	membership.UserID = userID
+	membership.OpportunityID = opportunityID
+	membership.PermissionsFlag = models.OpportunityPermissionsMember
+	membership.InviterID = inviterID
+
+	return s.opportunityMembershipRepository.Create(ctx, membership)
+}
+
+// invalidateInvite invalidates an opportunity invite by ID.
+func (s *service) invalidateInvite(ctx context.Context, inviteID int64) error {
+	return s.opportunityMembershipInviteRepository.DeleteByID(inviteID)
 }

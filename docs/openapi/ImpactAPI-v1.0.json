@@ -120,7 +120,9 @@
     "/auth/register": {
       "post": {
         "summary": "Creates a new user and returns a token pair on success.",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "requestBody": {
           "description": "Contains information about the user.",
           "required": true,
@@ -174,7 +176,9 @@
                         {
                           "code": 98,
                           "message": "missing or invalid fields",
-                          "invalidFields": ["password"]
+                          "invalidFields": [
+                            "password"
+                          ]
                         }
                       ]
                     }
@@ -189,7 +193,9 @@
     "/auth/login": {
       "post": {
         "summary": "Attempts to login using the credentials provided. Returns a token pair on success.",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "requestBody": {
           "description": "Contains a username and password used to authenticate the user.",
           "required": true,
@@ -197,7 +203,10 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["email", "password"],
+                "required": [
+                  "email",
+                  "password"
+                ],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -268,7 +277,9 @@
     },
     "/auth/tokens/refresh": {
       "post": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Generates a new token pair from a refresh token.",
         "requestBody": {
           "description": "Contains a refresh token.",
@@ -277,7 +288,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["refreshToken"],
+                "required": [
+                  "refreshToken"
+                ],
                 "properties": {
                   "refreshToken": {
                     "type": "string",
@@ -307,7 +320,9 @@
     },
     "/auth/password-resets": {
       "post": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Creates a new password reset request and emails the link to the user.",
         "requestBody": {
           "description": "Includes the users email to send the request to.",
@@ -316,7 +331,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["email"],
+                "required": [
+                  "email"
+                ],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -365,7 +382,9 @@
                         {
                           "code": 98,
                           "message": "missing or invalid fields",
-                          "invalidFields": ["email"]
+                          "invalidFields": [
+                            "email"
+                          ]
                         }
                       ]
                     }
@@ -382,7 +401,9 @@
     },
     "/auth/password-resets/{passwordResetKey}": {
       "get": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Gets a password reset object. If valid, it returns a first name and email to render a form with.",
         "responses": {
           "200": {
@@ -413,7 +434,9 @@
     },
     "/auth/password-resets/{passwordResetKey}/reset": {
       "post": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Resets the user's password from a password reset key.",
         "requestBody": {
           "content": {
@@ -471,7 +494,9 @@
                         {
                           "code": 98,
                           "message": "missing or invalid fields",
-                          "invalidFields": ["password"]
+                          "invalidFields": [
+                            "password"
+                          ]
                         }
                       ]
                     }
@@ -488,7 +513,9 @@
     },
     "/auth/oauth/google": {
       "post": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Attempts to login with a Google Oauth code.",
         "requestBody": {
           "content": {
@@ -563,7 +590,9 @@
     },
     "/auth/oauth/facebook": {
       "post": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Attempts to login with a Facebook Oauth code.",
         "requestBody": {
           "content": {
@@ -638,7 +667,9 @@
     },
     "/users/{userId}": {
       "get": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Gets the profile of a single user by ID.",
         "parameters": [
           {
@@ -710,7 +741,9 @@
         }
       },
       "patch": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Updates a user's profile. Non-filled fields will be ignored.",
         "parameters": [
           {
@@ -767,7 +800,9 @@
     },
     "/users/{userId}/profile-picture": {
       "post": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Uploads a new profile picture to a user by ID.",
         "parameters": [
           {
@@ -811,7 +846,9 @@
     },
     "/users/{userId}/tags": {
       "get": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Gets all of a user's tags. (Areas of Interest)",
         "parameters": [
           {
@@ -857,7 +894,9 @@
         }
       },
       "post": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Adds multiple tags to a user. Skips duplicates, so it's okay to send tags when unsure if they are already added.",
         "parameters": [
           {
@@ -931,7 +970,9 @@
     },
     "/users/{userId}/tags/{tagId}": {
       "delete": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Deletes a tag from a user's profile.",
         "parameters": [
           {
@@ -972,7 +1013,10 @@
     },
     "/users/{userId}/organizations": {
       "get": {
-        "tags": ["Users", "Organizations"],
+        "tags": [
+          "Users",
+          "Organizations"
+        ],
         "description": "Gets all of a single user's organizations. Use 'me' for the current user.",
         "parameters": [
           {
@@ -992,10 +1036,14 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "properties": {
                     "data": {
-                      "required": ["organizations"],
+                      "required": [
+                        "organizations"
+                      ],
                       "properties": {
                         "organizations": {
                           "type": "array",
@@ -1038,7 +1086,10 @@
     },
     "/users/{userId}/opportunities": {
       "get": {
-        "tags": ["Opportunities", "Users"],
+        "tags": [
+          "Opportunities",
+          "Users"
+        ],
         "summary": "Gets enrolled opportunities by user ID.",
         "parameters": [
           {
@@ -1233,14 +1284,18 @@
     },
     "/organizations": {
       "post": {
-        "tags": ["Organizations"],
+        "tags": [
+          "Organizations"
+        ],
         "summary": "Creates a new organization and adds the authenticated user as the owner.",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["name"],
+                "required": [
+                  "name"
+                ],
                 "properties": {
                   "name": {
                     "type": "string",
@@ -1351,7 +1406,9 @@
                         {
                           "code": 98,
                           "message": "missing or invalid fields",
-                          "invalidFields": ["name"]
+                          "invalidFields": [
+                            "name"
+                          ]
                         }
                       ]
                     }
@@ -1365,7 +1422,9 @@
     },
     "/organizations/{organizationId}": {
       "get": {
-        "tags": ["Organizations"],
+        "tags": [
+          "Organizations"
+        ],
         "summary": "Gets the profile of a single organization. Authentication required.",
         "parameters": [
           {
@@ -1385,7 +1444,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "properties": {
                     "data": {
                       "required": [
@@ -1459,10 +1520,17 @@
                         },
                         "location": {
                           "type": "object",
-                          "required": ["city", "state", "country"],
+                          "required": [
+                            "city",
+                            "state",
+                            "country"
+                          ],
                           "properties": {
                             "city": {
-                              "required": ["shortName", "longName"],
+                              "required": [
+                                "shortName",
+                                "longName"
+                              ],
                               "properties": {
                                 "shortName": {
                                   "type": "string",
@@ -1476,7 +1544,10 @@
                               "type": "object"
                             },
                             "state": {
-                              "required": ["shortName", "longName"],
+                              "required": [
+                                "shortName",
+                                "longName"
+                              ],
                               "properties": {
                                 "shortName": {
                                   "type": "string",
@@ -1490,7 +1561,10 @@
                               "type": "object"
                             },
                             "country": {
-                              "required": ["shortName", "longName"],
+                              "required": [
+                                "shortName",
+                                "longName"
+                              ],
                               "properties": {
                                 "shortName": {
                                   "type": "string",
@@ -1528,7 +1602,9 @@
         }
       },
       "patch": {
-        "tags": ["Organizations"],
+        "tags": [
+          "Organizations"
+        ],
         "summary": "Gets the profile of a single organization. Authentication required.",
         "parameters": [
           {
@@ -1604,7 +1680,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "properties": {
                     "data": {
                       "properties": {
@@ -1631,7 +1709,9 @@
         }
       },
       "delete": {
-        "tags": ["Organizations"],
+        "tags": [
+          "Organizations"
+        ],
         "summary": "Deletes a single organization. Requires owner permissions.",
         "parameters": [
           {
@@ -1659,7 +1739,9 @@
     },
     "/organizations/{organizationId}/tags": {
       "get": {
-        "tags": ["Organizations"],
+        "tags": [
+          "Organizations"
+        ],
         "summary": "Gets all of an organization's tags. (Areas of Interest)",
         "parameters": [
           {
@@ -1705,7 +1787,9 @@
         }
       },
       "post": {
-        "tags": ["Organizations"],
+        "tags": [
+          "Organizations"
+        ],
         "summary": "Adds multiple tags to an organization. Skips duplicates, so it's okay to send tags when unsure if they are already added.",
         "parameters": [
           {
@@ -1779,7 +1863,9 @@
     },
     "/organizations/{organizationId}/tags/{tagId}": {
       "delete": {
-        "tags": ["Organizations"],
+        "tags": [
+          "Organizations"
+        ],
         "summary": "Deletes a tag from an organization's profile.",
         "parameters": [
           {
@@ -1820,7 +1906,9 @@
     },
     "/organizations/{organizationId}/profile-picture": {
       "post": {
-        "tags": ["Organizations"],
+        "tags": [
+          "Organizations"
+        ],
         "summary": "Uploads a new profile picture to an organization by ID.",
         "parameters": [
           {
@@ -1864,7 +1952,9 @@
     },
     "/organizations/{organizationId}/invite": {
       "post": {
-        "tags": ["Organizations"],
+        "tags": [
+          "Organizations"
+        ],
         "summary": "Sends invites to multiple organization members by email address.",
         "parameters": [
           {
@@ -1888,7 +1978,9 @@
                     "description": "An array of invite objects.",
                     "items": {
                       "type": "object",
-                      "required": ["email"],
+                      "required": [
+                        "email"
+                      ],
                       "properties": {
                         "email": {
                           "type": "string",
@@ -1918,7 +2010,10 @@
     },
     "/organizations/{organizationId}/opportunities": {
       "get": {
-        "tags": ["Opportunities", "Organizations"],
+        "tags": [
+          "Opportunities",
+          "Organizations"
+        ],
         "summary": "Gets opportunities by organization ID. Requires manager status of organization.",
         "parameters": [
           {
@@ -2111,7 +2206,10 @@
         }
       },
       "post": {
-        "tags": ["Opportunities", "Organizations"],
+        "tags": [
+          "Opportunities",
+          "Organizations"
+        ],
         "summary": "Creates a new opportunity under the specified organization. Requires manager status of organization.",
         "parameters": [
           {
@@ -2238,7 +2336,9 @@
     },
     "/opportunities/{opportunityId}": {
       "get": {
-        "tags": ["Opportunities"],
+        "tags": [
+          "Opportunities"
+        ],
         "summary": "Gets a single opportunity by ID.",
         "parameters": [
           {
@@ -2385,7 +2485,9 @@
         }
       },
       "patch": {
-        "tags": ["Opportunities"],
+        "tags": [
+          "Opportunities"
+        ],
         "summary": "Creates a new opportunity under the specified organization. Requires manager status of organization.",
         "parameters": [
           {
@@ -2506,7 +2608,9 @@
         }
       },
       "delete": {
-        "tags": ["Opportunities"],
+        "tags": [
+          "Opportunities"
+        ],
         "summary": "Deletes an opportunity.",
         "parameters": [
           {
@@ -2534,7 +2638,9 @@
     },
     "/opportunities/{opportunityId}/tags": {
       "get": {
-        "tags": ["Opportunities"],
+        "tags": [
+          "Opportunities"
+        ],
         "summary": "Gets all of an opportunity's tags. (Areas of Interest)",
         "parameters": [
           {
@@ -2580,7 +2686,9 @@
         }
       },
       "post": {
-        "tags": ["Opportunities"],
+        "tags": [
+          "Opportunities"
+        ],
         "summary": "Adds multiple tags to an opportunity. Skips duplicates, so it's okay to send tags when unsure if they are already added.",
         "parameters": [
           {
@@ -2654,7 +2762,9 @@
     },
     "/opportunities/{opportunityId}/tags/{tagId}": {
       "delete": {
-        "tags": ["Opportunities"],
+        "tags": [
+          "Opportunities"
+        ],
         "summary": "Deletes a tag from an opportunity's profile.",
         "parameters": [
           {
@@ -2698,7 +2808,9 @@
     },
     "/opportunities/{opportunityId}/profile-picture": {
       "post": {
-        "tags": ["Opportunities"],
+        "tags": [
+          "Opportunities"
+        ],
         "summary": "Uploads a new profile picture to a user by ID.",
         "parameters": [
           {
@@ -2742,7 +2854,9 @@
     },
     "/opportunities/{opportunityId}/volunteers": {
       "get": {
-        "tags": ["Opportunities"],
+        "tags": [
+          "Opportunities"
+        ],
         "parameters": [
           {
             "in": "path",
@@ -2761,10 +2875,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "properties": {
                     "data": {
-                      "required": ["pending", "volunteers"],
+                      "required": [
+                        "pending",
+                        "volunteers"
+                      ],
                       "properties": {
                         "pending": {
                           "type": "array",
@@ -2831,6 +2950,55 @@
                               }
                             }
                           }
+                        },
+                        "invited": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "accepted": {
+                                "type": "boolean",
+                                "example": false
+                              },
+                              "emailOnly": {
+                                "type": "boolean",
+                                "example": false,
+                                "description": "When true, it means that the user has not yet made an account, and should be displayed in a list with only the email."
+                              },
+                              "firstName": {
+                                "type": "string",
+                                "example": "tyler"
+                              },
+                              "id": {
+                                "type": "string",
+                                "example": "1273884565403865088"
+                              },
+                              "inviteeEmail": {
+                                "type": "string",
+                                "example": "tylerlafayette@gmail.com"
+                              },
+                              "inviteeId": {
+                                "type": "string",
+                                "example": "1273884565403865088"
+                              },
+                              "inviterId": {
+                                "type": "string",
+                                "example": "1273884565403865088"
+                              },
+                              "lastName": {
+                                "type": "string",
+                                "example": "Lafayette"
+                              },
+                              "opportunityId": {
+                                "type": "string",
+                                "example": "1282893821989883904"
+                              },
+                              "profilePicture": {
+                                "type": "string",
+                                "example": "https://cdn.joinimpact.org/profile-picture-1273884565403865088-1593076042.png"
+                              }
+                            }
+                          }
                         }
                       },
                       "type": "object"
@@ -2851,7 +3019,9 @@
     },
     "/opportunities/{opportunityId}/request": {
       "post": {
-        "tags": ["Opportunities"],
+        "tags": [
+          "Opportunities"
+        ],
         "summary": "Attempts to request membership from an opportunity by ID. Creates and returns a conversation for chatting with the organization.",
         "parameters": [
           {
@@ -2888,10 +3058,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "properties": {
                     "data": {
-                      "required": ["conversationId", "success"],
+                      "required": [
+                        "conversationId",
+                        "success"
+                      ],
                       "properties": {
                         "conversationId": {
                           "type": "string",
@@ -2923,7 +3098,9 @@
     },
     "/opportunities/{opportunityId}/publish": {
       "post": {
-        "tags": ["Opportunities"],
+        "tags": [
+          "Opportunities"
+        ],
         "summary": "Attempts to publish an opportunity. Will return an error if the opportunity is not publishable. Requires manager status.",
         "parameters": [
           {
@@ -2945,7 +3122,9 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "required": ["errors"],
+                  "required": [
+                    "errors"
+                  ],
                   "properties": {
                     "errors": {
                       "type": "array",
@@ -2961,7 +3140,9 @@
                             "items": {
                               "type": "string"
                             },
-                            "example": ["description"]
+                            "example": [
+                              "description"
+                            ]
                           },
                           "msg": {
                             "type": "string",
@@ -2983,7 +3164,9 @@
     },
     "/opportunities/{opportunityId}/unpublish": {
       "post": {
-        "tags": ["Opportunities"],
+        "tags": [
+          "Opportunities"
+        ],
         "summary": "Unpublishes a published opportunity. Requires manager status.",
         "parameters": [
           {
@@ -3006,9 +3189,541 @@
         }
       }
     },
+    "/opportunities/{opportunityId}/invites": {
+      "post": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "Creates new invites for users.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "opportunityId",
+            "description": "The ID of the opportunity.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "invites": {
+                    "type": "array",
+                    "description": "An array of invite objects.",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "email"
+                      ],
+                      "properties": {
+                        "email": {
+                          "type": "string",
+                          "description": "A valid email address.",
+                          "format": "email"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success!"
+          },
+          "400": {
+            "description": "A user was already invited, or the email was invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "errors"
+                  ],
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "number",
+                            "example": 32
+                          },
+                          "data": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "email": {
+                                  "type": "string",
+                                  "example": "tylerlafayette@gmail.com"
+                                },
+                                "ref": {
+                                  "type": "string",
+                                  "example": "opportunities.user_already_invited"
+                                }
+                              }
+                            }
+                          },
+                          "msg": {
+                            "type": "string",
+                            "example": "errors while sending invites"
+                          },
+                          "ref": {
+                            "type": "string",
+                            "example": "opportunities.multiple_invite_errors"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
+    "/opportunities/{opportunityId}/invites/{inviteId}/validate": {
+      "post": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "(Volunteer) Checks if an invite is valid and returns an opportunity profile on success for the UI.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "opportunityId",
+            "description": "The ID of the opportunity.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "inviteId",
+            "description": "The ID of the invite.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "key"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "description": "The secret key of the invite (should be received as a get parameter).",
+                    "example": "ujcSbcAW1KW9DAbPQNHLsYGY"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! An opportunity view will be returned from which a modal can be shown to the user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "required": [
+                        "description",
+                        "id",
+                        "limits",
+                        "organizationId",
+                        "profilePicture",
+                        "public",
+                        "requirements",
+                        "stats",
+                        "tags",
+                        "title"
+                      ],
+                      "properties": {
+                        "description": {
+                          "type": "string",
+                          "example": "Your help is needed to fight climate change! This opportunity will require you to physically come to our offices in Palo Alto."
+                        },
+                        "id": {
+                          "type": "string",
+                          "example": "1282893821989883904"
+                        },
+                        "limits": {
+                          "required": [
+                            "volunteersCap"
+                          ],
+                          "properties": {
+                            "volunteersCap": {
+                              "required": [
+                                "active",
+                                "cap"
+                              ],
+                              "properties": {
+                                "active": {
+                                  "type": "boolean",
+                                  "example": true
+                                },
+                                "cap": {
+                                  "type": "number",
+                                  "example": 50
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "organizationId": {
+                          "type": "string",
+                          "example": "1280407140296560640"
+                        },
+                        "profilePicture": {
+                          "type": "string",
+                          "example": ""
+                        },
+                        "public": {
+                          "type": "boolean",
+                          "example": false
+                        },
+                        "requirements": {
+                          "required": [
+                            "ageLimit",
+                            "expectedHours"
+                          ],
+                          "properties": {
+                            "ageLimit": {
+                              "required": [
+                                "active",
+                                "from",
+                                "to"
+                              ],
+                              "properties": {
+                                "active": {
+                                  "type": "boolean",
+                                  "example": true
+                                },
+                                "from": {
+                                  "type": "number",
+                                  "example": 13
+                                },
+                                "to": {
+                                  "type": "number",
+                                  "example": 18
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "expectedHours": {
+                              "required": [
+                                "active",
+                                "hours"
+                              ],
+                              "properties": {
+                                "active": {
+                                  "type": "boolean",
+                                  "example": true
+                                },
+                                "hours": {
+                                  "type": "number",
+                                  "example": 8
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "type": "undefined"
+                          },
+                          "example": []
+                        },
+                        "title": {
+                          "type": "string",
+                          "example": "Help code algorithms to fight climate change!"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The invite ID or key was incorrect, or the user's email doesn't match the one the invite is intended for, and the invite is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "errors"
+                  ],
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "number",
+                            "example": 20
+                          },
+                          "msg": {
+                            "type": "string",
+                            "example": "invite invalid"
+                          },
+                          "ref": {
+                            "type": "string",
+                            "example": "opportunities.invite_invalid"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
+    "/opportunities/{opportunityId}/invites/{inviteId}/accept": {
+      "post": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "(Volunteer) Accepts an invite.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "opportunityId",
+            "description": "The ID of the opportunity.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "inviteId",
+            "description": "The ID of the invite.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "key"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "description": "The secret key of the invite (should be received as a get parameter).",
+                    "example": "ujcSbcAW1KW9DAbPQNHLsYGY"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! An opportunity view will be returned from which a modal can be shown to the user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The invite ID or key was incorrect, or the user's email doesn't match the one the invite is intended for, and the invite is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "errors"
+                  ],
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "number",
+                            "example": 20
+                          },
+                          "msg": {
+                            "type": "string",
+                            "example": "invite invalid"
+                          },
+                          "ref": {
+                            "type": "string",
+                            "example": "opportunities.invite_invalid"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
+    "/opportunities/{opportunityId}/invites/{inviteId}/decline": {
+      "post": {
+        "tags": [
+          "Opportunities"
+        ],
+        "summary": "(Volunteer) Declines an invite and invalidates it.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "opportunityId",
+            "description": "The ID of the opportunity.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "inviteId",
+            "description": "The ID of the invite.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "key"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "description": "The secret key of the invite (should be received as a get parameter).",
+                    "example": "ujcSbcAW1KW9DAbPQNHLsYGY"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! An opportunity view will be returned from which a modal can be shown to the user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The invite ID or key was incorrect, or the user's email doesn't match the one the invite is intended for, and the invite is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "errors"
+                  ],
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "number",
+                            "example": 20
+                          },
+                          "msg": {
+                            "type": "string",
+                            "example": "invite invalid"
+                          },
+                          "ref": {
+                            "type": "string",
+                            "example": "opportunities.invite_invalid"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
     "/tags": {
       "get": {
-        "tags": ["Tags"],
+        "tags": [
+          "Tags"
+        ],
         "summary": "Requires authentication. Gets tags from a search term (if present) or returns popular tags.",
         "parameters": [
           {
