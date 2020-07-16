@@ -6,11 +6,11 @@ import "github.com/joinimpact/api/internal/models"
 func isPublishable(opportunity models.Opportunity) ([]string, bool) {
 	invalidFields := []string{}
 
-	if len(opportunity.Title) < 8 {
+	if len(opportunity.Title) < 4 {
 		invalidFields = append(invalidFields, "title")
 	}
 
-	if len(opportunity.Description) < 24 {
+	if len(opportunity.Description) < 64 {
 		invalidFields = append(invalidFields, "description")
 	}
 
