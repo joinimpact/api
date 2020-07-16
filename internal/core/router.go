@@ -156,7 +156,8 @@ func (app *App) Router() *chi.Mux {
 					})
 				})
 
-				r.Post("/events", events.Post(app.eventsService))
+				r.With(permissions.Require(scopes.ScopeManager)).Post("/events", events.Post(app.eventsService))
+				r.With(permissions.Require(scopes.ScopeCollaborator)).Get("/events", events.GetByOpportunity(app.eventsService))
 			})
 		})
 
