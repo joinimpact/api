@@ -47,6 +47,8 @@ type Service interface {
 	PublishOpportunity(ctx context.Context, opportunityID int64) error
 	// UnpublishOpportunity unpublishes an opportunity.
 	UnpublishOpportunity(ctx context.Context, opportunityID int64) error
+	// InviteVolunteer invites a volunteer by user email to an opportunity.
+	InviteVolunteer(ctx context.Context, inviterID, opportunityID int64, userEmail string) error
 }
 
 // service represents the intenral implementation of the opportunities Service.
@@ -497,6 +499,12 @@ func (s *service) UnpublishOpportunity(ctx context.Context, opportunityID int64)
 	if err != nil {
 		return NewErrServerError()
 	}
+
+	return nil
+}
+
+// InviteVolunteer invites a volunteer by user email to an opportunity.
+func (s *service) InviteVolunteer(ctx context.Context, inviterID, opportunityID int64, userEmail string) error {
 
 	return nil
 }
