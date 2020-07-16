@@ -25,7 +25,7 @@ func ScopeProviderOpportunities(organizationsService organizations.Service, oppo
 		}
 
 		// Get the opportunity so we can check organization membership.
-		opportunity, err := opportunitiesService.GetOpportunity(ctx, opportunityID)
+		opportunity, err := opportunitiesService.GetMinimalOpportunity(ctx, opportunityID)
 		if err != nil {
 			return scopes.NoChange
 		}

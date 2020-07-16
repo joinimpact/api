@@ -33,6 +33,19 @@ func (s *service) requestToEvent(request ModifyEventRequest) models.Event {
 	return event
 }
 
+func (s *service) eventToMinimalView(event models.Event) (*EventView, error) {
+	view := &EventView{}
+
+	view.ID = event.ID
+	view.OpportunityID = event.OpportunityID
+	view.CreatorID = event.CreatorID
+	view.Title = event.Title
+	view.Description = event.Description
+	view.Hours = event.Hours
+
+	return view, nil
+}
+
 func (s *service) eventToView(event models.Event) (*EventView, error) {
 	view := &EventView{}
 

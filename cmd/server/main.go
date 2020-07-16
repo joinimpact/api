@@ -47,6 +47,10 @@ func main() {
 	// Close the database on program exit.
 	defer db.Close()
 
+	if config.DevMode {
+		db.LogMode(true)
+	}
+
 	// Create a new MigrationService to handle automatic migrations.
 	migrationService := migrations.NewMigrationService(db)
 	// Auto migrate models into the database.

@@ -18,6 +18,8 @@ type Service interface {
 	CreateEvent(ctx context.Context, request ModifyEventRequest) (int64, error)
 	// GetEvent gets a single event by ID.
 	GetEvent(ctx context.Context, eventID int64) (*EventView, error)
+	// GetMinimalEvent gets a single event with only the event base fields.
+	GetMinimalEvent(ctx context.Context, eventID int64) (*EventView, error)
 	// GetOpportunityEvents gets all events by opportunity ID.
 	GetOpportunityEvents(ctx context.Context, opportunityID int64) ([]EventView, error)
 }
@@ -82,6 +84,23 @@ func (s *service) GetEvent(ctx context.Context, eventID int64) (*EventView, erro
 
 	// Convert the event to view.
 	view, err := s.eventToView(*event)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	return view, nil
+}
+
+// GetMinimalEvent gets a single event by ID.
+func (s *service) GetMinimalEvent(ctx context.Context, eventID int64) (*EventView, error) {
+	// Find the event by ID.
+	event, err := s.eventRepository.FindByID(ctx, eventID)
+	if err != nil {
+		return nil, NewErrEventNotFound()
+	}
+
+	// Convert the event to view.
+	view, err := s.eventToMinimalView(*event)
 	if err != nil {
 		return nil, NewErrServerError()
 	}
