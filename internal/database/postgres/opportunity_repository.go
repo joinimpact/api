@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/jinzhu/gorm"
 	"github.com/joinimpact/api/internal/models"
@@ -36,7 +37,7 @@ func (r *opportunityRepository) FindByOrganizationID(ctx context.Context, organi
 	if err := r.db.
 		Limit(dbctx.Get(ctx).Limit).
 		Offset(dbctx.Get(ctx).Page*dbctx.Get(ctx).Limit).
-		Where("organization_id = ? AND active = True AND title LIKE ?", organizationID, fmt.Sprintf("%%%s%%", dbctx.Get(ctx).Query)).
+		Where("organization_id = ? AND active = True AND LOWER(title) LIKE ?", organizationID, strings.ToLower(fmt.Sprintf("%%%s%%", dbctx.Get(ctx).Query))).
 		Find(&opportunities).
 		Error; err != nil {
 		return opportunities, err
