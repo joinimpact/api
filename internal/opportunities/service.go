@@ -172,6 +172,8 @@ func (s *service) GetOpportunity(ctx context.Context, id int64) (*OpportunityVie
 	view.Description = opportunity.Description
 	view.Public = opportunity.Public
 
+	_, view.Publishable = isPublishable(*opportunity)
+
 	opportunityRequirements, err := s.opportunityRequirementsRepository.FindByOpportunityID(opportunity.ID)
 	if err == nil {
 		if opportunityRequirements.AgeLimitActive {

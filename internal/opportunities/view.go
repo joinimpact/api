@@ -5,6 +5,7 @@ import "github.com/joinimpact/api/internal/models"
 // OpportunityView is a representation of how the opportunities will be returned by the API.
 type OpportunityView struct {
 	ID             int64         `json:"id"`
+	Publishable    bool          `json:"publishable"`
 	OrganizationID int64         `json:"organizationId"`
 	CreatorID      int64         `json:"creatorId" scope:"manager"`
 	ProfilePicture string        `json:"profilePicture"`
