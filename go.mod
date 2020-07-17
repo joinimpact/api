@@ -8,6 +8,7 @@ require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/elastic/go-elasticsearch/v7 v7.8.0 // indirect
 	github.com/go-chi/chi v4.1.1+incompatible
 	github.com/go-chi/render v1.0.1
 	github.com/go-playground/locales v0.13.0 // indirect
