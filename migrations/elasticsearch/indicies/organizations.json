@@ -1,0 +1,18 @@
+{
+  "properties": {
+    "tags": {
+      "type": "nested",
+      "properties": {
+        "id": {
+          "enabled": false
+        },
+        "name": {
+          "type": "text"
+        },
+        "category": {
+          "enabled": false
+        }
+      }
+    }
+  }
+}
