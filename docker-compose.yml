@@ -1,7 +1,6 @@
 version: "3.5"
 
 services:
-
   api:
     image: ${CI_REGISTRY_IMAGE:-docker.pkg.github.com/joinimpact/api/api}:${CI_COMMIT_REF:-master}
     build:
@@ -17,8 +16,49 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres
+      - elasticsearch
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/healthcheck"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/healthcheck",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.8.0
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=impact-es-cluster
+      - cluster.initial_master_nodes=es01
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ${DATA_PATH:-/tmp}/joinimpact/elasticsearch:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:9200/_cluster/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -58,7 +98,15 @@ services:
       - "127.0.0.1:8080:80/tcp"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/healthcheck"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost/healthcheck",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -75,13 +123,21 @@ services:
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
       - ${DATA_PATH:-/tmp}/joinimpact/certbot/www:/var/www/certbot:ro
-      - ${DATA_PATH:-/tmp}/joinimpact/certbot/letsencrypt:/etc/letsencrypt:ro        
+      - ${DATA_PATH:-/tmp}/joinimpact/certbot/letsencrypt:/etc/letsencrypt:ro
     restart: unless-stopped
     depends_on:
       - api
       - frontend
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/healthcheck"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost/healthcheck",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
