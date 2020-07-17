@@ -1,5 +1,9 @@
 {
   "properties": {
+    "name": {
+      "type": "text",
+      "boost": 2
+    },
     "tags": {
       "type": "nested",
       "properties": {
