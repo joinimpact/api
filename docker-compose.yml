@@ -46,7 +46,7 @@ services:
         soft: -1
         hard: -1
     volumes:
-      - ${DATA_PATH:-/tmp}/joinimpact/elasticsearch:/usr/share/elasticsearch/data
+      - ${DATA_PATH:-/tmp}/joinimpact/elasticsearch:/usr/share/elasticsearch/data:rw
     ports:
       - 9200:9200
     healthcheck:
