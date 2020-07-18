@@ -33,12 +33,11 @@ services:
       start_period: 10s
 
   elasticsearch:
-    user: $USER
     image: docker.elastic.co/elasticsearch/elasticsearch:7.8.0
     container_name: elasticsearch
     environment:
-      - node.name=elasticsearch
-      - cluster.name=impact-es-cluster
+      - node.name=elasticsearch-1
+      - cluster.name=es-impact
       - cluster.initial_master_nodes=es01
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
@@ -47,9 +46,11 @@ services:
         soft: -1
         hard: -1
     volumes:
-      - ${DATA_PATH:-/tmp}/joinimpact/elasticsearch:/usr/share/elasticsearch/data:rw
+      - elastic01:/usr/share/elasticsearch/data
     ports:
       - 9200:9200
+    networks:
+      - elastic
     healthcheck:
       test:
         [
@@ -143,3 +144,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+volumes:
+  elastic01:
+    driver: local
+
+networks:
+  elastic:
+    driver: bridge
