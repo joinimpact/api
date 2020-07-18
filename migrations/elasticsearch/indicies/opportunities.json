@@ -1,0 +1,25 @@
+{
+  "properties": {
+    "title": {
+      "type": "text",
+      "boost": 2
+    },
+    "location": {
+      "type": "geo_point"
+    },
+    "tags": {
+      "type": "nested",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "text"
+        },
+        "category": {
+          "enabled": false
+        }
+      }
+    }
+  }
+}

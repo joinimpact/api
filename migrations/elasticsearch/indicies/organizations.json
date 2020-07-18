@@ -1,0 +1,22 @@
+{
+  "properties": {
+    "name": {
+      "type": "text",
+      "boost": 2
+    },
+    "tags": {
+      "type": "nested",
+      "properties": {
+        "id": {
+          "enabled": false
+        },
+        "name": {
+          "type": "text"
+        },
+        "category": {
+          "enabled": false
+        }
+      }
+    }
+  }
+}

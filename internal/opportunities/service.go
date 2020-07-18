@@ -11,6 +11,7 @@ import (
 	"github.com/joinimpact/api/internal/email"
 	"github.com/joinimpact/api/internal/email/templates"
 	"github.com/joinimpact/api/internal/models"
+	opportunitiesSearch "github.com/joinimpact/api/internal/search/stores/opportunities"
 	"github.com/joinimpact/api/internal/snowflakes"
 	"github.com/rs/zerolog"
 )
@@ -60,6 +61,8 @@ type Service interface {
 	DeclineInvite(ctx context.Context, opportunityID int64, userID, inviteID int64, inviteKey string) error
 	// GetOpportunityMembership returns the permissions level of a single user's relationship with an opportunity.
 	GetOpportunityMembership(ctx context.Context, opportunityID, userID int64) (int, error)
+	// Search searches opportunities by a query struct.
+	Search(ctx context.Context, query opportunitiesSearch.Query) ([]OpportunityView, error)
 }
 
 // service represents the intenral implementation of the opportunities Service.
@@ -79,10 +82,11 @@ type service struct {
 	snowflakeService                       snowflakes.SnowflakeService
 	emailService                           email.Service
 	cdnClient                              *cdn.Client
+	searchStore                            opportunitiesSearch.Store
 }
 
 // NewService creates and returns a new Opportunities service with the provifded dependencies.
-func NewService(opportunityRepository models.OpportunityRepository, opportunityRequirementsRepository models.OpportunityRequirementsRepository, opportunityLimitsRepository models.OpportunityLimitsRepository, opportunityTagRepository models.OpportunityTagRepository, opportunityMembershipRepository models.OpportunityMembershipRepository, opportunityMembershipRequestRepository models.OpportunityMembershipRequestRepository, opportunityMembershipInviteRepository models.OpportunityMembershipInviteRepository, tagRepository models.TagRepository, userRepository models.UserRepository, organizationRepository models.OrganizationRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service) Service {
+func NewService(opportunityRepository models.OpportunityRepository, opportunityRequirementsRepository models.OpportunityRequirementsRepository, opportunityLimitsRepository models.OpportunityLimitsRepository, opportunityTagRepository models.OpportunityTagRepository, opportunityMembershipRepository models.OpportunityMembershipRepository, opportunityMembershipRequestRepository models.OpportunityMembershipRequestRepository, opportunityMembershipInviteRepository models.OpportunityMembershipInviteRepository, tagRepository models.TagRepository, userRepository models.UserRepository, organizationRepository models.OrganizationRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service, searchStore opportunitiesSearch.Store) Service {
 	return &service{
 		opportunityRepository,
 		opportunityRequirementsRepository,
@@ -99,6 +103,7 @@ func NewService(opportunityRepository models.OpportunityRepository, opportunityR
 		snowflakeService,
 		emailService,
 		cdn.NewCDNClient(config),
+		searchStore,
 	}
 }
 
@@ -254,6 +259,8 @@ func (s *service) CreateOpportunity(ctx context.Context, view OpportunityView) (
 		return 0, NewErrServerError()
 	}
 
+	s.searchStore.Save(opportunity.ID)
+
 	return opportunity.ID, nil
 }
 
@@ -310,6 +317,8 @@ func (s *service) UpdateOpportunity(ctx context.Context, view OpportunityView) e
 			return NewErrServerError()
 		}
 	}
+
+	s.searchStore.Save(opportunity.ID)
 
 	return nil
 }
@@ -397,6 +406,8 @@ func (s *service) AddOpportunityTags(ctx context.Context, opportunityID int64, t
 		}
 	}
 
+	s.searchStore.Save(opportunityID)
+
 	return successfulTags, nil
 }
 
@@ -406,6 +417,8 @@ func (s *service) RemoveOpportunityTag(ctx context.Context, opportunityID, tagID
 	if err != nil {
 		return NewErrTagNotFound()
 	}
+
+	s.searchStore.Save(opportunityID)
 
 	return s.opportunityTagRepository.DeleteByID(opportunityTag.ID)
 }
@@ -511,6 +524,8 @@ func (s *service) PublishOpportunity(ctx context.Context, opportunityID int64) e
 		return NewErrServerError()
 	}
 
+	s.searchStore.Save(opportunityID)
+
 	return nil
 }
 
@@ -527,6 +542,8 @@ func (s *service) UnpublishOpportunity(ctx context.Context, opportunityID int64)
 	if err != nil {
 		return NewErrServerError()
 	}
+
+	s.searchStore.Save(opportunityID)
 
 	return nil
 }
@@ -700,4 +717,25 @@ func (s *service) GetOpportunityMembership(ctx context.Context, opportunityID, u
 	}
 
 	return membership.PermissionsFlag, nil
+}
+
+// Search searches opportunities by a query struct.
+func (s *service) Search(ctx context.Context, query opportunitiesSearch.Query) ([]OpportunityView, error) {
+	views := []OpportunityView{}
+
+	search, err := s.searchStore.Search(query)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	for _, item := range search {
+		view, err := s.GetOpportunity(ctx, item.ID)
+		if err != nil {
+			continue
+		}
+
+		views = append(views, *view)
+	}
+
+	return views, nil
 }
