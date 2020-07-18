@@ -4027,6 +4027,211 @@
         }
       }
     },
+    "/browse/query": {
+      "post": {
+        "tags": [
+          "Browse",
+          "Opportunities"
+        ],
+        "description": "Browse with a query. Uses POST instead of GET to use a JSON body for search options.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "textQuery": {
+                    "type": "string",
+                    "example": "bird"
+                  },
+                  "ageRange": {
+                    "required": [
+                      "age"
+                    ],
+                    "properties": {
+                      "age": {
+                        "type": "number",
+                        "example": 16
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "commitmentRange": {
+                    "required": [
+                      "min",
+                      "max"
+                    ],
+                    "properties": {
+                      "min": {
+                        "type": "number",
+                        "example": 3,
+                        "description": "Minimum hours"
+                      },
+                      "max": {
+                        "type": "number",
+                        "example": 6,
+                        "description": "Maximum hours"
+                      }
+                    },
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success, opportunities returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "opportunities": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "data": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "example": "123913912309"
+                                  },
+                                  "organizationId": {
+                                    "type": "string",
+                                    "example": "213123123193"
+                                  },
+                                  "creatorId": {
+                                    "type": "string",
+                                    "example": "123913913921",
+                                    "description": "Only visible if you manage the organization that owns the opportunity."
+                                  },
+                                  "profilePicture": {
+                                    "type": "string",
+                                    "example": "https://cdn.joinimpact.org/opportunity-banner-23492424449234-24234234.png"
+                                  },
+                                  "title": {
+                                    "type": "string",
+                                    "minimum": 4,
+                                    "maximum": 128,
+                                    "example": "Help code algorithms to fight climate change!"
+                                  },
+                                  "description": {
+                                    "type": "string",
+                                    "minimum": 64,
+                                    "maximum": 1024,
+                                    "example": "Your help is needed to fight climate change! This opportunity will require you to physically come to our offices in Palo Alto."
+                                  },
+                                  "public": {
+                                    "type": "boolean",
+                                    "description": "Whether or not the opportunity is public. Only visible as manager.",
+                                    "example": true
+                                  },
+                                  "tags": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "name": {
+                                          "type": "string",
+                                          "description": "The name of the tag."
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "stats": {
+                                    "type": "object",
+                                    "description": "Only visible as manager.",
+                                    "properties": {
+                                      "volunteersEnrolled": {
+                                        "type": "integer",
+                                        "example": 30
+                                      },
+                                      "volunteersPending": {
+                                        "type": "integer",
+                                        "example": 5
+                                      }
+                                    }
+                                  },
+                                  "requirements": {
+                                    "type": "object",
+                                    "properties": {
+                                      "ageLimit": {
+                                        "type": "object",
+                                        "properties": {
+                                          "active": {
+                                            "type": "boolean",
+                                            "example": true
+                                          },
+                                          "from": {
+                                            "type": "integer",
+                                            "example": 13
+                                          },
+                                          "to": {
+                                            "type": "integer",
+                                            "example": 18
+                                          }
+                                        }
+                                      },
+                                      "expectedHours": {
+                                        "type": "object",
+                                        "properties": {
+                                          "active": {
+                                            "type": "boolean",
+                                            "example": true
+                                          },
+                                          "hours": {
+                                            "type": "number",
+                                            "example": 8
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "limits": {
+                                    "type": "object",
+                                    "properties": {
+                                      "volunteersCap": {
+                                        "type": "object",
+                                        "properties": {
+                                          "active": {
+                                            "type": "boolean",
+                                            "example": true
+                                          },
+                                          "cap": {
+                                            "type": "integer",
+                                            "example": 50
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error finding user."
+          },
+          "500": {
+            "description": "A server error occurred while fetching opportunities."
+          }
+        }
+      }
+    },
     "/tags": {
       "get": {
         "tags": [
