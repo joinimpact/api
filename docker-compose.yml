@@ -38,7 +38,7 @@ services:
     environment:
       - node.name=elasticsearch-1
       - cluster.name=es-impact
-      - cluster.initial_master_nodes=es01
+      - cluster.initial_master_nodes=elasticsearch-1
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ulimits:
