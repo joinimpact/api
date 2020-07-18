@@ -33,6 +33,8 @@ type Config struct {
 	FacebookAppSecret   string // the app secret for Facebook Oauth
 	FacebookCallbackURL string // the callback URL for Facebook Oauth
 	GoogleMapsAPIKey    string // the api key for accessing Google Places and Geocoding APIs
+	ElasticHost         string
+	ElasticPort         string
 }
 
 // NewConfig generates a new config from environment variables and returns a Config struct.
@@ -58,6 +60,8 @@ func NewConfig() *Config {
 		FacebookAppSecret:   envString("IMPACT_FACEBOOK_APP_SECRET", ""),
 		FacebookCallbackURL: envString("IMPACT_FACEBOOK_CALLBACK_URL", "https://dev.joinimpact.org/auth/login"),
 		GoogleMapsAPIKey:    envString("IMPACT_GOOGLE_MAPS_API_KEY", ""),
+		ElasticHost:         envString("IMPACT_ELASTIC_HOST", "localhost"),
+		ElasticPort:         envString("IMPACT_ELASTIC_PORT", "9200"),
 	}
 }
 

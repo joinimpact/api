@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/joinimpact/api/internal/core/handlers/auth"
+	"github.com/joinimpact/api/internal/core/handlers/browse"
 	"github.com/joinimpact/api/internal/core/handlers/events"
 	"github.com/joinimpact/api/internal/core/handlers/opportunities"
 	"github.com/joinimpact/api/internal/core/handlers/organizations"
@@ -49,6 +50,10 @@ func (app *App) Router() *chi.Mux {
 		}))
 		// Gets limit and other database query parameters from the URL.
 		router.Use(db.ContextMiddleware())
+
+		router.Route("/browse", func(r chi.Router) {
+			r.Post("/query", browse.QueryPost(app.opportunitiesService))
+		})
 
 		router.Route("/users", func(r chi.Router) {
 			r.Route("/{userID}", func(r chi.Router) {

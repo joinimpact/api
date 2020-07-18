@@ -12,6 +12,8 @@ import (
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/opportunities"
 	"github.com/joinimpact/api/internal/organizations"
+	"github.com/joinimpact/api/internal/search"
+	opportunitiesSearch "github.com/joinimpact/api/internal/search/stores/opportunities"
 	"github.com/joinimpact/api/internal/snowflakes"
 	"github.com/joinimpact/api/internal/tags"
 	"github.com/joinimpact/api/internal/users"
@@ -122,11 +124,23 @@ func main() {
 	messageRepository := postgres.NewMessageRepository(db, &log.Logger)
 	eventRepository := postgres.NewEventRepository(db, &log.Logger)
 
+	// Elastic client
+	elasticClient, err := search.NewElasticsearch(config.ElasticHost, config.ElasticPort)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error initializing Elasticsearch client")
+	}
+	// Elastic services
+	opportunitiesSearchService := opportunitiesSearch.NewStore(elasticClient, opportunityRepository, opportunityRequirementsRepository, opportunityLimitsRepository, opportunityTagRepository, tagRepository, organizationRepository, &log.Logger, config)
+	err = opportunitiesSearchService.Start()
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error starting Opportunities search service")
+	}
+
 	// Internal services
 	usersService := users.NewService(userRepository, userProfileFieldRepository, userTagRepository, tagRepository, config, &log.Logger, snowflakeService, locationService)
 	authenticationService := authentication.NewService(userRepository, passwordResetRepository, thirdPartyIdentityRepository, config, &log.Logger, snowflakeService, emailService)
 	organizationsService := organizations.NewService(organizationRepository, organizationMembershipRepository, organizationMembershipInviteRepository, organizationProfileFieldRepository, organizationTagRepository, userRepository, tagRepository, config, &log.Logger, snowflakeService, emailService, locationService)
-	opportunitiesService := opportunities.NewService(opportunityRepository, opportunityRequirementsRepository, opportunityLimitsRepository, opportunityTagRepository, opportunityMembershipRepository, opportunityMembershipRequestRepository, opportunityMembershipInviteRepository, tagRepository, userRepository, organizationRepository, config, &log.Logger, snowflakeService, emailService)
+	opportunitiesService := opportunities.NewService(opportunityRepository, opportunityRequirementsRepository, opportunityLimitsRepository, opportunityTagRepository, opportunityMembershipRepository, opportunityMembershipRequestRepository, opportunityMembershipInviteRepository, tagRepository, userRepository, organizationRepository, config, &log.Logger, snowflakeService, emailService, opportunitiesSearchService)
 	eventsService := events.NewService(eventRepository, opportunityMembershipRepository, tagRepository, config, &log.Logger, snowflakeService, emailService, locationService)
 	conversationsService := conversations.NewService(conversationRepository, conversationMembershipRepository, conversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository, messageRepository, usersService, config, &log.Logger, snowflakeService, emailService)
 	tagsService := tags.NewService(tagRepository, config, &log.Logger, snowflakeService)
