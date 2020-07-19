@@ -52,6 +52,7 @@ func (app *App) Router() *chi.Mux {
 		router.Use(db.ContextMiddleware())
 
 		router.Route("/browse", func(r chi.Router) {
+			r.Get("/", browse.Get(app.opportunitiesService))
 			r.Post("/query", browse.QueryPost(app.opportunitiesService))
 		})
 

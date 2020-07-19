@@ -4027,6 +4027,77 @@
         }
       }
     },
+    "/browse": {
+      "get": {
+        "tags": [
+          "Browse",
+          "Opportunities"
+        ],
+        "description": "Get a summary of opportunities to display to the user by default.",
+        "responses": {
+          "200": {
+            "description": "Success! The API will return a list of sections which have names and an optional tag for the Your interests section.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "required": [
+                        "sections"
+                      ],
+                      "properties": {
+                        "sections": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "example": "your_interests"
+                              },
+                              "opportunities": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "description": "Standard opportunity objects"
+                                },
+                                "example": []
+                              },
+                              "tag": {
+                                "type": "string",
+                                "example": "Research"
+                              }
+                            }
+                          },
+                          "example": [
+                            {
+                              "name": "in_your_area",
+                              "opportunities": []
+                            },
+                            {
+                              "name": "your_interests",
+                              "opportunities": [],
+                              "tag": "Research"
+                            }
+                          ]
+                        }
+                      },
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
     "/browse/query": {
       "post": {
         "tags": [
