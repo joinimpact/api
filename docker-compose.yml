@@ -44,8 +44,8 @@ services:
       - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
     ulimits:
       memlock:
-        soft: 1024
-        hard: 1024
+        soft: -1
+        hard: -1
     volumes:
       - elastic01:/usr/share/elasticsearch/data
     ports:
