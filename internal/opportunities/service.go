@@ -39,6 +39,8 @@ type Service interface {
 	RemoveOpportunityTag(ctx context.Context, opportunityID, tagID int64) error
 	// UploadProfilePicture uploads a profile picture to the CDN and adds it to the opportunity.
 	UploadProfilePicture(ctx context.Context, opportunityID int64, fileReader io.Reader) (string, error)
+	// CanRequestOpportunityMembership checks if a user can request membership or not.
+	CanRequestOpportunityMembership(ctx context.Context, opportunityID, volunteerID int64) error
 	// RequestOpportunityMembership creates a membership request (as a volunteer) to join an opportunity.
 	RequestOpportunityMembership(ctx context.Context, opportunityID int64, volunteerID int64) (int64, error)
 	// GetOpportunityVolunteers returns an array of OpportunityMembership volunteer objects for a specified opportunity by ID.
@@ -440,13 +442,7 @@ func (s *service) UploadProfilePicture(ctx context.Context, opportunityID int64,
 
 // RequestOpportunityMembership creates a membership request (as a volunteer) to join an opportunity.
 func (s *service) RequestOpportunityMembership(ctx context.Context, opportunityID int64, volunteerID int64) (int64, error) {
-	_, err := s.opportunityMembershipRepository.FindUserInOpportunity(ctx, opportunityID, volunteerID)
-	if err == nil {
-		return 0, NewErrMembershipAlreadyRequested()
-	}
-
-	_, err = s.opportunityMembershipRequestRepository.FindInOpportunityByVolunteerID(opportunityID, volunteerID)
-	if err == nil {
+	if err := s.CanRequestOpportunityMembership(ctx, opportunityID, volunteerID); err != nil {
 		return 0, NewErrMembershipAlreadyRequested()
 	}
 
@@ -464,12 +460,27 @@ func (s *service) RequestOpportunityMembership(ctx context.Context, opportunityI
 	}
 
 	// Attempt to create the entity.
-	err = s.opportunityMembershipRequestRepository.Create(opportunityMembershipRequest)
+	err := s.opportunityMembershipRequestRepository.Create(opportunityMembershipRequest)
 	if err != nil {
 		return 0, NewErrServerError()
 	}
 
 	return id, nil
+}
+
+// CanRequestOpportunityMembership checks if a user can request membership or not.
+func (s *service) CanRequestOpportunityMembership(ctx context.Context, opportunityID, volunteerID int64) error {
+	_, err := s.opportunityMembershipRepository.FindUserInOpportunity(ctx, opportunityID, volunteerID)
+	if err == nil {
+		return NewErrMembershipAlreadyRequested()
+	}
+
+	_, err = s.opportunityMembershipRequestRepository.FindInOpportunityByVolunteerID(opportunityID, volunteerID)
+	if err == nil {
+		return NewErrMembershipAlreadyRequested()
+	}
+
+	return nil
 }
 
 // GetOpportunityVolunteers returns an array of OpportunityMembership volunteer objects for a specified opportunity by ID.

@@ -128,6 +128,8 @@ func (app *App) Router() *chi.Mux {
 						Get("/", opportunities.VolunteersGet(app.opportunitiesService, app.usersService))
 				})
 
+				r.Get("/status", opportunities.StatusGet(app.opportunitiesService))
+
 				r.Route("/invites", func(r chi.Router) {
 					r.With(permissions.Require(scopes.ScopeAuthenticated)).Post("/", opportunities.InvitesPost(app.opportunitiesService))
 

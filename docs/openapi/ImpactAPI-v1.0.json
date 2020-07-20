@@ -3017,6 +3017,49 @@
         }
       }
     },
+    "/opportunities/{opportunityId}/status": {
+      "get": {
+        "tags": [
+          "Opportunities"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "opportunityId",
+            "description": "The ID of the opportunity.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "summary": "Tells you whether the current user can apply to, has already applied to, or is a member of the specified opportunity.",
+        "responses": {
+          "200": {
+            "description": "Success, a code was returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "integer",
+                          "description": "0 = can apply, 1 = already applied, 2 = active member of opportunity",
+                          "example": 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/opportunities/{opportunityId}/request": {
       "post": {
         "tags": [
