@@ -41,6 +41,8 @@ type Service interface {
 	UploadProfilePicture(ctx context.Context, opportunityID int64, fileReader io.Reader) (string, error)
 	// CanRequestOpportunityMembership checks if a user can request membership or not.
 	CanRequestOpportunityMembership(ctx context.Context, opportunityID, volunteerID int64) error
+	// AcceptOpportunityMembershipRequest accepts a membership request from a volunteer by user ID.
+	AcceptOpportunityMembershipRequest(ctx context.Context, opportunityID, volunteerID, userID int64) error
 	// RequestOpportunityMembership creates a membership request (as a volunteer) to join an opportunity.
 	RequestOpportunityMembership(ctx context.Context, opportunityID int64, volunteerID int64) (int64, error)
 	// GetOpportunityVolunteers returns an array of OpportunityMembership volunteer objects for a specified opportunity by ID.
@@ -483,6 +485,27 @@ func (s *service) CanRequestOpportunityMembership(ctx context.Context, opportuni
 	return nil
 }
 
+// AcceptOpportunityMembershipRequest accepts a membership request from a volunteer by user ID.
+func (s *service) AcceptOpportunityMembershipRequest(ctx context.Context, opportunityID, volunteerID, userID int64) error {
+	// Check that a valid request exists.
+	membershipRequest, err := s.opportunityMembershipRequestRepository.FindInOpportunityByVolunteerID(opportunityID, volunteerID)
+	if err != nil {
+		return NewErrRequestNotFound()
+	}
+
+	// Create the volunteer membership.
+	if err := s.createVolunteerMembership(ctx, userID, membershipRequest.OpportunityID, membershipRequest.VolunteerID); err != nil {
+		return NewErrServerError()
+	}
+
+	// Delete the membership request.
+	if err := s.opportunityMembershipRequestRepository.DeleteByID(membershipRequest.ID); err != nil {
+		return NewErrServerError()
+	}
+
+	return nil
+}
+
 // GetOpportunityVolunteers returns an array of OpportunityMembership volunteer objects for a specified opportunity by ID.
 func (s *service) GetOpportunityVolunteers(ctx context.Context, opportunityID int64) ([]models.OpportunityMembership, error) {
 	// Get all memberships.
@@ -706,8 +729,10 @@ func (s *service) DeclineInvite(ctx context.Context, opportunityID int64, userID
 func (s *service) createVolunteerMembership(ctx context.Context, inviterID int64, opportunityID, userID int64) error {
 	membership := models.OpportunityMembership{}
 
+	membership.Active = true
 	membership.ID = s.snowflakeService.GenerateID()
 	membership.UserID = userID
+	membership.JoinedAt = time.Now()
 	membership.OpportunityID = opportunityID
 	membership.PermissionsFlag = models.OpportunityPermissionsMember
 	membership.InviterID = inviterID

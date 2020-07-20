@@ -156,3 +156,22 @@ func (e *ErrInviteInvalid) Error() string {
 func (e *ErrInviteInvalid) Ref() string {
 	return "opportunities.invite_invalid"
 }
+
+// ErrRequestNotFound is thrown when a request is not found.
+type ErrRequestNotFound struct {
+}
+
+// NewErrRequestNotFound creates and returns a ErrRequestNotFound.
+func NewErrRequestNotFound() error {
+	return &ErrRequestNotFound{}
+}
+
+// Error provides a string representation of the error.
+func (e *ErrRequestNotFound) Error() string {
+	return "request not found"
+}
+
+// Ref provides a representation of the error.
+func (e *ErrRequestNotFound) Ref() string {
+	return "opportunities.request_not_found"
+}

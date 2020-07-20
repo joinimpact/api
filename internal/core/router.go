@@ -123,9 +123,14 @@ func (app *App) Router() *chi.Mux {
 					Post("/request", opportunities.RequestPost(app.opportunitiesService, app.conversationsService))
 
 				r.Route("/volunteers", func(r chi.Router) {
-					r.
-						With(permissions.Require(scopes.ScopeManager)).
-						Get("/", opportunities.VolunteersGet(app.opportunitiesService, app.usersService))
+					r.Use(permissions.Require(scopes.ScopeManager))
+					r.Get("/", opportunities.VolunteersGet(app.opportunitiesService, app.usersService))
+
+					r.Route("/{userID}", func(r chi.Router) {
+						r.Use(idctx.Prepare("userID"))
+
+						r.Post("/accept", opportunities.VolunteersAcceptPost(app.opportunitiesService))
+					})
 				})
 
 				r.Get("/status", opportunities.StatusGet(app.opportunitiesService))
