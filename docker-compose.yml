@@ -40,12 +40,11 @@ services:
       - node.name=elasticsearch-1
       - cluster.name=es-impact
       - cluster.initial_master_nodes=elasticsearch-1
-      - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
     ulimits:
       memlock:
-        soft: -1
-        hard: -1
+        soft: 1024
+        hard: 1024
     volumes:
       - elastic01:/usr/share/elasticsearch/data
     ports:
