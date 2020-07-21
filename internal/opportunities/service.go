@@ -210,7 +210,7 @@ func (s *service) GetOpportunity(ctx context.Context, id int64) (*OpportunityVie
 		}
 	}
 
-	organization, err := s.organizationRepository.FindByID(opportunity.ID)
+	organization, err := s.organizationRepository.FindByID(opportunity.OrganizationID)
 	if err == nil {
 		view.OpportunityOrganizationProfile = &OpportunityOrganizationProfile{
 			ID:             organization.ID,
