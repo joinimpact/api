@@ -1,9 +1,10 @@
-package opportunities
+package events
 
 import (
 	"context"
 
 	"github.com/joinimpact/api/internal/core/middleware/auth"
+	"github.com/joinimpact/api/internal/events"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/opportunities"
 	"github.com/joinimpact/api/internal/organizations"
@@ -11,18 +12,25 @@ import (
 	"github.com/joinimpact/api/pkg/scopes"
 )
 
-// ScopeProviderOpportunities provides a scope based on a user id and organization.
-func ScopeProviderOpportunities(organizationsService organizations.Service, opportunitiesService opportunities.Service) scopes.ScopeFunction {
+// ScopeProviderEvents provides a scope based on a user id and event id.
+func ScopeProviderEvents(eventsService events.Service, organizationsService organizations.Service, opportunitiesService opportunities.Service) scopes.ScopeFunction {
 	return func(ctx context.Context) scopes.Scope {
+		eventID, err := idctx.GetFromContext(ctx, "eventID")
+		if err != nil {
+			return scopes.NoChange
+		}
+
+		event, err := eventsService.GetMinimalEvent(ctx, eventID)
+		if err != nil {
+			return scopes.NoChange
+		}
+
 		userID, ok := ctx.Value(auth.KeyUserID).(int64)
 		if !ok {
 			return scopes.NoChange
 		}
 
-		opportunityID, err := idctx.GetFromContext(ctx, "opportunityID")
-		if err != nil {
-			return scopes.NoChange
-		}
+		opportunityID := event.OpportunityID
 
 		// Get the opportunity so we can check organization membership.
 		opportunity, err := opportunitiesService.GetMinimalOpportunity(ctx, opportunityID)
@@ -30,7 +38,7 @@ func ScopeProviderOpportunities(organizationsService organizations.Service, oppo
 			return scopes.NoChange
 		}
 
-		// If no opportunity membership is found,
+		// Check organization membership first for manager/admin permissions.
 		organizationMembership, err := organizationsService.GetOrganizationMembership(opportunity.OrganizationID, userID)
 		if err == nil {
 			// If the membership was found, check its type and return.
@@ -44,6 +52,7 @@ func ScopeProviderOpportunities(organizationsService organizations.Service, oppo
 			}
 		}
 
+		// Get the opportunity membership.
 		membership, err := opportunitiesService.GetOpportunityMembership(ctx, opportunityID, userID)
 		if err != nil {
 			return scopes.NoChange

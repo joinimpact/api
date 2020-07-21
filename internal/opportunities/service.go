@@ -25,6 +25,8 @@ type Service interface {
 	GetVolunteerOpportunities(ctx context.Context, userID int64) ([]OpportunityView, error)
 	// GetOpportunity returns an opportunity by ID.
 	GetOpportunity(ctx context.Context, id int64) (*OpportunityView, error)
+	// GetMinimalOpportunity returns an opportunity without tags or a profile.
+	GetMinimalOpportunity(ctx context.Context, id int64) (*OpportunityView, error)
 	// CreateOpportunity creates a new opportunity and returns the ID on success.
 	CreateOpportunity(ctx context.Context, opportunity OpportunityView) (int64, error)
 	// DeleteOpportunity deletes a single opportunity by ID.
@@ -220,6 +222,28 @@ func (s *service) GetOpportunity(ctx context.Context, id int64) (*OpportunityVie
 	}
 
 	view.Tags, _ = s.GetOpportunityTags(ctx, opportunity.ID)
+
+	return view, nil
+}
+
+// GetMinimalOpportunity returns an opportunity without tags or a profile.
+func (s *service) GetMinimalOpportunity(ctx context.Context, id int64) (*OpportunityView, error) {
+	view := &OpportunityView{}
+	view.Requirements = &Requirements{}
+	view.Limits = &Limits{}
+
+	opportunity, err := s.opportunityRepository.FindByID(ctx, id)
+	if err != nil {
+		return nil, NewErrOpportunityNotFound()
+	}
+
+	view.ID = opportunity.ID
+	view.OrganizationID = opportunity.OrganizationID
+	view.CreatorID = opportunity.CreatorID
+	view.ProfilePicture = opportunity.ProfilePicture
+	view.Title = opportunity.Title
+	view.Description = opportunity.Description
+	view.Public = opportunity.Public
 
 	return view, nil
 }

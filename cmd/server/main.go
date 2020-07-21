@@ -49,6 +49,10 @@ func main() {
 	// Close the database on program exit.
 	defer db.Close()
 
+	if config.DevMode {
+		db.LogMode(true)
+	}
+
 	// Create a new MigrationService to handle automatic migrations.
 	migrationService := migrations.NewMigrationService(db)
 	// Auto migrate models into the database.
@@ -68,6 +72,7 @@ func main() {
 		&models.OpportunityMembershipRequest{},
 		&models.OpportunityMembershipInvite{},
 		&models.Event{},
+		&models.EventResponse{},
 		&models.Conversation{},
 		&models.ConversationOpportunityMembershipRequest{},
 		&models.ConversationMembership{},
@@ -123,6 +128,7 @@ func main() {
 	conversationOrganizationMembershipRepository := postgres.NewConversationOrganizationMembershipRepository(db, &log.Logger)
 	messageRepository := postgres.NewMessageRepository(db, &log.Logger)
 	eventRepository := postgres.NewEventRepository(db, &log.Logger)
+	eventResponseRepository := postgres.NewEventResponseRepository(db, &log.Logger)
 
 	// Elastic client
 	elasticClient, err := search.NewElasticsearch(config.ElasticHost, config.ElasticPort)
@@ -141,7 +147,7 @@ func main() {
 	authenticationService := authentication.NewService(userRepository, passwordResetRepository, thirdPartyIdentityRepository, config, &log.Logger, snowflakeService, emailService)
 	organizationsService := organizations.NewService(organizationRepository, organizationMembershipRepository, organizationMembershipInviteRepository, organizationProfileFieldRepository, organizationTagRepository, userRepository, tagRepository, config, &log.Logger, snowflakeService, emailService, locationService)
 	opportunitiesService := opportunities.NewService(opportunityRepository, opportunityRequirementsRepository, opportunityLimitsRepository, opportunityTagRepository, opportunityMembershipRepository, opportunityMembershipRequestRepository, opportunityMembershipInviteRepository, tagRepository, userRepository, organizationRepository, config, &log.Logger, snowflakeService, emailService, opportunitiesSearchService)
-	eventsService := events.NewService(eventRepository, opportunityMembershipRepository, tagRepository, config, &log.Logger, snowflakeService, emailService, locationService)
+	eventsService := events.NewService(eventRepository, eventResponseRepository, opportunityMembershipRepository, tagRepository, config, &log.Logger, snowflakeService, emailService, locationService)
 	conversationsService := conversations.NewService(conversationRepository, conversationMembershipRepository, conversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository, messageRepository, usersService, config, &log.Logger, snowflakeService, emailService)
 	tagsService := tags.NewService(tagRepository, config, &log.Logger, snowflakeService)
 

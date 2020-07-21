@@ -4460,6 +4460,202 @@
         }
       }
     },
+    "/events/{eventId}/responses": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "description": "The ID of the event.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "summary": "Gets all responses for a single event. Requires manager permissions.",
+        "responses": {
+          "200": {
+            "description": "Success! The responses were found and returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "required": [
+                        "responses"
+                      ],
+                      "properties": {
+                        "responses": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "eventId": {
+                                "type": "string",
+                                "example": "1283266052775481344"
+                              },
+                              "firstName": {
+                                "type": "string",
+                                "example": "tyler"
+                              },
+                              "id": {
+                                "type": "string",
+                                "description": "The user's ID",
+                                "example": "1273884565403865088"
+                              },
+                              "lastName": {
+                                "type": "string",
+                                "example": "Lafayette"
+                              },
+                              "profilePicture": {
+                                "type": "string",
+                                "example": "https://cdn.joinimpact.org/profile-picture-1273884565403865088-1593076042.png"
+                              },
+                              "response": {
+                                "type": "number",
+                                "example": 2
+                              },
+                              "userId": {
+                                "type": "string",
+                                "example": "1273884565403865088"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
+    "/events/{eventId}/response": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "description": "The ID of the event.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "summary": "Get's your response to an event (as a volunteer).",
+        "responses": {
+          "200": {
+            "description": "Success! Your response was found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "required": [
+                        "eventId",
+                        "id",
+                        "response",
+                        "userId"
+                      ],
+                      "properties": {
+                        "eventId": {
+                          "type": "string",
+                          "example": "1283266052775481344"
+                        },
+                        "id": {
+                          "type": "string",
+                          "example": "1285601486193037312"
+                        },
+                        "response": {
+                          "type": "number",
+                          "example": 2
+                        },
+                        "userId": {
+                          "type": "string",
+                          "example": "1273884565403865088"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No response was found, OK to use PUT to create one."
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Events"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "description": "The ID of the event.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "summary": "Creates or updates your response (as a volunteer) to an event.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "response": {
+                    "description": "This indicates the user's response to an event. 1 indicates they can attend and  2 indicates that they can not.",
+                    "type": "integer",
+                    "example": 2
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! The response was updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/success"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
     "/tags": {
       "get": {
         "tags": [
