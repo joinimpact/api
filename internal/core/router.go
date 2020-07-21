@@ -95,6 +95,8 @@ func (app *App) Router() *chi.Mux {
 				r.With(permissions.Require(scopes.ScopeAdmin)).Post("/invite", organizations.PostInvite(app.organizationsService))
 				r.With(permissions.Require(scopes.ScopeAdmin)).Post("/invites", organizations.PostInvite(app.organizationsService))
 
+				r.With(permissions.Require(scopes.ScopeManager)).Get("/members", organizations.MembersGet(app.organizationsService, app.usersService))
+
 				r.Route("/opportunities", func(r chi.Router) {
 					r.With(permissions.Require(scopes.ScopeManager)).Post("/", opportunities.Post(app.opportunitiesService))
 					r.With(permissions.Require(scopes.ScopeAuthenticated)).Get("/", opportunities.Get(app.opportunitiesService))

@@ -4,18 +4,26 @@ import "github.com/joinimpact/api/internal/models"
 
 // OpportunityView is a representation of how the opportunities will be returned by the API.
 type OpportunityView struct {
-	ID             int64         `json:"id"`
-	Publishable    bool          `json:"publishable"`
-	OrganizationID int64         `json:"organizationId"`
-	CreatorID      int64         `json:"creatorId" scope:"manager"`
-	ProfilePicture string        `json:"profilePicture"`
-	Title          string        `json:"title"`
-	Description    string        `json:"description"`
-	Public         bool          `json:"public" scope:"authenticated"`
-	Tags           []models.Tag  `json:"tags"` // the model's tags
-	Stats          *Stats        `json:"stats" scope:"authenticated"`
-	Requirements   *Requirements `json:"requirements"`
-	Limits         *Limits       `json:"limits"`
+	ID                             int64                           `json:"id"`
+	Publishable                    bool                            `json:"publishable"`
+	OrganizationID                 int64                           `json:"organizationId"`
+	CreatorID                      int64                           `json:"creatorId" scope:"manager"`
+	ProfilePicture                 string                          `json:"profilePicture"`
+	Title                          string                          `json:"title"`
+	Description                    string                          `json:"description"`
+	Public                         bool                            `json:"public" scope:"authenticated"`
+	Tags                           []models.Tag                    `json:"tags"` // the model's tags
+	Stats                          *Stats                          `json:"stats" scope:"authenticated"`
+	Requirements                   *Requirements                   `json:"requirements"`
+	Limits                         *Limits                         `json:"limits"`
+	OpportunityOrganizationProfile *OpportunityOrganizationProfile `json:"organization,omitempty"`
+}
+
+// OpportunityOrganizationProfile contains an organization profile in an opportunity.
+type OpportunityOrganizationProfile struct {
+	ID             int64  `json:"id"`
+	Name           string `json:"name"`
+	ProfilePicture string `json:"profilePicture"`
 }
 
 // Stats represents opportunity statistics.

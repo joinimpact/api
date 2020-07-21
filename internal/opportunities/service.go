@@ -210,6 +210,15 @@ func (s *service) GetOpportunity(ctx context.Context, id int64) (*OpportunityVie
 		}
 	}
 
+	organization, err := s.organizationRepository.FindByID(opportunity.OrganizationID)
+	if err == nil {
+		view.OpportunityOrganizationProfile = &OpportunityOrganizationProfile{
+			ID:             organization.ID,
+			Name:           organization.Name,
+			ProfilePicture: organization.ProfilePicture,
+		}
+	}
+
 	view.Tags, _ = s.GetOpportunityTags(ctx, opportunity.ID)
 
 	return view, nil
