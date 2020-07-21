@@ -1950,6 +1950,74 @@
         }
       }
     },
+    "/organizations/{organizationId}/members": {
+      "get": {
+        "tags": [
+          "Organizations"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "organizationID",
+            "description": "The organization ID.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "summary": "Gets the members within an organization.",
+        "responses": {
+          "200": {
+            "description": "Success, the members were found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "members": {
+                          "type": "array",
+                          "items": {
+                            "properties": {
+                              "firstName": {
+                                "type": "string",
+                                "example": "tyler"
+                              },
+                              "id": {
+                                "type": "string",
+                                "example": "19827378"
+                              },
+                              "inviterId": {
+                                "type": "string",
+                                "example": "1280766037612040192"
+                              },
+                              "lastName": {
+                                "type": "string",
+                                "example": "Lafayette"
+                              },
+                              "permissionsFlag": {
+                                "type": "number",
+                                "example": 0
+                              },
+                              "profilePicture": {
+                                "type": "string",
+                                "example": "https://cdn.joinimpact.org/profile-picture-1273884565403865088-1593076042.png"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/organizations/{organizationId}/invite": {
       "post": {
         "tags": [

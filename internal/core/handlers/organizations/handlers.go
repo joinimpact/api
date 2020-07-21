@@ -507,8 +507,12 @@ func PostInvite(organizationsService organizations.Service) http.HandlerFunc {
 
 // MembersGet gets all members in a single opportunity.
 func MembersGet(organizationsService organizations.Service, usersService users.Service) http.HandlerFunc {
+	type membership struct {
+		models.OrganizationMembership
+		users.UserProfile
+	}
 	type response struct {
-		Members []users.UserProfile `json:"members"`
+		Members []membership `json:"members"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		organizationIDString := chi.URLParam(r, "organizationID")
@@ -523,15 +527,15 @@ func MembersGet(organizationsService organizations.Service, usersService users.S
 			resp.ServerError(w, r, resp.ErrorRef(500, "error getting members", "generic.server_error", nil))
 		}
 
-		users := []users.UserProfile{}
-		for _, membership := range memberships {
-			user, err := usersService.GetMinimalUserProfile(membership.UserID)
+		users := []membership{}
+		for _, member := range memberships {
+			user, err := usersService.GetMinimalUserProfile(member.UserID)
 			if err != nil {
 				resp.ServerError(w, r, resp.ErrorRef(500, "error getting user", "generic.server_error", nil))
 				return
 			}
 
-			users = append(users, *user)
+			users = append(users, membership{member, *user})
 		}
 
 		resp.OK(w, r, response{users})
