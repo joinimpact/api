@@ -13,6 +13,7 @@ import (
 	"github.com/joinimpact/api/internal/core/middleware/auth"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/organizations"
+	"github.com/joinimpact/api/internal/users"
 	"github.com/joinimpact/api/pkg/idctx"
 	"github.com/joinimpact/api/pkg/location"
 	"github.com/joinimpact/api/pkg/parse"
@@ -501,5 +502,38 @@ func PostInvite(organizationsService organizations.Service) http.HandlerFunc {
 		resp.OK(w, r, map[string]bool{
 			"success": true,
 		})
+	}
+}
+
+// MembersGet gets all members in a single opportunity.
+func MembersGet(organizationsService organizations.Service, usersService users.Service) http.HandlerFunc {
+	type response struct {
+		Members []users.UserProfile `json:"members"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		organizationIDString := chi.URLParam(r, "organizationID")
+		organizationID, err := strconv.ParseInt(organizationIDString, 10, 64)
+		if err != nil {
+			resp.BadRequest(w, r, resp.Error(400, "invalid organization id"))
+			return
+		}
+
+		memberships, err := organizationsService.GetOrganizationMemberships(organizationID)
+		if err != nil {
+			resp.ServerError(w, r, resp.ErrorRef(500, "error getting members", "generic.server_error", nil))
+		}
+
+		users := []users.UserProfile{}
+		for _, membership := range memberships {
+			user, err := usersService.GetMinimalUserProfile(membership.UserID)
+			if err != nil {
+				resp.ServerError(w, r, resp.ErrorRef(500, "error getting user", "generic.server_error", nil))
+				return
+			}
+
+			users = append(users, *user)
+		}
+
+		resp.OK(w, r, response{users})
 	}
 }
