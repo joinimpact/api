@@ -14,7 +14,7 @@ type EventResponse struct {
 	Model
 	UserID   int64 `json:"userId"`
 	EventID  int64 `json:"eventId"`
-	Response int   `json:"response"`
+	Response *int  `json:"response"`
 }
 
 // EventResponseRepository represents a repository of event responses.

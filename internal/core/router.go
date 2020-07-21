@@ -165,8 +165,16 @@ func (app *App) Router() *chi.Mux {
 			r.Route("/{eventID}", func(r chi.Router) {
 				r.Use(idctx.Prepare("eventID"))
 				r.Use(scopes.Middleware(events.ScopeProviderEvents(app.eventsService, app.organizationsService, app.opportunitiesService)))
+				r.Use(permissions.Require(scopes.ScopeCollaborator))
 
 				r.Get("/", events.GetOne(app.eventsService))
+
+				r.Route("/response", func(r chi.Router) {
+					r.Get("/", events.ResponseGet(app.eventsService))
+					r.Put("/", events.ResponsePut(app.eventsService))
+				})
+
+				r.Get("/responses", events.ResponsesGet(app.eventsService, app.usersService))
 			})
 		})
 	})
