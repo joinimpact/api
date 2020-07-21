@@ -27,6 +27,7 @@ type Service interface {
 // service represents the internal implementation of the Service.
 type service struct {
 	eventRepository                 models.EventRepository
+	eventResponseRepository         models.EventResponseRepository
 	opportunityMembershipRepository models.OpportunityMembershipRepository
 	tagRepository                   models.TagRepository
 	config                          *config.Config
@@ -39,9 +40,10 @@ type service struct {
 
 // NewService creates and returns a new events.Service with the provided
 // dependencies.
-func NewService(eventRepository models.EventRepository, opportunityMembershipRepository models.OpportunityMembershipRepository, tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service, locationService location.Service) Service {
+func NewService(eventRepository models.EventRepository, eventResponseRepository models.EventResponseRepository, opportunityMembershipRepository models.OpportunityMembershipRepository, tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service, locationService location.Service) Service {
 	return &service{
 		eventRepository,
+		eventResponseRepository,
 		opportunityMembershipRepository,
 		tagRepository,
 		config,

@@ -33,7 +33,6 @@ type EventRepository interface {
 	Create(ctx context.Context, event Event) error
 	// Update updates an entity with the ID in the provided entity.
 	Update(ctx context.Context, event Event) error
-
 	// DeleteByID deletes an entity by ID.
 	DeleteByID(ctx context.Context, id int64) error
 }
