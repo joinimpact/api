@@ -79,7 +79,8 @@ const queryTemplate = `
 		"filter": [
 			%s
 		  { "term": { "public": true } }
-		]
+		],
+		"minimum_should_match": 1
 	  }
 	}
 	%s
