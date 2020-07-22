@@ -60,6 +60,7 @@ const queryTemplate = `
 			"multi_match": {
 			  "query": "%s",
 			  "fields": ["title^4", "description^2", "organization.name^1"],
+			  "zero_terms_query": "all",
 			  "fuzziness": "AUTO"
 			}
 		  },
@@ -79,7 +80,8 @@ const queryTemplate = `
 		"filter": [
 			%s
 		  { "term": { "public": true } }
-		]
+		],
+		"minimum_should_match": 1
 	  }
 	}
 	%s
