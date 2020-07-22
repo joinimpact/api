@@ -1,6 +1,9 @@
 package dbctx
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type key int
 
@@ -20,6 +23,8 @@ type Request struct {
 	Limit int
 	Page  int
 	Query string
+	From  *time.Time
+	To    *time.Time
 }
 
 // Inject adds a dbctx.Request to a context and returns it.
@@ -35,6 +40,8 @@ func Get(ctx context.Context) *Request {
 			DefaultLimit,
 			DefaultPage,
 			DefaultQuery,
+			nil,
+			nil,
 		}
 	}
 

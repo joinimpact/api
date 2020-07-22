@@ -1282,6 +1282,238 @@
         }
       }
     },
+    "/users/{userId}/events": {
+      "get": {
+        "tags": [
+          "Users",
+          "Events"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "description": "The ID of the user who you are querying. Use 'me' to reference the current user.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "description": "An integer that limits how many items will be returned. Default 20.",
+            "schema": {
+              "type": "integer",
+              "example": 10
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "A page index (starting from 0). With each increasing number, it shifts the offset back (1 * the limit).",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "query",
+            "description": "A search term to filter items by. If not set, returns all opportunities.",
+            "schema": {
+              "type": "string",
+              "example": "code"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "description": "The from date to filter by (inclusive). Use an ISO date provided by JavaScript's toISOString function.",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2003-08-27T17:00:00-07:00"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "description": "The to date to filter by (non-inclusive). Use an ISO date provided by JavaScript's toISOString function.",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2003-08-28T17:00:00-07:00"
+            }
+          }
+        ],
+        "summary": "Gets a volunteer's events based on their enrolled opportunities.",
+        "responses": {
+          "200": {
+            "description": "Success, the events will be returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "required": [
+                        "events"
+                      ],
+                      "properties": {
+                        "events": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "creatorId": {
+                                "type": "string",
+                                "example": "1273884565403865088"
+                              },
+                              "description": {
+                                "type": "string",
+                                "example": "This is a test event."
+                              },
+                              "hours": {
+                                "type": "number",
+                                "example": 5
+                              },
+                              "id": {
+                                "type": "string",
+                                "example": "1283266052775481344"
+                              },
+                              "location": {
+                                "required": [
+                                  "city",
+                                  "country",
+                                  "state",
+                                  "streetAddress"
+                                ],
+                                "properties": {
+                                  "city": {
+                                    "required": [
+                                      "longName",
+                                      "shortName"
+                                    ],
+                                    "properties": {
+                                      "longName": {
+                                        "type": "string",
+                                        "example": "Keystone"
+                                      },
+                                      "shortName": {
+                                        "type": "string",
+                                        "example": "Keystone"
+                                      }
+                                    },
+                                    "type": "object"
+                                  },
+                                  "country": {
+                                    "required": [
+                                      "longName",
+                                      "shortName"
+                                    ],
+                                    "properties": {
+                                      "longName": {
+                                        "type": "string",
+                                        "example": "United States"
+                                      },
+                                      "shortName": {
+                                        "type": "string",
+                                        "example": "US"
+                                      }
+                                    },
+                                    "type": "object"
+                                  },
+                                  "state": {
+                                    "required": [
+                                      "longName",
+                                      "shortName"
+                                    ],
+                                    "properties": {
+                                      "longName": {
+                                        "type": "string",
+                                        "example": "South Dakota"
+                                      },
+                                      "shortName": {
+                                        "type": "string",
+                                        "example": "SD"
+                                      }
+                                    },
+                                    "type": "object"
+                                  },
+                                  "streetAddress": {
+                                    "required": [
+                                      "longName",
+                                      "shortName"
+                                    ],
+                                    "properties": {
+                                      "longName": {
+                                        "type": "string",
+                                        "example": "64 Presidential Trail, Keystone, SD 57751, USA"
+                                      },
+                                      "shortName": {
+                                        "type": "string",
+                                        "example": "64 Presidential Trail, Keystone, SD 57751, USA"
+                                      }
+                                    },
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "opportunityId": {
+                                "type": "string",
+                                "example": "1282893821989883904"
+                              },
+                              "schedule": {
+                                "required": [
+                                  "dateOnly",
+                                  "from",
+                                  "singleDate",
+                                  "to"
+                                ],
+                                "properties": {
+                                  "dateOnly": {
+                                    "type": "boolean",
+                                    "example": true
+                                  },
+                                  "from": {
+                                    "type": "string",
+                                    "example": "2003-07-27T17:00:00-07:00"
+                                  },
+                                  "singleDate": {
+                                    "type": "boolean",
+                                    "example": true
+                                  },
+                                  "to": {
+                                    "type": "string",
+                                    "example": "2003-07-27T17:00:00-07:00"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "title": {
+                                "type": "string",
+                                "example": "Hello world!"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
     "/organizations": {
       "post": {
         "tags": [

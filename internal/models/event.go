@@ -27,6 +27,8 @@ type EventRepository interface {
 	FindByID(ctx context.Context, id int64) (*Event, error)
 	// FindByOpportunityID finds multiple entities by the opportunity ID.
 	FindByOpportunityID(ctx context.Context, opportunityID int64) ([]Event, error)
+	// FindByOpportunityIDs finds multiple entities by multiple opportunity IDs.
+	FindByOpportunityIDs(ctx context.Context, opportunityIDs []int64) ([]Event, error)
 	// FindByCreatorID finds multiple entities by the creator ID.
 	FindByCreatorID(ctx context.Context, creatorID int64) ([]Event, error)
 	// Create creates a new entity.

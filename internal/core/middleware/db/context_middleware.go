@@ -4,6 +4,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/joinimpact/api/pkg/dbctx"
 	"github.com/joinimpact/api/pkg/resp"
@@ -47,11 +48,33 @@ func ContextMiddleware() func(next http.Handler) http.Handler {
 			// Get the query parameter.
 			queryString := r.URL.Query().Get("query")
 
+			var from *time.Time
+			var to *time.Time
+
+			// Get the from and to dates.
+			fromString := r.URL.Query().Get("from")
+			toString := r.URL.Query().Get("to")
+			if len(fromString) > 0 && len(fromString) < 128 {
+				fromTime, err := time.Parse(time.RFC3339, fromString)
+				if err == nil {
+					from = &fromTime
+				}
+			}
+
+			if len(toString) > 0 && len(toString) < 128 {
+				toTime, err := time.Parse(time.RFC3339, toString)
+				if err == nil {
+					to = &toTime
+				}
+			}
+
 			// Inject the limit value.
 			ctx = dbctx.Inject(ctx, dbctx.Request{
 				Limit: limit,
 				Page:  page,
 				Query: queryString,
+				From:  from,
+				To:    to,
 			})
 
 			next.ServeHTTP(w, r.WithContext(ctx))
