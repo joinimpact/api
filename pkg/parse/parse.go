@@ -9,9 +9,9 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/joinimpact/api/pkg/resp"
 	"github.com/mitchellh/mapstructure"
-	validator "gopkg.in/go-playground/validator.v9"
 )
 
 // POST parses and reflects data into a struct.
