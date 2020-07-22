@@ -33,10 +33,52 @@ func (r *eventRepository) FindByID(ctx context.Context, id int64) (*models.Event
 // FindByOpportunityID finds multiple entities by the opportunity ID.
 func (r *eventRepository) FindByOpportunityID(ctx context.Context, opportunityID int64) ([]models.Event, error) {
 	var events []models.Event
-	if err := r.db.
-		Limit(dbctx.Get(ctx).Limit).
-		Offset(dbctx.Get(ctx).Page*dbctx.Get(ctx).Limit).
-		Where("opportunity_id = ? AND active = True AND title LIKE ?", opportunityID, fmt.Sprintf("%%%s%%", dbctx.Get(ctx).Query)).
+
+	dbctx := dbctx.Get(ctx)
+
+	db := r.db.
+		Limit(dbctx.Limit).
+		Offset(dbctx.Page*dbctx.Limit).
+		Where("opportunity_id = ? AND active = True AND title LIKE ?", opportunityID, fmt.Sprintf("%%%s%%", dbctx.Query)).
+		Order("from_date ASC", true)
+
+	if dbctx.From != nil {
+		db = db.Where("from_date >= ?", *dbctx.From)
+	}
+
+	if dbctx.To != nil {
+		db = db.Where("to_date < ?", *dbctx.To)
+	}
+
+	if err := db.
+		Find(&events).
+		Error; err != nil {
+		return events, err
+	}
+	return events, nil
+}
+
+// FindByOpportunityIDs finds multiple entities by multiple opportunity IDs.
+func (r *eventRepository) FindByOpportunityIDs(ctx context.Context, opportunityIDs []int64) ([]models.Event, error) {
+	var events []models.Event
+
+	dbctx := dbctx.Get(ctx)
+
+	db := r.db.
+		Limit(dbctx.Limit).
+		Offset(dbctx.Page*dbctx.Limit).
+		Where("opportunity_id IN (?) AND active = True AND title LIKE ?", opportunityIDs, fmt.Sprintf("%%%s%%", dbctx.Query)).
+		Order("from_date ASC", true)
+
+	if dbctx.From != nil {
+		db = db.Where("from_date >= ?", *dbctx.From)
+	}
+
+	if dbctx.To != nil {
+		db = db.Where("to_date < ?", *dbctx.To)
+	}
+
+	if err := db.
 		Find(&events).
 		Error; err != nil {
 		return events, err

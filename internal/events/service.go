@@ -30,6 +30,8 @@ type Service interface {
 	SetEventResponseCanNotAttend(ctx context.Context, eventID, userID int64) error
 	// GetOpportunityEvents gets all events by opportunity ID.
 	GetOpportunityEvents(ctx context.Context, opportunityID int64) ([]EventView, error)
+	// GetUserEvents gets events from all of a user's enrolled opportunities.
+	GetUserEvents(ctx context.Context, userID int64) ([]EventView, error)
 }
 
 // service represents the internal implementation of the Service.
@@ -245,4 +247,35 @@ func (s *service) getEventMemberships(ctx context.Context, eventID int64) ([]int
 	}
 
 	return userIDs, nil
+}
+
+// GetUserEvents gets events from all of a user's enrolled opportunities.
+func (s *service) GetUserEvents(ctx context.Context, userID int64) ([]EventView, error) {
+	memberships, err := s.opportunityMembershipRepository.FindByUserID(ctx, userID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	ids := []int64{}
+	for _, membership := range memberships {
+		ids = append(ids, membership.OpportunityID)
+	}
+
+	events, err := s.eventRepository.FindByOpportunityIDs(ctx, ids)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	views := []EventView{}
+	for _, event := range events {
+		// Convert the event to view.
+		view, err := s.eventToView(event)
+		if err != nil {
+			return nil, NewErrServerError()
+		}
+
+		views = append(views, *view)
+	}
+
+	return views, nil
 }
