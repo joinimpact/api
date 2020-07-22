@@ -4,6 +4,7 @@ package parse
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"reflect"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/joinimpact/api/pkg/resp"
+	"github.com/joinimpact/api/pkg/validators"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -56,6 +58,9 @@ func POST(w http.ResponseWriter, r *http.Request, s interface{}) error {
 	}
 
 	validate := validator.New()
+	validate.RegisterValidation("minAge", validators.MinAge)
+	validate.RegisterValidation("maxAge", validators.MaxAge)
+
 	err := validate.Struct(s)
 	if err == nil {
 		return nil
@@ -76,6 +81,8 @@ func POST(w http.ResponseWriter, r *http.Request, s interface{}) error {
 			fieldErr.InvalidFields = append(fieldErr.InvalidFields, err.Field())
 		}
 	}
+
+	fmt.Println(err.(validator.ValidationErrors).Error())
 
 	if len(fieldErr.InvalidFields) > 0 {
 		resp.BadRequest(w, r, fieldErr)

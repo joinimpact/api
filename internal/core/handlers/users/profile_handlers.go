@@ -63,7 +63,7 @@ func UpdateUserProfile(usersService users.Service) http.HandlerFunc {
 		req := struct {
 			FirstName   string                    `json:"firstName" validate:"omitempty,min=2,max=48"`
 			LastName    string                    `json:"lastName" validate:"omitempty,min=2,max=48"`
-			DateOfBirth time.Time                 `json:"dateOfBirth" validate:"omitempty"`
+			DateOfBirth time.Time                 `json:"dateOfBirth" validate:"omitempty,minAge=13,maxAge=100"`
 			Location    *location.Coordinates     `json:"location"`
 			Profile     []models.UserProfileField `json:"profile"`
 		}{}
@@ -71,6 +71,9 @@ func UpdateUserProfile(usersService users.Service) http.HandlerFunc {
 		if err != nil {
 			return
 		}
+
+		// Round the date of birth to the nearest day.
+		req.DateOfBirth = req.DateOfBirth.Truncate(24 * time.Hour)
 
 		err = usersService.UpdateUserProfile(reqCtx.userID, users.UserProfile{
 			FirstName:   req.FirstName,

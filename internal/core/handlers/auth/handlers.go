@@ -68,13 +68,16 @@ func Register(service authentication.Service, usersService users.Service) http.H
 			LastName    string                `json:"lastName" validate:"min=2,max=48"`
 			Email       string                `json:"email" validate:"email"`
 			Password    string                `json:"password" validate:"min=8,max=512"`
-			DateOfBirth time.Time             `json:"dateOfBirth"`
+			DateOfBirth time.Time             `json:"dateOfBirth" validate:"omitempty,minAge=13,maxAge=100"`
 			Location    *location.Coordinates `json:"location"`
 		}{}
 		err := parse.POST(w, r, &req)
 		if err != nil {
 			return
 		}
+
+		// Round the date of birth to the nearest day.
+		req.DateOfBirth = req.DateOfBirth.Truncate(24 * time.Hour)
 
 		tokenPair, err := service.Register(models.User{
 			FirstName:   req.FirstName,
