@@ -1379,6 +1379,14 @@
                                 "type": "number",
                                 "example": 5
                               },
+                              "totalHours": {
+                                "type": "number",
+                                "example": 5
+                              },
+                              "hoursFrequency": {
+                                "type": "number",
+                                "example": 0
+                              },
                               "id": {
                                 "type": "string",
                                 "example": "1283266052775481344"
@@ -4190,7 +4198,12 @@
                   "hours": {
                     "type": "number",
                     "example": 5,
-                    "description": "Hours that will be awarded to event participants."
+                    "description": "Hours that will be awarded to event participants per the hoursFrequency setting."
+                  },
+                  "hoursFrequency": {
+                    "type": "number",
+                    "example": 0,
+                    "description": "0 for total time, 1 for per day hours."
                   }
                 }
               }
@@ -4469,6 +4482,14 @@
                         "hours": {
                           "type": "number",
                           "example": 5
+                        },
+                        "totalHours": {
+                          "type": "number",
+                          "example": 5
+                        },
+                        "hoursFrequency": {
+                          "type": "number",
+                          "example": 0
                         },
                         "id": {
                           "type": "string",

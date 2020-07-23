@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+// HoursFrequency constants
+const (
+	EventHoursFrequencyOnce   uint = iota
+	EventHoursFrequencyPerDay uint = iota
+)
+
 // Event represents a scheduled event under an opportunity.
 type Event struct {
 	Model
@@ -14,6 +20,7 @@ type Event struct {
 	Title             string    `json:"title"`
 	Description       string    `json:"description"`
 	Hours             int       `json:"hours"`
+	HoursFrequency    *uint     `json:"hoursFrequency"`
 	DateOnly          *bool     `json:"dateOnly"`
 	FromDate          time.Time `json:"from"`
 	ToDate            time.Time `json:"to"`
