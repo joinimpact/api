@@ -3,6 +3,7 @@ module github.com/joinimpact/api
 go 1.14
 
 require (
+	cloud.google.com/go/pubsub v1.2.0
 	github.com/DATA-DOG/go-sqlmock v1.4.1
 	github.com/aws/aws-sdk-go v1.33.7
 	github.com/bwmarrin/snowflake v0.3.0
@@ -12,6 +13,8 @@ require (
 	github.com/go-chi/render v1.0.1
 	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.16.0 // indirect
+	github.com/google/uuid v1.1.1
+	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/go-version v1.2.1 // indirect
 	github.com/huandu/facebook/v2 v2.5.2
 	github.com/jinzhu/gorm v1.9.12

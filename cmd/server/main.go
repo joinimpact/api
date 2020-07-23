@@ -17,6 +17,9 @@ import (
 	"github.com/joinimpact/api/internal/snowflakes"
 	"github.com/joinimpact/api/internal/tags"
 	"github.com/joinimpact/api/internal/users"
+	"github.com/joinimpact/api/internal/websocket/hub"
+	"github.com/joinimpact/api/internal/websocket/hubmanager"
+	"github.com/joinimpact/api/internal/websocket/socketserver"
 	"github.com/joinimpact/api/pkg/location"
 
 	"github.com/joinimpact/api/internal/migrations"
@@ -151,8 +154,14 @@ func main() {
 	conversationsService := conversations.NewService(conversationRepository, conversationMembershipRepository, conversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository, messageRepository, usersService, config, &log.Logger, snowflakeService, emailService)
 	tagsService := tags.NewService(tagRepository, config, &log.Logger, snowflakeService)
 
+	// WebSocket services
+	wsHub := hub.NewHub(hub.Options{})
+	hubManager := hubmanager.NewHubManager(wsHub)
+	wsManager := socketserver.NewWebSocketManager(wsHub, hubManager, authenticationService)
+	websocketService := socketserver.NewService(wsManager)
+
 	// Create a new app using the new config.
-	app := core.NewApp(config, &log.Logger, authenticationService, usersService, organizationsService, tagsService, opportunitiesService, eventsService, conversationsService)
+	app := core.NewApp(config, &log.Logger, websocketService, authenticationService, usersService, organizationsService, tagsService, opportunitiesService, eventsService, conversationsService)
 
 	// Print a message.
 	log.Info().Int("port", int(config.Port)).Str("version", APIVersion).Msg("Listening")

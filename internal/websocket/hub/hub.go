@@ -55,8 +55,13 @@ func (h *Hub) removeChannel(id ChannelID) error {
 // Subscribe subscribes a client to a Channel
 func (h *Hub) Subscribe(id ChannelID, session *Session) error {
 	c, err := h.getChannel(id)
-	if err != nil {
-		return err
+	if err != nil || c == nil {
+		c, err = h.newChannel(id)
+		if err != nil {
+			// TODO:
+			// - Find a better way to handle this error
+			return err
+		}
 	}
 
 	// Subscribe the session to the channel

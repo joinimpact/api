@@ -42,10 +42,15 @@ func InitChannel(id ChannelID) *Channel {
 
 // Fanout fans a message out to all connected sessions in the Channel
 func (c *Channel) Fanout(message interface{}) {
+	m := websocket.Message{
+		Opcode: 0,
+		Data:   message,
+	}
+
 	// Loop through all connected sessions
 	for _, s := range c.subscriptions {
 		// Send message to session
-		s.SendMessage(message)
+		s.SendMessage(m)
 	}
 }
 
@@ -77,6 +82,15 @@ func (c *Channel) Unsubscribe(id SessionID) bool {
 	c.lock.Lock()
 	// Unlock the mutex after the function completes
 	defer c.lock.Unlock()
+
+	s, ok := c.subscriptions[id]
+	if !ok {
+		// Explanation of return at bottom of function
+		return len(c.subscriptions) == 0
+	}
+
+	// Update the session's subscribed Channels list
+	s.Susbcriptions[c.ChannelID] = false
 
 	// Remove the session from the subscriptions list by ID
 	delete(c.subscriptions, id)
