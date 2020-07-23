@@ -4,7 +4,6 @@ package websocket
 const (
 	OpcodeHello                 = iota
 	OpcodeClientAuthenticate    = iota
-	OpcodeAuthenticationFailed  = iota
 	OpcodeAuthenticationSuccess = iota
 	OpcodeHeartbeat             = iota
 	OpcodeHeartbeatAck          = iota

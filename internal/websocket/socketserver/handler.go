@@ -17,6 +17,9 @@ import (
 var upgrader = gws.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
 }
 
 // getToken attempts to get the token from the Authorization HTTP header.
@@ -45,6 +48,8 @@ func (s *service) Handler() http.HandlerFunc {
 
 		// Calculate the heartbeat timeout
 		d := time.Duration(websocket.HeartbeatTimeout) * time.Millisecond
+
+		d = d + 1000*time.Millisecond
 
 		// Create a hub.Session object with the session ID and WebSocket connection
 		session := hub.Session{
