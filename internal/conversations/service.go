@@ -18,6 +18,10 @@ import (
 type Service interface {
 	// CreateOpportunityMembershipRequestConversation creates an opportunity membership request conversation and adds a message to it. Returns conversation ID on success.
 	CreateOpportunityMembershipRequestConversation(ctx context.Context, organizationID, opportunityID, opportunityMembershipRequestID, volunteerID int64, messageStr string) (int64, error)
+	// GetUserConversationMemberships gets a user's volunteer conversation memberships.
+	GetUserConversationMemberships(userID int64) ([]models.ConversationMembership, error)
+	// GetOrganizationConversations gets an organization's internal conversations.
+	GetOrganizationConversations(organizationID int64) ([]models.Conversation, error)
 }
 
 // service represents the internal implementation of the conversations Service.
@@ -113,4 +117,24 @@ func (s *service) CreateOpportunityMembershipRequestConversation(ctx context.Con
 	}
 
 	return conversation.ID, nil
+}
+
+// GetUserConversationMemberships gets a user's volunteer conversation memberships.
+func (s *service) GetUserConversationMemberships(userID int64) ([]models.ConversationMembership, error) {
+	memberships, err := s.conversationMembershipRepository.FindByUserID(userID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	return memberships, nil
+}
+
+// GetOrganizationConversations gets an organization's internal conversations.
+func (s *service) GetOrganizationConversations(organizationID int64) ([]models.Conversation, error) {
+	conversations, err := s.conversationRepository.FindByOrganizationID(organizationID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	return conversations, nil
 }

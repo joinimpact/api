@@ -1,6 +1,8 @@
 package socketserver
 
-import "net/http"
+import (
+	"net/http"
+)
 
 // Service represents a websocket service.
 type Service interface {

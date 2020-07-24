@@ -3,6 +3,9 @@ package socketserver
 import (
 	gws "github.com/gorilla/websocket"
 	"github.com/joinimpact/api/internal/authentication"
+	"github.com/joinimpact/api/internal/conversations"
+	"github.com/joinimpact/api/internal/organizations"
+	"github.com/joinimpact/api/internal/pubsub"
 	"github.com/joinimpact/api/internal/websocket"
 	"github.com/joinimpact/api/internal/websocket/hub"
 	"github.com/joinimpact/api/internal/websocket/hubmanager"
@@ -22,21 +25,36 @@ const (
 	ErrTimeout             = 4004
 )
 
+var stream pubsub.Stream = pubsub.Stream("impact.users")
+
 // WebSocketManager provides methods for reading and writing from WebSockets
 type WebSocketManager struct {
 	hub                   *hub.Hub
 	hubManager            *hubmanager.HubManager
+	broker                pubsub.Broker
 	authenticationService authentication.Service
+	organizationsService  organizations.Service
+	conversationsService  conversations.Service
 }
 
 // NewWebSocketManager creates and returns a WebSocketManager based on the
 // provided dependencies
-func NewWebSocketManager(h *hub.Hub, hm *hubmanager.HubManager, authenticationService authentication.Service) *WebSocketManager {
+func NewWebSocketManager(h *hub.Hub, hm *hubmanager.HubManager, broker pubsub.Broker, authenticationService authentication.Service, organizationsService organizations.Service, conversationsService conversations.Service) *WebSocketManager {
 	return &WebSocketManager{
 		h,
 		hm,
+		broker,
 		authenticationService,
+		organizationsService,
+		conversationsService,
 	}
+}
+
+// SubscribeHub subscribes the hub to the pubsub broker.
+func (w *WebSocketManager) SubscribeHub() {
+	channel := w.broker.Subscribe(stream)
+
+	w.hubManager.StartMessagePump(channel)
 }
 
 // Reader reads and parses messages from the WebSocket

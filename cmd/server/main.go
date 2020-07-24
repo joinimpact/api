@@ -12,6 +12,7 @@ import (
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/opportunities"
 	"github.com/joinimpact/api/internal/organizations"
+	"github.com/joinimpact/api/internal/pubsub"
 	"github.com/joinimpact/api/internal/search"
 	opportunitiesSearch "github.com/joinimpact/api/internal/search/stores/opportunities"
 	"github.com/joinimpact/api/internal/snowflakes"
@@ -154,10 +155,13 @@ func main() {
 	conversationsService := conversations.NewService(conversationRepository, conversationMembershipRepository, conversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository, messageRepository, usersService, config, &log.Logger, snowflakeService, emailService)
 	tagsService := tags.NewService(tagRepository, config, &log.Logger, snowflakeService)
 
+	// Pub/sub service
+	broker := pubsub.NewBroker()
+
 	// WebSocket services
 	wsHub := hub.NewHub(hub.Options{})
 	hubManager := hubmanager.NewHubManager(wsHub)
-	wsManager := socketserver.NewWebSocketManager(wsHub, hubManager, authenticationService)
+	wsManager := socketserver.NewWebSocketManager(wsHub, hubManager, broker, authenticationService, organizationsService, conversationsService)
 	websocketService := socketserver.NewService(wsManager)
 
 	// Create a new app using the new config.

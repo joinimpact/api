@@ -6,8 +6,8 @@ import (
 	"github.com/joinimpact/api/internal/websocket"
 )
 
-// ChannelID is an int64 ID reference to one channel
-type ChannelID int64
+// ChannelID is a string ID reference to one channel
+type ChannelID string
 
 // Channel wraps a group of subscriptions
 type Channel struct {

@@ -4,7 +4,9 @@ import (
 	"errors"
 	"sync"
 
-	"cloud.google.com/go/pubsub"
+	"github.com/joinimpact/api/internal/models"
+	"github.com/joinimpact/api/internal/pubsub"
+	"github.com/joinimpact/api/internal/websocket"
 	"github.com/joinimpact/api/internal/websocket/hub"
 )
 
@@ -86,53 +88,47 @@ func (h *HubManager) unsubscribeAll(id userID, channelID hub.ChannelID) {
 	}
 }
 
-// processMessage modifies subscriptions based on pubsub.Messages received
-func (h *HubManager) processMessage(m pubsub.Message) {
-	return
-	// Decode the event code
-	// _, err := strconv.ParseInt(m.Header["event"], 10, 64)
-	// if err != nil {
-	// codeDecoded = -1
-	// }
+// processMessage modifies subscriptions based on pubsub.Events received
+func (h *HubManager) processMessage(m pubsub.Event) {
+	switch m.EventName {
+	case "conversations.CONVERSATION_MEMBERSHIP_CREATED":
+		membership, ok := m.Payload.(models.ConversationMembership)
+		if !ok {
+			return
+		}
 
-	// Convert from an int64 to an int
-	// code := int(codeDecoded)
+		h.subscribeAll(userID(membership.UserID), ConversationIDToChannelID(membership.ConversationID))
+	case "conversations.CONVERSATION_MEMBERSHIP_DELETED":
+		membership, ok := m.Payload.(models.ConversationMembership)
+		if !ok {
+			return
+		}
 
-	// switch code {
-	// case codes.EventAddedToConversation:
-	// 	d, err := conversationmember.Decode(m)
-	// 	if err != nil {
-	// 		// Log error if the conversation member is unable to be decoded
-	// 		log.Printf("[HubManager] Error while decoding conversation member: %e", err)
-	// 		return
-	// 	}
-
-	// 	groupID := userID(d.UserId)
-
-	// 	// Subscribe the Sessions to the Channel
-	// 	h.subscribeAll(groupID, hub.ChannelID(d.ConversationId))
-	// case codes.EventRemovedFromConversation:
-	// 	d, err := conversationmember.Decode(m)
-	// 	if err != nil {
-	// 		// Log error if the conversation member is unable to be decoded
-	// 		log.Printf("[HubManager] Error while decoding conversation member: %e", err)
-	// 		return
-	// 	}
-
-	// 	groupID := userID(d.UserId)
-
-	// 	// Unsubscribe the Sessions from the Channel
-	// 	h.unsubscribeAll(groupID, hub.ChannelID(d.ConversationId))
-	// }
+		h.unsubscribeAll(userID(membership.UserID), ConversationIDToChannelID(membership.ConversationID))
+	}
 }
 
 // messagePump takes messages in from a provided channel, interprets the
 // results, and forwards the messages to the Hub
-func (h *HubManager) messagePump(channel chan pubsub.Message) {
+func (h *HubManager) messagePump(channel <-chan pubsub.Event) {
 	for {
 		select {
 		case m := <-channel:
 			h.processMessage(m)
+
+			switch m.EventName {
+			case "messages.MESSAGE_SENT":
+				message, ok := m.Payload.(models.Message)
+				if !ok {
+					return
+				}
+
+				h.hub.RouteMessage(ConversationIDToChannelID(message.ConversationID), websocket.Message{
+					Opcode:    websocket.OpcodeEvent,
+					EventName: string(m.EventName),
+					Data:      message,
+				})
+			}
 
 			// to, ok := m.Header["to"]
 			// if !ok {
@@ -164,7 +160,7 @@ func (h *HubManager) messagePump(channel chan pubsub.Message) {
 
 // StartMessagePump starts pumping messages into the Hub from the provided
 // pubsub Message channel
-func (h *HubManager) StartMessagePump(channel chan pubsub.Message) {
+func (h *HubManager) StartMessagePump(channel <-chan pubsub.Event) {
 	// Start the messagePump in a goroutine
 	go h.messagePump(channel)
 }
