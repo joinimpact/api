@@ -43,7 +43,7 @@ func buildQuery(query Query) io.Reader {
 
 	sort := ""
 	if query.Location != nil {
-		sort = fmt.Sprintf(sort, query.Location.Longitude, query.Location.Latitude)
+		sort = fmt.Sprintf(sortTemplate, query.Location.Longitude, query.Location.Latitude)
 	}
 
 	queryStr := fmt.Sprintf(queryTemplate, query.TextQuery, query.TextQuery, strings.Join(filters, ","), sort)
@@ -88,7 +88,7 @@ const queryTemplate = `
   }
 `
 
-const sort = `
+const sortTemplate = `
 ,"sort": [
 	{
 		"_geo_distance": {

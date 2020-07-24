@@ -497,6 +497,7 @@ func (s *service) RequestOpportunityMembership(ctx context.Context, opportunityI
 	// Attempt to create the entity.
 	err := s.opportunityMembershipRequestRepository.Create(opportunityMembershipRequest)
 	if err != nil {
+		s.logger.Error().Err(err).Msg("Error creating opportunity membership request")
 		return 0, NewErrServerError()
 	}
 
@@ -528,11 +529,13 @@ func (s *service) AcceptOpportunityMembershipRequest(ctx context.Context, opport
 
 	// Create the volunteer membership.
 	if err := s.createVolunteerMembership(ctx, userID, membershipRequest.OpportunityID, membershipRequest.VolunteerID); err != nil {
+		s.logger.Error().Err(err).Msg("Error creating volunteer membership")
 		return NewErrServerError()
 	}
 
 	// Delete the membership request.
 	if err := s.opportunityMembershipRequestRepository.DeleteByID(membershipRequest.ID); err != nil {
+		s.logger.Error().Err(err).Msg("Error deleting membership request")
 		return NewErrServerError()
 	}
 
@@ -588,6 +591,7 @@ func (s *service) PublishOpportunity(ctx context.Context, opportunityID int64) e
 
 	err = s.opportunityRepository.Save(ctx, *opportunity)
 	if err != nil {
+		s.logger.Error().Err(err).Msg("Error publishing opportunity")
 		return NewErrServerError()
 	}
 
@@ -607,6 +611,7 @@ func (s *service) UnpublishOpportunity(ctx context.Context, opportunityID int64)
 
 	err = s.opportunityRepository.Save(ctx, *opportunity)
 	if err != nil {
+		s.logger.Error().Err(err).Msg("Error unpublishing opportunity")
 		return NewErrServerError()
 	}
 
@@ -674,6 +679,7 @@ func (s *service) InviteVolunteer(ctx context.Context, inviterID, opportunityID 
 	)
 	err = s.emailService.Send(email)
 	if err != nil {
+		s.logger.Error().Err(err).Msg("Error sending opportunity invite email")
 		return NewErrServerError()
 	}
 
@@ -722,10 +728,12 @@ func (s *service) AcceptInvite(ctx context.Context, opportunityID int64, userID,
 	}
 
 	if err := s.createVolunteerMembership(ctx, invite.InviterID, invite.OpportunityID, userID); err != nil {
+		s.logger.Error().Err(err).Msg("Error creating volunteer membership")
 		return NewErrServerError()
 	}
 
 	if err := s.invalidateInvite(ctx, invite.ID); err != nil {
+		s.logger.Error().Err(err).Msg("Error invalidating invite")
 		return NewErrServerError()
 	}
 
@@ -794,6 +802,7 @@ func (s *service) Search(ctx context.Context, query opportunitiesSearch.Query) (
 
 	search, err := s.searchStore.Search(query)
 	if err != nil {
+		s.logger.Error().Err(err).Msg("Error searching opportunities")
 		return nil, NewErrServerError()
 	}
 
