@@ -11,7 +11,7 @@
       "type": "nested",
       "properties": {
         "id": {
-          "type": "integer"
+          "type": "long"
         },
         "name": {
           "type": "text"
