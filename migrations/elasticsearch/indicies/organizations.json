@@ -8,7 +8,7 @@
       "type": "nested",
       "properties": {
         "id": {
-          "enabled": false
+          "type": "long"
         },
         "name": {
           "type": "text"
