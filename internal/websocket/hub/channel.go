@@ -41,12 +41,7 @@ func InitChannel(id ChannelID) *Channel {
 }
 
 // Fanout fans a message out to all connected sessions in the Channel
-func (c *Channel) Fanout(message interface{}) {
-	m := websocket.Message{
-		Opcode: 0,
-		Data:   message,
-	}
-
+func (c *Channel) Fanout(m websocket.Message) {
 	// Loop through all connected sessions
 	for _, s := range c.subscriptions {
 		// Send message to session

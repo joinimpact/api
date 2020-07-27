@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/joinimpact/api/internal/core/handlers/auth"
 	"github.com/joinimpact/api/internal/core/handlers/browse"
+	"github.com/joinimpact/api/internal/core/handlers/conversations"
 	"github.com/joinimpact/api/internal/core/handlers/events"
 	"github.com/joinimpact/api/internal/core/handlers/opportunities"
 	"github.com/joinimpact/api/internal/core/handlers/organizations"
@@ -191,6 +192,17 @@ func (app *App) Router() *chi.Mux {
 				})
 
 				r.Get("/responses", events.ResponsesGet(app.eventsService, app.usersService))
+			})
+		})
+
+		router.Route("/conversations", func(r chi.Router) {
+			r.Route("/{conversationID}", func(r chi.Router) {
+				r.Use(idctx.Prepare("conversationID"))
+				r.Use(permissions.Require(scopes.ScopeAuthenticated))
+
+				r.Route("/messages", func(r chi.Router) {
+					r.Post("/", conversations.MessagesPost(app.conversationsService))
+				})
 			})
 		})
 	})

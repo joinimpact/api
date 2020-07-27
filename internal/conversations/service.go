@@ -3,15 +3,24 @@ package conversations
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/joinimpact/api/internal/cdn"
 	"github.com/joinimpact/api/internal/config"
 	"github.com/joinimpact/api/internal/email"
 	"github.com/joinimpact/api/internal/models"
+	"github.com/joinimpact/api/internal/pubsub"
 	"github.com/joinimpact/api/internal/snowflakes"
 	"github.com/joinimpact/api/internal/users"
 	"github.com/rs/zerolog"
+)
+
+var stream = pubsub.Stream("impact.users")
+
+// Events
+const (
+	MessageSent = "messages.MESSAGE_SENT"
 )
 
 // Service defines methods for interacting with conversations and messages.
@@ -22,6 +31,8 @@ type Service interface {
 	GetUserConversationMemberships(userID int64) ([]models.ConversationMembership, error)
 	// GetOrganizationConversations gets an organization's internal conversations.
 	GetOrganizationConversations(organizationID int64) ([]models.Conversation, error)
+	// SendStandardMessage sends a standard message to a conversation, returning the ID on success.
+	SendStandardMessage(ctx context.Context, conversationID, senderID int64, messageText string) (int64, error)
 }
 
 // service represents the internal implementation of the conversations Service.
@@ -36,11 +47,12 @@ type service struct {
 	logger                                             *zerolog.Logger
 	snowflakeService                                   snowflakes.SnowflakeService
 	emailService                                       email.Service
+	broker                                             pubsub.Broker
 	cdnClient                                          *cdn.Client
 }
 
 // NewService creates and returns a new conversations.Service.
-func NewService(conversationRepository models.ConversationRepository, conversationMembershipRepository models.ConversationMembershipRepository, conversationOpportunityMembershipRequestRepository models.ConversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository models.ConversationOrganizationMembershipRepository, messageRepository models.MessageRepository, usersService users.Service, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service) Service {
+func NewService(conversationRepository models.ConversationRepository, conversationMembershipRepository models.ConversationMembershipRepository, conversationOpportunityMembershipRequestRepository models.ConversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository models.ConversationOrganizationMembershipRepository, messageRepository models.MessageRepository, usersService users.Service, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service, broker pubsub.Broker) Service {
 	return &service{
 		conversationRepository,
 		conversationMembershipRepository,
@@ -52,6 +64,7 @@ func NewService(conversationRepository models.ConversationRepository, conversati
 		logger,
 		snowflakeService,
 		emailService,
+		broker,
 		cdn.NewCDNClient(config),
 	}
 }
@@ -137,4 +150,42 @@ func (s *service) GetOrganizationConversations(organizationID int64) ([]models.C
 	}
 
 	return conversations, nil
+}
+
+// SendStandardMessage sends a standard message to a conversation, returning the ID on success.
+func (s *service) SendStandardMessage(ctx context.Context, conversationID, senderID int64, messageText string) (int64, error) {
+	message := models.Message{}
+	message.ID = s.snowflakeService.GenerateID()
+	message.Timestamp = time.Now()
+	message.ConversationID = conversationID
+	message.SenderID = senderID
+	message.Type = models.MessageTypeStandard
+
+	messageBody := MessageStandard{
+		Text: messageText,
+	}
+
+	jsonBytes, err := json.Marshal(messageBody)
+	if err != nil {
+		return 0, NewErrServerError()
+	}
+
+	message.Body = postgres.Jsonb{
+		RawMessage: json.RawMessage(jsonBytes),
+	}
+
+	message.Edited = false
+	if err := s.messageRepository.Create(ctx, message); err != nil {
+		s.logger.Error().Err(err).Msg("Error creating message")
+		return 0, NewErrServerError()
+	}
+
+	if err := s.broker.Publish(stream, pubsub.Event{
+		EventName: MessageSent,
+		Payload:   message,
+	}); err != nil {
+		s.logger.Error().Err(err).Msg("Error publishing message to pub/sub")
+	}
+
+	return message.ID, nil
 }

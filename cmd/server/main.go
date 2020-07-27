@@ -146,22 +146,23 @@ func main() {
 		log.Fatal().Err(err).Msg("Error starting Opportunities search service")
 	}
 
+	// Pub/sub service
+	broker := pubsub.NewBroker()
+
 	// Internal services
 	usersService := users.NewService(userRepository, userProfileFieldRepository, userTagRepository, tagRepository, config, &log.Logger, snowflakeService, locationService)
 	authenticationService := authentication.NewService(userRepository, passwordResetRepository, thirdPartyIdentityRepository, config, &log.Logger, snowflakeService, emailService)
 	organizationsService := organizations.NewService(organizationRepository, organizationMembershipRepository, organizationMembershipInviteRepository, organizationProfileFieldRepository, organizationTagRepository, userRepository, tagRepository, config, &log.Logger, snowflakeService, emailService, locationService)
 	opportunitiesService := opportunities.NewService(opportunityRepository, opportunityRequirementsRepository, opportunityLimitsRepository, opportunityTagRepository, opportunityMembershipRepository, opportunityMembershipRequestRepository, opportunityMembershipInviteRepository, tagRepository, userRepository, organizationRepository, config, &log.Logger, snowflakeService, emailService, opportunitiesSearchService)
 	eventsService := events.NewService(eventRepository, eventResponseRepository, opportunityMembershipRepository, tagRepository, config, &log.Logger, snowflakeService, emailService, locationService)
-	conversationsService := conversations.NewService(conversationRepository, conversationMembershipRepository, conversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository, messageRepository, usersService, config, &log.Logger, snowflakeService, emailService)
+	conversationsService := conversations.NewService(conversationRepository, conversationMembershipRepository, conversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository, messageRepository, usersService, config, &log.Logger, snowflakeService, emailService, broker)
 	tagsService := tags.NewService(tagRepository, config, &log.Logger, snowflakeService)
-
-	// Pub/sub service
-	broker := pubsub.NewBroker()
 
 	// WebSocket services
 	wsHub := hub.NewHub(hub.Options{})
 	hubManager := hubmanager.NewHubManager(wsHub)
 	wsManager := socketserver.NewWebSocketManager(wsHub, hubManager, broker, authenticationService, organizationsService, conversationsService)
+	wsManager.SubscribeHub()
 	websocketService := socketserver.NewService(wsManager)
 
 	// Create a new app using the new config.
