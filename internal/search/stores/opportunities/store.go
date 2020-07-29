@@ -23,6 +23,8 @@ type Store interface {
 	Save(opportunityID int64)
 	// Search searches opportunities, and returns relevant a list of documents.
 	Search(query Query) ([]OpportunityDocument, error)
+	// Recommendations searches opportunities, and returns relevant a list of documents.
+	Recommendations(query RecommendationQuery) ([]OpportunityDocument, error)
 }
 
 // store represents the internal implementation of the Store.
@@ -206,6 +208,62 @@ func (s *store) Search(query Query) ([]OpportunityDocument, error) {
 	documents := []OpportunityDocument{}
 
 	queryReader := buildQuery(query)
+
+	res, err := s.client.Search(
+		s.client.Search.WithIndex(indexName),
+		s.client.Search.WithBody(queryReader),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		var e map[string]interface{}
+		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("[%s] %s: %s", res.Status(), e["error"].(map[string]interface{})["type"], e["error"].(map[string]interface{})["reason"])
+	}
+
+	type envelopeResponse struct {
+		Took int
+		Hits struct {
+			Total struct {
+				Value int
+			}
+			Hits []struct {
+				ID         string          `json:"_id"`
+				Source     json.RawMessage `json:"_source"`
+				Highlights json.RawMessage `json:"highlight"`
+				Sort       []interface{}   `json:"sort"`
+			}
+		}
+	}
+
+	var r envelopeResponse
+	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+		return nil, err
+	}
+
+	for _, hit := range r.Hits.Hits {
+		doc := OpportunityDocument{}
+
+		if err := json.Unmarshal(hit.Source, &doc); err != nil {
+			return nil, err
+		}
+
+		documents = append(documents, doc)
+	}
+
+	return documents, nil
+}
+
+// Recommendations searches opportunities, and returns relevant a list of documents.
+func (s *store) Recommendations(query RecommendationQuery) ([]OpportunityDocument, error) {
+	documents := []OpportunityDocument{}
+
+	queryReader := buildRecommendationQuery(query)
 
 	res, err := s.client.Search(
 		s.client.Search.WithIndex(indexName),
