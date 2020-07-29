@@ -243,9 +243,36 @@ func (s *service) GetOpportunity(ctx context.Context, id int64) (*OpportunityVie
 		}
 	}
 
+	view.Stats, err = s.getOpportunityStats(ctx, opportunity.ID)
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Error getting opportunity stats")
+		return nil, NewErrServerError()
+	}
+
 	view.Tags, _ = s.GetOpportunityTags(ctx, opportunity.ID)
 
 	return view, nil
+}
+
+// getOpportunityStats gets a single opportunity's Stats by ID.
+func (s *service) getOpportunityStats(ctx context.Context, opportunityID int64) (*Stats, error) {
+	stats := &Stats{}
+
+	memberships, err := s.opportunityMembershipRepository.FindByOpportunityID(ctx, opportunityID)
+	if err != nil {
+		return nil, err
+	}
+
+	stats.VolunteersEnrolled = len(memberships)
+
+	pendingMemberships, err := s.opportunityMembershipRequestRepository.FindByOpportunityID(opportunityID)
+	if err != nil {
+		return nil, err
+	}
+
+	stats.VolunteersPending = len(pendingMemberships)
+
+	return stats, nil
 }
 
 // GetMinimalOpportunity returns an opportunity without tags or a profile.
