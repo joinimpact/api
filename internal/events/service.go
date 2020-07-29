@@ -97,8 +97,16 @@ func (s *service) GetEvent(ctx context.Context, eventID int64) (*EventView, erro
 	// Convert the event to view.
 	view, err := s.eventToView(*event)
 	if err != nil {
+		s.logger.Error().Err(err).Msg("Error converting event to view")
 		return nil, NewErrServerError()
 	}
+
+	responsesSummary, err := s.getEventResponsesSummary(ctx, eventID)
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Error getting EventResponsesSummary")
+		return nil, NewErrServerError()
+	}
+	view.EventResponsesSummary = responsesSummary
 
 	return view, nil
 }

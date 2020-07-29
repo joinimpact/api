@@ -20,9 +20,10 @@ type EventBase struct {
 
 // EventView is the view in which event entities will be passed through the Service.
 type EventView struct {
-	EventBase     `validate:"dive"`
-	EventSchedule *EventSchedule     `json:"schedule"`
-	Location      *location.Location `json:"location"`
+	EventBase             `validate:"dive"`
+	EventSchedule         *EventSchedule         `json:"schedule"`
+	EventResponsesSummary *EventResponsesSummary `json:"responses,omitempty" scope:"manager"`
+	Location              *location.Location     `json:"location"`
 }
 
 // EventSchedule represents a date/time range for a single event.
@@ -40,6 +41,7 @@ type ModifyEventRequest struct {
 	Location      *location.Coordinates `json:"location" validate:"omitempty,dive"`
 }
 
+// EventResponsesSummary contains the number of volunteers joining, not joining, and total number of volunteers of an event.
 type EventResponsesSummary struct {
 	NumCanAttend    uint `json:"numCanAttend"`
 	NumCanNotAttend uint `json:"numCanNotAttend"`
