@@ -13,6 +13,7 @@ import (
 	"github.com/joinimpact/api/internal/models"
 	opportunitiesSearch "github.com/joinimpact/api/internal/search/stores/opportunities"
 	"github.com/joinimpact/api/internal/snowflakes"
+	"github.com/joinimpact/api/pkg/dbctx"
 	"github.com/joinimpact/api/pkg/location"
 	"github.com/rs/zerolog"
 )
@@ -71,7 +72,7 @@ type Service interface {
 	// GetOpportunityMembership returns the permissions level of a single user's relationship with an opportunity.
 	GetOpportunityMembership(ctx context.Context, opportunityID, userID int64) (int, error)
 	// Search searches opportunities by a query struct.
-	Search(ctx context.Context, query opportunitiesSearch.Query) ([]OpportunityView, error)
+	Search(ctx context.Context, query opportunitiesSearch.Query) (*SearchResponse, error)
 	// GetRecommendations gets a list of browse rows for a specific user based on recommendations made using a random number seeded by the current date.
 	GetRecommendations(ctx context.Context, userID int64) ([]Section, error)
 }
@@ -862,8 +863,19 @@ func (s *service) GetOpportunityMembership(ctx context.Context, opportunityID, u
 	return membership.PermissionsFlag, nil
 }
 
+// SearchResponse represents a response to the Search method.
+type SearchResponse struct {
+	TotalResults  uint
+	Pages         uint
+	Opportunities []OpportunityView
+}
+
 // Search searches opportunities by a query struct.
-func (s *service) Search(ctx context.Context, query opportunitiesSearch.Query) ([]OpportunityView, error) {
+func (s *service) Search(ctx context.Context, query opportunitiesSearch.Query) (*SearchResponse, error) {
+	dbc := dbctx.Get(ctx)
+	query.Page = uint(dbc.Page)
+	query.Limit = uint(dbc.Limit)
+
 	views := []OpportunityView{}
 
 	search, err := s.searchStore.Search(query)
@@ -872,7 +884,7 @@ func (s *service) Search(ctx context.Context, query opportunitiesSearch.Query) (
 		return nil, NewErrServerError()
 	}
 
-	for _, item := range search {
+	for _, item := range search.Documents {
 		view, err := s.GetOpportunity(ctx, item.ID)
 		if err != nil {
 			continue
@@ -881,7 +893,11 @@ func (s *service) Search(ctx context.Context, query opportunitiesSearch.Query) (
 		views = append(views, *view)
 	}
 
-	return views, nil
+	return &SearchResponse{
+		TotalResults:  search.TotalResults,
+		Pages:         search.Pages,
+		Opportunities: views,
+	}, nil
 }
 
 // GetRecommendations gets a list of browse rows for a specific user based on recommendations made using a random number seeded by the current date.
