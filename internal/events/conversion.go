@@ -1,6 +1,7 @@
 package events
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/joinimpact/api/internal/models"
@@ -80,6 +81,35 @@ func (s *service) eventToView(event models.Event) (*EventView, error) {
 	view.TotalHours = s.calculateTotalHours(event)
 
 	return view, nil
+}
+
+// getEventResponsesSummary gets an EventResponsesSummary for a single event by ID.
+func (s *service) getEventResponsesSummary(ctx context.Context, eventID int64) (*EventResponsesSummary, error) {
+	// Get all event memberships.
+	ids, err := s.getEventMemberships(ctx, eventID)
+	if err != nil {
+		return nil, err
+	}
+
+	summary := &EventResponsesSummary{}
+	summary.TotalMembers = uint(len(ids))
+
+	for _, id := range ids {
+		// Find a response if one exists.
+		eventResponse, err := s.eventResponseRepository.FindInEventByUserID(ctx, eventID, id)
+		if err != nil {
+			continue
+		}
+
+		switch *eventResponse.Response {
+		case models.EventResponseCanAttend:
+			summary.NumCanAttend++
+		case models.EventResponseCanNotAttend:
+			summary.NumCanNotAttend++
+		}
+	}
+
+	return summary, nil
 }
 
 // calculateTotalHours calculates the total hours from an event's dates and the HoursFrequency set.
