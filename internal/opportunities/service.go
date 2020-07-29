@@ -46,6 +46,8 @@ type Service interface {
 	CanRequestOpportunityMembership(ctx context.Context, opportunityID, volunteerID int64) error
 	// AcceptOpportunityMembershipRequest accepts a membership request from a volunteer by user ID.
 	AcceptOpportunityMembershipRequest(ctx context.Context, opportunityID, volunteerID, userID int64) error
+	// DeclineOpportunityMembershipRequest accepts a membership request from a volunteer by user ID.
+	DeclineOpportunityMembershipRequest(ctx context.Context, opportunityID, volunteerID, userID int64) error
 	// RequestOpportunityMembership creates a membership request (as a volunteer) to join an opportunity.
 	RequestOpportunityMembership(ctx context.Context, opportunityID int64, volunteerID int64) (int64, error)
 	// GetOpportunityVolunteers returns an array of OpportunityMembership volunteer objects for a specified opportunity by ID.
@@ -551,6 +553,23 @@ func (s *service) AcceptOpportunityMembershipRequest(ctx context.Context, opport
 	if err := s.createVolunteerMembership(ctx, userID, membershipRequest.OpportunityID, membershipRequest.VolunteerID); err != nil {
 		s.logger.Error().Err(err).Msg("Error creating volunteer membership")
 		return NewErrServerError()
+	}
+
+	// Delete the membership request.
+	if err := s.opportunityMembershipRequestRepository.DeleteByID(membershipRequest.ID); err != nil {
+		s.logger.Error().Err(err).Msg("Error deleting membership request")
+		return NewErrServerError()
+	}
+
+	return nil
+}
+
+// DeclineOpportunityMembershipRequest accepts a membership request from a volunteer by user ID.
+func (s *service) DeclineOpportunityMembershipRequest(ctx context.Context, opportunityID, volunteerID, userID int64) error {
+	// Check that a valid request exists.
+	membershipRequest, err := s.opportunityMembershipRequestRepository.FindInOpportunityByVolunteerID(opportunityID, volunteerID)
+	if err != nil {
+		return NewErrRequestNotFound()
 	}
 
 	// Delete the membership request.

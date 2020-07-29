@@ -39,3 +39,9 @@ type ModifyEventRequest struct {
 	EventSchedule *EventSchedule        `json:"schedule" validate:"dive"`
 	Location      *location.Coordinates `json:"location" validate:"omitempty,dive"`
 }
+
+type EventResponsesSummary struct {
+	NumCanAttend    uint `json:"numCanAttend"`
+	NumCanNotAttend uint `json:"numCanNotAttend"`
+	TotalMembers    uint `json:"totalMembers"`
+}

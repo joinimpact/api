@@ -3371,6 +3371,52 @@
         }
       }
     },
+    "/opportunities/{opportunityId}/volunteers/{userID}/decline": {
+      "post": {
+        "tags": [
+          "Opportunities"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "opportunityId",
+            "description": "The ID of the opportunity.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "userID",
+            "description": "The ID of the volunteer whose request you want to decline.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "summary": "Declines a volunteer's request to join an opportunity. Requires manager status.",
+        "responses": {
+          "200": {
+            "description": "Success! The user was declined.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/success"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The request was not found."
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
     "/opportunities/{opportunityId}/status": {
       "get": {
         "tags": [

@@ -133,6 +133,7 @@ func (app *App) Router() *chi.Mux {
 						r.Use(idctx.Prepare("userID"))
 
 						r.Post("/accept", opportunities.VolunteersAcceptPost(app.opportunitiesService))
+						r.Post("/decline", opportunities.VolunteersDeclinePost(app.opportunitiesService))
 					})
 				})
 
