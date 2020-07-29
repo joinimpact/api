@@ -4250,6 +4250,27 @@
                     "type": "number",
                     "example": 0,
                     "description": "0 for total time, 1 for per day hours."
+                  },
+                  "responses": {
+                    "type": "object",
+                    "description": "A summary of volunteer responses to an event. Will only show to managers and above.",
+                    "properties": {
+                      "numCanAttend": {
+                        "type": "integer",
+                        "example": 2,
+                        "description": "The number of volunteers who have marked that they can attend."
+                      },
+                      "numCanNotAttend": {
+                        "type": "integer",
+                        "example": 3,
+                        "description": "The number of volunteers who have marked that they can not attend."
+                      },
+                      "totalVolunteers": {
+                        "type": "integer",
+                        "example": 10,
+                        "description": "The total volunteers who are part of the event, including those who have already responded."
+                      }
+                    }
                   }
                 }
               }
