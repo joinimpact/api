@@ -45,5 +45,5 @@ type ModifyEventRequest struct {
 type EventResponsesSummary struct {
 	NumCanAttend    uint `json:"numCanAttend"`
 	NumCanNotAttend uint `json:"numCanNotAttend"`
-	TotalMembers    uint `json:"totalMembers"`
+	TotalMembers    uint `json:"totalVolunteers"`
 }
