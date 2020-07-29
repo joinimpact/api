@@ -22,7 +22,7 @@ type Store interface {
 	// Save saves an opportunity by ID in the Elasticsearch store.
 	Save(opportunityID int64)
 	// Search searches opportunities, and returns relevant a list of documents.
-	Search(query Query) ([]OpportunityDocument, error)
+	Search(query Query) (*SearchResponse, error)
 	// Recommendations searches opportunities, and returns relevant a list of documents.
 	Recommendations(query RecommendationQuery) ([]OpportunityDocument, error)
 }
@@ -203,8 +203,15 @@ func (s *store) Save(opportunityID int64) {
 	}
 }
 
+// SearchResponse represents a response to a Search query.
+type SearchResponse struct {
+	TotalResults uint
+	Pages        uint
+	Documents    []OpportunityDocument
+}
+
 // Search searches opportunities, and returns relevant a list of documents.
-func (s *store) Search(query Query) ([]OpportunityDocument, error) {
+func (s *store) Search(query Query) (*SearchResponse, error) {
 	documents := []OpportunityDocument{}
 
 	queryReader := buildQuery(query)
@@ -256,7 +263,16 @@ func (s *store) Search(query Query) ([]OpportunityDocument, error) {
 		documents = append(documents, doc)
 	}
 
-	return documents, nil
+	limit := uint(20)
+	if query.Limit > 0 && query.Limit <= 100 {
+		limit = query.Limit
+	}
+
+	return &SearchResponse{
+		TotalResults: uint(r.Hits.Total.Value),
+		Pages:        uint(uint(r.Hits.Total.Value)/limit) + 1,
+		Documents:    documents,
+	}, nil
 }
 
 // Recommendations searches opportunities, and returns relevant a list of documents.

@@ -14,6 +14,8 @@ type Query struct {
 	Location        *location.Coordinates `json:"location"`
 	AgeRange        *AgeRange             `json:"ageRange"`
 	CommitmentRange *CommitmentRange      `json:"commitmentRange"`
+	Limit           uint                  `json:"-"`
+	Page            uint                  `json:"-"`
 }
 
 // AgeRange represents the range of ages to filter by.
@@ -41,18 +43,32 @@ func buildQuery(query Query) io.Reader {
 		filters = append(filters, " ")
 	}
 
+	limit := uint(20)
+	if query.Limit > 0 && query.Limit <= 100 {
+		limit = query.Limit
+	}
+
+	limits := fmt.Sprintf(limitsTemplate, limit, query.Page*limit)
+
 	sort := ""
 	if query.Location != nil {
 		sort = fmt.Sprintf(sortTemplate, query.Location.Longitude, query.Location.Latitude)
 	}
 
-	queryStr := fmt.Sprintf(queryTemplate, query.TextQuery, query.TextQuery, strings.Join(filters, ","), sort)
+	queryStr := fmt.Sprintf(queryTemplate, limits, query.TextQuery, query.TextQuery, strings.Join(filters, ","), sort)
+	fmt.Println(queryStr)
 
 	return strings.NewReader(queryStr)
 }
 
+const limitsTemplate = `
+	"size": %d,
+	"from": %d,
+`
+
 const queryTemplate = `
 {
+	%s
 	"query": {
 	  "bool": {
 		"should": [

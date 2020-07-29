@@ -15,6 +15,8 @@ func QueryPost(opportunitiesService opportunities.Service) http.HandlerFunc {
 		opportunitiesSearch.Query
 	}
 	type response struct {
+		TotalResults  uint                            `json:"totalResults"`
+		Pages         uint                            `json:"pages"`
 		Opportunities []opportunities.OpportunityView `json:"opportunities"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -39,6 +41,10 @@ func QueryPost(opportunitiesService opportunities.Service) http.HandlerFunc {
 			return
 		}
 
-		resp.OK(w, r, response{res})
+		resp.OK(w, r, response{
+			TotalResults:  res.TotalResults,
+			Pages:         res.Pages,
+			Opportunities: res.Opportunities,
+		})
 	}
 }
