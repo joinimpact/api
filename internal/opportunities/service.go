@@ -13,6 +13,7 @@ import (
 	"github.com/joinimpact/api/internal/models"
 	opportunitiesSearch "github.com/joinimpact/api/internal/search/stores/opportunities"
 	"github.com/joinimpact/api/internal/snowflakes"
+	"github.com/joinimpact/api/pkg/location"
 	"github.com/rs/zerolog"
 )
 
@@ -69,6 +70,8 @@ type Service interface {
 	GetOpportunityMembership(ctx context.Context, opportunityID, userID int64) (int, error)
 	// Search searches opportunities by a query struct.
 	Search(ctx context.Context, query opportunitiesSearch.Query) ([]OpportunityView, error)
+	// GetRecommendations gets a list of browse rows for a specific user based on recommendations made using a random number seeded by the current date.
+	GetRecommendations(ctx context.Context, userID int64) ([]Section, error)
 }
 
 // service represents the intenral implementation of the opportunities Service.
@@ -82,6 +85,7 @@ type service struct {
 	opportunityMembershipInviteRepository  models.OpportunityMembershipInviteRepository
 	tagRepository                          models.TagRepository
 	userRepository                         models.UserRepository
+	userTagRepository                      models.UserTagRepository
 	organizationRepository                 models.OrganizationRepository
 	config                                 *config.Config
 	logger                                 *zerolog.Logger
@@ -92,7 +96,7 @@ type service struct {
 }
 
 // NewService creates and returns a new Opportunities service with the provifded dependencies.
-func NewService(opportunityRepository models.OpportunityRepository, opportunityRequirementsRepository models.OpportunityRequirementsRepository, opportunityLimitsRepository models.OpportunityLimitsRepository, opportunityTagRepository models.OpportunityTagRepository, opportunityMembershipRepository models.OpportunityMembershipRepository, opportunityMembershipRequestRepository models.OpportunityMembershipRequestRepository, opportunityMembershipInviteRepository models.OpportunityMembershipInviteRepository, tagRepository models.TagRepository, userRepository models.UserRepository, organizationRepository models.OrganizationRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service, searchStore opportunitiesSearch.Store) Service {
+func NewService(opportunityRepository models.OpportunityRepository, opportunityRequirementsRepository models.OpportunityRequirementsRepository, opportunityLimitsRepository models.OpportunityLimitsRepository, opportunityTagRepository models.OpportunityTagRepository, opportunityMembershipRepository models.OpportunityMembershipRepository, opportunityMembershipRequestRepository models.OpportunityMembershipRequestRepository, opportunityMembershipInviteRepository models.OpportunityMembershipInviteRepository, tagRepository models.TagRepository, userRepository models.UserRepository, userTagRepository models.UserTagRepository, organizationRepository models.OrganizationRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service, searchStore opportunitiesSearch.Store) Service {
 	return &service{
 		opportunityRepository,
 		opportunityRequirementsRepository,
@@ -103,6 +107,7 @@ func NewService(opportunityRepository models.OpportunityRepository, opportunityR
 		opportunityMembershipInviteRepository,
 		tagRepository,
 		userRepository,
+		userTagRepository,
 		organizationRepository,
 		config,
 		logger,
@@ -816,4 +821,91 @@ func (s *service) Search(ctx context.Context, query opportunitiesSearch.Query) (
 	}
 
 	return views, nil
+}
+
+// GetRecommendations gets a list of browse rows for a specific user based on recommendations made using a random number seeded by the current date.
+func (s *service) GetRecommendations(ctx context.Context, userID int64) ([]Section, error) {
+	user, err := s.userRepository.FindByID(userID)
+	if err != nil {
+		return nil, NewErrUserNotFound()
+	}
+
+	tags, err := s.userTagRepository.FindByUserID(user.ID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	now := time.Now()
+	day := now.Day()
+
+	sections := []Section{}
+
+	search, err := s.searchStore.Recommendations(opportunitiesSearch.RecommendationQuery{
+		LocationRestriction: true,
+		Location: &location.Coordinates{
+			Latitude:  user.LocationLatitude,
+			Longitude: user.LocationLongitude,
+		},
+	})
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Error searching opportunities for recommendations")
+		return nil, NewErrServerError()
+	}
+
+	views := []OpportunityView{}
+
+	for _, item := range search {
+		view, err := s.GetOpportunity(ctx, item.ID)
+		if err != nil {
+			continue
+		}
+
+		views = append(views, *view)
+	}
+
+	sections = append(sections, Section{
+		Name:          "in_your_area",
+		Opportunities: views,
+	})
+
+	if len(tags) > 0 {
+		index := day % len(tags)
+		tag, err := s.tagRepository.FindByID(tags[index].TagID)
+		if err != nil {
+			s.logger.Error().Err(err).Msg("Error finding tag in GetRecommendations")
+			return nil, NewErrServerError()
+		}
+
+		search, err := s.searchStore.Recommendations(opportunitiesSearch.RecommendationQuery{
+			TagName:             tag.Name,
+			LocationRestriction: false,
+			Location: &location.Coordinates{
+				Latitude:  user.LocationLatitude,
+				Longitude: user.LocationLongitude,
+			},
+		})
+		if err != nil {
+			s.logger.Error().Err(err).Msg("Error searching opportunities for recommendations")
+			return nil, NewErrServerError()
+		}
+
+		views := []OpportunityView{}
+
+		for _, item := range search {
+			view, err := s.GetOpportunity(ctx, item.ID)
+			if err != nil {
+				continue
+			}
+
+			views = append(views, *view)
+		}
+
+		sections = append(sections, Section{
+			Name:          "your_interests",
+			Tag:           tag.Name,
+			Opportunities: views,
+		})
+	}
+
+	return sections, nil
 }
