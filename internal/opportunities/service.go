@@ -93,10 +93,11 @@ type service struct {
 	emailService                           email.Service
 	cdnClient                              *cdn.Client
 	searchStore                            opportunitiesSearch.Store
+	locationService                        location.Service
 }
 
 // NewService creates and returns a new Opportunities service with the provifded dependencies.
-func NewService(opportunityRepository models.OpportunityRepository, opportunityRequirementsRepository models.OpportunityRequirementsRepository, opportunityLimitsRepository models.OpportunityLimitsRepository, opportunityTagRepository models.OpportunityTagRepository, opportunityMembershipRepository models.OpportunityMembershipRepository, opportunityMembershipRequestRepository models.OpportunityMembershipRequestRepository, opportunityMembershipInviteRepository models.OpportunityMembershipInviteRepository, tagRepository models.TagRepository, userRepository models.UserRepository, userTagRepository models.UserTagRepository, organizationRepository models.OrganizationRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service, searchStore opportunitiesSearch.Store) Service {
+func NewService(opportunityRepository models.OpportunityRepository, opportunityRequirementsRepository models.OpportunityRequirementsRepository, opportunityLimitsRepository models.OpportunityLimitsRepository, opportunityTagRepository models.OpportunityTagRepository, opportunityMembershipRepository models.OpportunityMembershipRepository, opportunityMembershipRequestRepository models.OpportunityMembershipRequestRepository, opportunityMembershipInviteRepository models.OpportunityMembershipInviteRepository, tagRepository models.TagRepository, userRepository models.UserRepository, userTagRepository models.UserTagRepository, organizationRepository models.OrganizationRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service, searchStore opportunitiesSearch.Store, locationService location.Service) Service {
 	return &service{
 		opportunityRepository,
 		opportunityRequirementsRepository,
@@ -115,6 +116,7 @@ func NewService(opportunityRepository models.OpportunityRepository, opportunityR
 		emailService,
 		cdn.NewCDNClient(config),
 		searchStore,
+		locationService,
 	}
 }
 
@@ -223,6 +225,19 @@ func (s *service) GetOpportunity(ctx context.Context, id int64) (*OpportunityVie
 			ID:             organization.ID,
 			Name:           organization.Name,
 			ProfilePicture: organization.ProfilePicture,
+		}
+
+		// Location
+		if organization.LocationLatitude != 0.0 || organization.LocationLongitude != 0.0 {
+			coordinates := &location.Coordinates{
+				Latitude:  organization.LocationLatitude,
+				Longitude: organization.LocationLongitude,
+			}
+
+			location, err := s.locationService.CoordinatesToCity(coordinates)
+			if err == nil {
+				view.Location = location
+			}
 		}
 	}
 
