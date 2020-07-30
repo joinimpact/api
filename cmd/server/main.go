@@ -12,11 +12,15 @@ import (
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/opportunities"
 	"github.com/joinimpact/api/internal/organizations"
+	"github.com/joinimpact/api/internal/pubsub"
 	"github.com/joinimpact/api/internal/search"
 	opportunitiesSearch "github.com/joinimpact/api/internal/search/stores/opportunities"
 	"github.com/joinimpact/api/internal/snowflakes"
 	"github.com/joinimpact/api/internal/tags"
 	"github.com/joinimpact/api/internal/users"
+	"github.com/joinimpact/api/internal/websocket/hub"
+	"github.com/joinimpact/api/internal/websocket/hubmanager"
+	"github.com/joinimpact/api/internal/websocket/socketserver"
 	"github.com/joinimpact/api/pkg/location"
 
 	"github.com/joinimpact/api/internal/migrations"
@@ -142,17 +146,27 @@ func main() {
 		log.Fatal().Err(err).Msg("Error starting Opportunities search service")
 	}
 
+	// Pub/sub service
+	broker := pubsub.NewBroker()
+
 	// Internal services
 	usersService := users.NewService(userRepository, userProfileFieldRepository, userTagRepository, tagRepository, config, &log.Logger, snowflakeService, locationService)
 	authenticationService := authentication.NewService(userRepository, passwordResetRepository, thirdPartyIdentityRepository, config, &log.Logger, snowflakeService, emailService)
 	organizationsService := organizations.NewService(organizationRepository, organizationMembershipRepository, organizationMembershipInviteRepository, organizationProfileFieldRepository, organizationTagRepository, userRepository, tagRepository, config, &log.Logger, snowflakeService, emailService, locationService)
 	opportunitiesService := opportunities.NewService(opportunityRepository, opportunityRequirementsRepository, opportunityLimitsRepository, opportunityTagRepository, opportunityMembershipRepository, opportunityMembershipRequestRepository, opportunityMembershipInviteRepository, tagRepository, userRepository, userTagRepository, organizationRepository, config, &log.Logger, snowflakeService, emailService, opportunitiesSearchService, locationService)
 	eventsService := events.NewService(eventRepository, eventResponseRepository, opportunityMembershipRepository, tagRepository, config, &log.Logger, snowflakeService, emailService, locationService)
-	conversationsService := conversations.NewService(conversationRepository, conversationMembershipRepository, conversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository, messageRepository, usersService, config, &log.Logger, snowflakeService, emailService)
+	conversationsService := conversations.NewService(conversationRepository, conversationMembershipRepository, conversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository, messageRepository, usersService, config, &log.Logger, snowflakeService, emailService, broker)
 	tagsService := tags.NewService(tagRepository, config, &log.Logger, snowflakeService)
 
+	// WebSocket services
+	wsHub := hub.NewHub(hub.Options{})
+	hubManager := hubmanager.NewHubManager(wsHub)
+	wsManager := socketserver.NewWebSocketManager(wsHub, hubManager, broker, authenticationService, organizationsService, conversationsService)
+	wsManager.SubscribeHub()
+	websocketService := socketserver.NewService(wsManager)
+
 	// Create a new app using the new config.
-	app := core.NewApp(config, &log.Logger, authenticationService, usersService, organizationsService, tagsService, opportunitiesService, eventsService, conversationsService)
+	app := core.NewApp(config, &log.Logger, websocketService, authenticationService, usersService, organizationsService, tagsService, opportunitiesService, eventsService, conversationsService)
 
 	// Print a message.
 	log.Info().Int("port", int(config.Port)).Str("version", APIVersion).Msg("Listening")

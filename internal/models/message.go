@@ -26,16 +26,22 @@ type Message struct {
 	EditedTimestamp time.Time      `json:"editedTimestamp,omitempty"`
 }
 
+// MessagesResponse represents a response from the MessageRepository with multiple messages.
+type MessagesResponse struct {
+	Messages     []Message
+	TotalResults int
+}
+
 // MessageRepository represents a repository of message entities.
 type MessageRepository interface {
 	// FindByID finds a single entity by ID.
 	FindByID(ctx context.Context, id int64) (*Message, error)
 	// FindByConversationID finds multiple entities by the conversation ID.
-	FindByConversationID(ctx context.Context, conversationID int64) ([]Message, error)
+	FindByConversationID(ctx context.Context, conversationID int64) (*MessagesResponse, error)
 	// FindBySenderID finds multiple entities by the sender ID.
-	FindBySenderID(ctx context.Context, senderID int64) ([]Message, error)
+	FindBySenderID(ctx context.Context, senderID int64) (*MessagesResponse, error)
 	// FindInConversationBySenderID finds multiple entities by the sender and conversation ID.
-	FindInConversationBySenderID(ctx context.Context, conversationID, senderID int64) ([]Message, error)
+	FindInConversationBySenderID(ctx context.Context, conversationID, senderID int64) (*MessagesResponse, error)
 	// Create creates a new entity.
 	Create(ctx context.Context, message Message) error
 	// Update updates an entity with the ID in the provided entity.

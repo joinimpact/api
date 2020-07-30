@@ -71,11 +71,11 @@ func (r *eventRepository) FindByOpportunityIDs(ctx context.Context, opportunityI
 		Order("from_date ASC", true)
 
 	if dbctx.From != nil {
-		db = db.Where("from_date >= ?", *dbctx.From)
+		db = db.Where("from_date >= ? OR to_date >= ?", *dbctx.From, *dbctx.From)
 	}
 
 	if dbctx.To != nil {
-		db = db.Where("to_date < ?", *dbctx.To)
+		db = db.Where("from_date < ? OR to_date < ?", *dbctx.To, *dbctx.To)
 	}
 
 	if err := db.

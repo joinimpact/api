@@ -3,21 +3,39 @@ package conversations
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/joinimpact/api/internal/cdn"
 	"github.com/joinimpact/api/internal/config"
 	"github.com/joinimpact/api/internal/email"
 	"github.com/joinimpact/api/internal/models"
+	"github.com/joinimpact/api/internal/pubsub"
 	"github.com/joinimpact/api/internal/snowflakes"
 	"github.com/joinimpact/api/internal/users"
+	"github.com/joinimpact/api/pkg/dbctx"
 	"github.com/rs/zerolog"
+)
+
+var stream = pubsub.Stream("impact.users")
+
+// Events
+const (
+	MessageSent = "messages.MESSAGE_SENT"
 )
 
 // Service defines methods for interacting with conversations and messages.
 type Service interface {
 	// CreateOpportunityMembershipRequestConversation creates an opportunity membership request conversation and adds a message to it. Returns conversation ID on success.
 	CreateOpportunityMembershipRequestConversation(ctx context.Context, organizationID, opportunityID, opportunityMembershipRequestID, volunteerID int64, messageStr string) (int64, error)
+	// GetUserConversationMemberships gets a user's volunteer conversation memberships.
+	GetUserConversationMemberships(userID int64) ([]models.ConversationMembership, error)
+	// GetOrganizationConversations gets an organization's internal conversations.
+	GetOrganizationConversations(organizationID int64) ([]models.Conversation, error)
+	// SendStandardMessage sends a standard message to a conversation, returning the ID on success.
+	SendStandardMessage(ctx context.Context, conversationID, senderID int64, messageText string) (int64, error)
+	// GetConversationMessages gets messages by conversation ID.
+	GetConversationMessages(ctx context.Context, conversationID int64) (*ConversationMessagesResponse, error)
 }
 
 // service represents the internal implementation of the conversations Service.
@@ -32,11 +50,12 @@ type service struct {
 	logger                                             *zerolog.Logger
 	snowflakeService                                   snowflakes.SnowflakeService
 	emailService                                       email.Service
+	broker                                             pubsub.Broker
 	cdnClient                                          *cdn.Client
 }
 
 // NewService creates and returns a new conversations.Service.
-func NewService(conversationRepository models.ConversationRepository, conversationMembershipRepository models.ConversationMembershipRepository, conversationOpportunityMembershipRequestRepository models.ConversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository models.ConversationOrganizationMembershipRepository, messageRepository models.MessageRepository, usersService users.Service, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service) Service {
+func NewService(conversationRepository models.ConversationRepository, conversationMembershipRepository models.ConversationMembershipRepository, conversationOpportunityMembershipRequestRepository models.ConversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository models.ConversationOrganizationMembershipRepository, messageRepository models.MessageRepository, usersService users.Service, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service, broker pubsub.Broker) Service {
 	return &service{
 		conversationRepository,
 		conversationMembershipRepository,
@@ -48,6 +67,7 @@ func NewService(conversationRepository models.ConversationRepository, conversati
 		logger,
 		snowflakeService,
 		emailService,
+		broker,
 		cdn.NewCDNClient(config),
 	}
 }
@@ -113,4 +133,111 @@ func (s *service) CreateOpportunityMembershipRequestConversation(ctx context.Con
 	}
 
 	return conversation.ID, nil
+}
+
+// GetUserConversationMemberships gets a user's volunteer conversation memberships.
+func (s *service) GetUserConversationMemberships(userID int64) ([]models.ConversationMembership, error) {
+	memberships, err := s.conversationMembershipRepository.FindByUserID(userID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	return memberships, nil
+}
+
+// GetOrganizationConversations gets an organization's internal conversations.
+func (s *service) GetOrganizationConversations(organizationID int64) ([]models.Conversation, error) {
+	conversations, err := s.conversationRepository.FindByOrganizationID(organizationID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	return conversations, nil
+}
+
+// SendStandardMessage sends a standard message to a conversation, returning the ID on success.
+func (s *service) SendStandardMessage(ctx context.Context, conversationID, senderID int64, messageText string) (int64, error) {
+	message := models.Message{}
+	message.ID = s.snowflakeService.GenerateID()
+	message.Timestamp = time.Now()
+	message.ConversationID = conversationID
+	message.SenderID = senderID
+	message.Type = models.MessageTypeStandard
+
+	messageBody := MessageStandard{
+		Text: messageText,
+	}
+
+	jsonBytes, err := marshalMessageBody(messageBody)
+	if err != nil {
+		return 0, NewErrServerError()
+	}
+
+	message.Body = *jsonBytes
+	message.Edited = false
+	if err := s.messageRepository.Create(ctx, message); err != nil {
+		s.logger.Error().Err(err).Msg("Error creating message")
+		return 0, NewErrServerError()
+	}
+
+	if err := s.broker.Publish(stream, pubsub.Event{
+		EventName: MessageSent,
+		Payload:   message,
+	}); err != nil {
+		s.logger.Error().Err(err).Msg("Error publishing message to pub/sub")
+	}
+
+	return message.ID, nil
+}
+
+// ConversationMessagesResponse represents a response containing messages and paging information.
+type ConversationMessagesResponse struct {
+	Messages []MessageView `json:"messages"`
+	Pages    uint          `json:"pages"`
+}
+
+// GetConversationMessages gets messages by conversation ID.
+func (s *service) GetConversationMessages(ctx context.Context, conversationID int64) (*ConversationMessagesResponse, error) {
+	res, err := s.messageRepository.FindByConversationID(ctx, conversationID)
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Error getting conversation messages")
+		return nil, NewErrServerError()
+	}
+
+	views := []MessageView{}
+
+	for _, message := range res.Messages {
+		body := map[string]interface{}{}
+		err := json.Unmarshal(message.Body.RawMessage, &body)
+		if err != nil {
+			continue
+		}
+		views = append(views, MessageView{
+			ID:              message.ID,
+			ConversationID:  message.ConversationID,
+			SenderID:        message.SenderID,
+			Timestamp:       message.Timestamp,
+			Type:            message.Type,
+			Edited:          message.Edited,
+			EditedTimestamp: message.EditedTimestamp,
+			Body:            body,
+		})
+	}
+
+	return &ConversationMessagesResponse{
+		Messages: views,
+		Pages:    uint(res.TotalResults/dbctx.Get(ctx).Limit) + 1,
+	}, nil
+}
+
+// marshalMessageBody marshals an interface of a message body to a postgres Jsonb value.
+func marshalMessageBody(body interface{}) (*postgres.Jsonb, error) {
+	jsonBytes, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	return &postgres.Jsonb{
+		RawMessage: json.RawMessage(jsonBytes),
+	}, nil
 }
