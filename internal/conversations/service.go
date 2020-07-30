@@ -13,6 +13,7 @@ import (
 	"github.com/joinimpact/api/internal/pubsub"
 	"github.com/joinimpact/api/internal/snowflakes"
 	"github.com/joinimpact/api/internal/users"
+	"github.com/joinimpact/api/pkg/dbctx"
 	"github.com/rs/zerolog"
 )
 
@@ -33,6 +34,8 @@ type Service interface {
 	GetOrganizationConversations(organizationID int64) ([]models.Conversation, error)
 	// SendStandardMessage sends a standard message to a conversation, returning the ID on success.
 	SendStandardMessage(ctx context.Context, conversationID, senderID int64, messageText string) (int64, error)
+	// GetConversationMessages gets messages by conversation ID.
+	GetConversationMessages(ctx context.Context, conversationID int64) (*ConversationMessagesResponse, error)
 }
 
 // service represents the internal implementation of the conversations Service.
@@ -165,15 +168,12 @@ func (s *service) SendStandardMessage(ctx context.Context, conversationID, sende
 		Text: messageText,
 	}
 
-	jsonBytes, err := json.Marshal(messageBody)
+	jsonBytes, err := marshalMessageBody(messageBody)
 	if err != nil {
 		return 0, NewErrServerError()
 	}
 
-	message.Body = postgres.Jsonb{
-		RawMessage: json.RawMessage(jsonBytes),
-	}
-
+	message.Body = *jsonBytes
 	message.Edited = false
 	if err := s.messageRepository.Create(ctx, message); err != nil {
 		s.logger.Error().Err(err).Msg("Error creating message")
@@ -188,4 +188,56 @@ func (s *service) SendStandardMessage(ctx context.Context, conversationID, sende
 	}
 
 	return message.ID, nil
+}
+
+// ConversationMessagesResponse represents a response containing messages and paging information.
+type ConversationMessagesResponse struct {
+	Messages []MessageView `json:"messages"`
+	Pages    uint          `json:"pages"`
+}
+
+// GetConversationMessages gets messages by conversation ID.
+func (s *service) GetConversationMessages(ctx context.Context, conversationID int64) (*ConversationMessagesResponse, error) {
+	res, err := s.messageRepository.FindByConversationID(ctx, conversationID)
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Error getting conversation messages")
+		return nil, NewErrServerError()
+	}
+
+	views := []MessageView{}
+
+	for _, message := range res.Messages {
+		body := map[string]interface{}{}
+		err := json.Unmarshal(message.Body.RawMessage, &body)
+		if err != nil {
+			continue
+		}
+		views = append(views, MessageView{
+			ID:              message.ID,
+			ConversationID:  message.ConversationID,
+			SenderID:        message.SenderID,
+			Timestamp:       message.Timestamp,
+			Type:            message.Type,
+			Edited:          message.Edited,
+			EditedTimestamp: message.EditedTimestamp,
+			Body:            body,
+		})
+	}
+
+	return &ConversationMessagesResponse{
+		Messages: views,
+		Pages:    uint(res.TotalResults/dbctx.Get(ctx).Limit) + 1,
+	}, nil
+}
+
+// marshalMessageBody marshals an interface of a message body to a postgres Jsonb value.
+func marshalMessageBody(body interface{}) (*postgres.Jsonb, error) {
+	jsonBytes, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	return &postgres.Jsonb{
+		RawMessage: json.RawMessage(jsonBytes),
+	}, nil
 }

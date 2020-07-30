@@ -5,6 +5,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/joinimpact/api/internal/models"
+	"github.com/joinimpact/api/pkg/dbctx"
 	"github.com/rs/zerolog"
 )
 
@@ -29,27 +30,80 @@ func (r *messageRepository) FindByID(ctx context.Context, id int64) (*models.Mes
 }
 
 // FindByConversationID finds multiple entities by the conversation ID.
-func (r *messageRepository) FindByConversationID(ctx context.Context, conversationID int64) ([]models.Message, error) {
-	var messages []models.Message
-	if err := r.db.Where("conversation_id = ?", conversationID).Order("timestamp DESC", true).Find(&messages).Error; err != nil {
+func (r *messageRepository) FindByConversationID(ctx context.Context, conversationID int64) (*models.MessagesResponse, error) {
+	messages := &models.MessagesResponse{}
+
+	dbctx := dbctx.Get(ctx)
+
+	db := r.db.
+		Model(&models.Message{}).
+		Limit(dbctx.Limit).
+		Where("conversation_id = ?", conversationID).Order("timestamp DESC", true).
+		Count(&messages.TotalResults).
+		Offset(dbctx.Page * dbctx.Limit)
+
+	if dbctx.From != nil {
+		db = db.Where("timestamp >= ?", *dbctx.From)
+	}
+
+	if dbctx.To != nil {
+		db = db.Where("timestamp < ?", *dbctx.To)
+	}
+
+	if err := db.Find(&messages.Messages).Error; err != nil {
 		return messages, err
 	}
 	return messages, nil
 }
 
 // FindBySenderID finds multiple entities by the sender ID.
-func (r *messageRepository) FindBySenderID(ctx context.Context, senderID int64) ([]models.Message, error) {
-	var messages []models.Message
-	if err := r.db.Where("sender_id = ?", senderID).Order("timestamp DESC", true).Find(&messages).Error; err != nil {
+func (r *messageRepository) FindBySenderID(ctx context.Context, senderID int64) (*models.MessagesResponse, error) {
+	messages := &models.MessagesResponse{}
+
+	dbctx := dbctx.Get(ctx)
+
+	db := r.db.
+		Model(&models.Message{}).
+		Limit(dbctx.Limit).
+		Where("sender_id = ?", senderID).Order("timestamp DESC", true).
+		Count(&messages.TotalResults).
+		Offset(dbctx.Page * dbctx.Limit)
+
+	if dbctx.From != nil {
+		db = db.Where("timestamp >= ?", *dbctx.From)
+	}
+
+	if dbctx.To != nil {
+		db = db.Where("timestamp < ?", *dbctx.To)
+	}
+
+	if err := db.Find(&messages.Messages).Count(&messages.TotalResults).Error; err != nil {
 		return messages, err
 	}
 	return messages, nil
 }
 
 // FindInConversationBySenderID finds multiple entities by the conversation and sender ID.
-func (r *messageRepository) FindInConversationBySenderID(ctx context.Context, conversationID, senderID int64) ([]models.Message, error) {
-	var messages []models.Message
-	if err := r.db.Where("conversation_id = ? AND sender_id = ?", conversationID, senderID).Order("timestamp DESC", true).Find(&messages).Error; err != nil {
+func (r *messageRepository) FindInConversationBySenderID(ctx context.Context, conversationID, senderID int64) (*models.MessagesResponse, error) {
+	messages := &models.MessagesResponse{}
+	dbctx := dbctx.Get(ctx)
+
+	db := r.db.
+		Model(&models.Message{}).
+		Limit(dbctx.Limit).
+		Where("conversation_id = ? AND sender_id = ?", conversationID, senderID).Order("timestamp DESC", true).
+		Count(&messages.TotalResults).
+		Offset(dbctx.Page * dbctx.Limit)
+
+	if dbctx.From != nil {
+		db = db.Where("timestamp >= ?", *dbctx.From)
+	}
+
+	if dbctx.To != nil {
+		db = db.Where("timestamp < ?", *dbctx.To)
+	}
+
+	if err := db.Find(&messages.Messages).Count(&messages.TotalResults).Error; err != nil {
 		return messages, err
 	}
 	return messages, nil

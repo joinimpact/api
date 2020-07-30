@@ -5135,6 +5135,231 @@
           }
         }
       }
+    },
+    "/conversations/{conversationId}/messages": {
+      "post": {
+        "tags": [
+          "Conversations"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversationId",
+            "description": "The ID of the conversation.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "summary": "Sends a standard message to a conversation.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "body"
+                ],
+                "properties": {
+                  "body": {
+                    "required": [
+                      "text"
+                    ],
+                    "properties": {
+                      "text": {
+                        "type": "string",
+                        "example": "Hello world"
+                      }
+                    },
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! The message was sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "required": [
+                        "messageId",
+                        "success"
+                      ],
+                      "properties": {
+                        "messageId": {
+                          "type": "string",
+                          "example": "1288597043480104960"
+                        },
+                        "success": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      },
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid message."
+          },
+          "404": {
+            "description": "Conversation not found."
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Conversations"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversationId",
+            "description": "The ID of the conversation.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "description": "An integer that limits how many items will be returned. Default 20.",
+            "schema": {
+              "type": "integer",
+              "example": 10
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "A page index (starting from 0). With each increasing number, it shifts the offset back (1 * the limit).",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "description": "The from date to filter by (inclusive). Use an ISO date provided by JavaScript's toISOString function.",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2003-08-27T17:00:00-07:00"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "description": "The to date to filter by (non-inclusive). Use an ISO date provided by JavaScript's toISOString function.",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2003-08-28T17:00:00-07:00"
+            }
+          }
+        ],
+        "summary": "Gets messages in a single conversation by descending timestamp.",
+        "responses": {
+          "200": {
+            "description": "Success! The messages were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "required": [
+                        "messages",
+                        "pages"
+                      ],
+                      "properties": {
+                        "messages": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "body": {
+                                "required": [
+                                  "text"
+                                ],
+                                "properties": {
+                                  "text": {
+                                    "type": "string",
+                                    "example": "bbb"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "conversationId": {
+                                "type": "string",
+                                "example": "1282560245918339072"
+                              },
+                              "edited": {
+                                "type": "boolean",
+                                "example": false
+                              },
+                              "editedTimestamp": {
+                                "type": "string",
+                                "example": "0000-12-31T16:07:02-07:52"
+                              },
+                              "id": {
+                                "type": "string",
+                                "example": "1288597043480104960"
+                              },
+                              "senderId": {
+                                "type": "string",
+                                "example": "1273884565403865088"
+                              },
+                              "timestamp": {
+                                "type": "string",
+                                "example": "2020-07-29T15:07:30.797624-07:00"
+                              },
+                              "type": {
+                                "type": "string",
+                                "example": "MESSAGE_STANDARD"
+                              }
+                            }
+                          }
+                        },
+                        "pages": {
+                          "type": "number",
+                          "description": "The total number of pages available.",
+                          "example": 3
+                        }
+                      },
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found."
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
     }
   }
 }

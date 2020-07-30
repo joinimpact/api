@@ -201,6 +201,7 @@ func (app *App) Router() *chi.Mux {
 				r.Use(permissions.Require(scopes.ScopeAuthenticated))
 
 				r.Route("/messages", func(r chi.Router) {
+					r.Get("/", conversations.MessagesGet(app.conversationsService))
 					r.Post("/", conversations.MessagesPost(app.conversationsService))
 				})
 			})
