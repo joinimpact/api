@@ -75,6 +75,7 @@ func (app *App) Router() *chi.Mux {
 				r.With(permissions.Require(scopes.ScopeOwner)).Get("/organizations", organizations.GetUserOrganizations(app.organizationsService))
 				r.With(permissions.Require(scopes.ScopeOwner)).Get("/opportunities", opportunities.GetByVolunteer(app.opportunitiesService))
 				r.With(permissions.Require(scopes.ScopeOwner)).Get("/events", events.GetByVolunteer(app.eventsService))
+				r.With(permissions.Require(scopes.ScopeOwner)).Get("/conversations", conversations.GetByUser(app.conversationsService))
 			})
 		})
 
@@ -98,6 +99,8 @@ func (app *App) Router() *chi.Mux {
 				r.With(permissions.Require(scopes.ScopeAdmin)).Post("/invites", organizations.PostInvite(app.organizationsService))
 
 				r.With(permissions.Require(scopes.ScopeManager)).Get("/members", organizations.MembersGet(app.organizationsService, app.usersService))
+
+				r.With(permissions.Require(scopes.ScopeManager)).Get("/conversations", conversations.GetByOrganization(app.conversationsService))
 
 				r.Route("/opportunities", func(r chi.Router) {
 					r.With(permissions.Require(scopes.ScopeManager)).Post("/", opportunities.Post(app.opportunitiesService))

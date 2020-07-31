@@ -1,6 +1,8 @@
 package socketserver
 
 import (
+	"context"
+
 	"github.com/joinimpact/api/internal/websocket/hub"
 	"github.com/joinimpact/api/internal/websocket/hubmanager"
 )
@@ -24,12 +26,12 @@ func (wsm *WebSocketManager) getUserChannels(userID int64) ([]hub.ChannelID, err
 	}
 
 	for _, organization := range organizations {
-		conversations, err := wsm.conversationsService.GetOrganizationConversations(organization.ID)
+		conversations, err := wsm.conversationsService.GetOrganizationConversations(context.Background(), organization.ID)
 		if err != nil {
 			return nil, err
 		}
 
-		for _, conversation := range conversations {
+		for _, conversation := range conversations.Conversations {
 			ids = append(ids, hubmanager.ConversationIDToChannelID(conversation.ID))
 		}
 	}

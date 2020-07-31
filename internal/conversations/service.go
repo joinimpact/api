@@ -30,8 +30,10 @@ type Service interface {
 	CreateOpportunityMembershipRequestConversation(ctx context.Context, organizationID, opportunityID, opportunityMembershipRequestID, volunteerID int64, messageStr string) (int64, error)
 	// GetUserConversationMemberships gets a user's volunteer conversation memberships.
 	GetUserConversationMemberships(userID int64) ([]models.ConversationMembership, error)
+	// GetUserConversations gets all of a user's conversations.
+	GetUserConversations(ctx context.Context, userID int64) (*ConversationsResponse, error)
 	// GetOrganizationConversations gets an organization's internal conversations.
-	GetOrganizationConversations(organizationID int64) ([]models.Conversation, error)
+	GetOrganizationConversations(ctx context.Context, organizationID int64) (*ConversationsResponse, error)
 	// SendStandardMessage sends a standard message to a conversation, returning the ID on success.
 	SendStandardMessage(ctx context.Context, conversationID, senderID int64, messageText string) (int64, error)
 	// GetConversationMessages gets messages by conversation ID.
@@ -145,14 +147,49 @@ func (s *service) GetUserConversationMemberships(userID int64) ([]models.Convers
 	return memberships, nil
 }
 
-// GetOrganizationConversations gets an organization's internal conversations.
-func (s *service) GetOrganizationConversations(organizationID int64) ([]models.Conversation, error) {
-	conversations, err := s.conversationRepository.FindByOrganizationID(organizationID)
+// ConversationsResponse contains conversations and total number of pages.
+type ConversationsResponse struct {
+	Conversations []models.Conversation `json:"conversations"`
+	Pages         uint                  `json:"pages"`
+}
+
+// GetUserConversations gets all of a user's conversations.
+func (s *service) GetUserConversations(ctx context.Context, userID int64) (*ConversationsResponse, error) {
+	memberships, err := s.GetUserConversationMemberships(userID)
 	if err != nil {
+		s.logger.Error().Err(err).Msg("Error getting user conversation memberships")
 		return nil, NewErrServerError()
 	}
 
-	return conversations, nil
+	ids := []int64{}
+	for _, membership := range memberships {
+		ids = append(ids, membership.ConversationID)
+	}
+
+	res, err := s.conversationRepository.FindByIDs(ctx, ids)
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Error getting conversations by IDs")
+		return nil, NewErrServerError()
+	}
+
+	return &ConversationsResponse{
+		Conversations: res.Conversations,
+		Pages:         uint(res.TotalResults/dbctx.Get(ctx).Limit) + 1,
+	}, nil
+}
+
+// GetOrganizationConversations gets an organization's internal conversations.
+func (s *service) GetOrganizationConversations(ctx context.Context, organizationID int64) (*ConversationsResponse, error) {
+	res, err := s.conversationRepository.FindByOrganizationID(ctx, organizationID)
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Error getting conversations by organization ID")
+		return nil, NewErrServerError()
+	}
+
+	return &ConversationsResponse{
+		Conversations: res.Conversations,
+		Pages:         uint(res.TotalResults/dbctx.Get(ctx).Limit) + 1,
+	}, nil
 }
 
 // SendStandardMessage sends a standard message to a conversation, returning the ID on success.
