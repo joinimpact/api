@@ -249,6 +249,13 @@ func (s *service) GetOpportunityEvents(ctx context.Context, opportunityID int64)
 			return nil, NewErrServerError()
 		}
 
+		responsesSummary, err := s.getEventResponsesSummary(ctx, event.ID)
+		if err != nil {
+			s.logger.Error().Err(err).Msg("Error getting EventResponsesSummary")
+			return nil, NewErrServerError()
+		}
+		view.EventResponsesSummary = responsesSummary
+
 		views = append(views, *view)
 	}
 
