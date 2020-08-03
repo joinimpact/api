@@ -2,7 +2,6 @@ package events
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/pkg/location"
@@ -65,12 +64,12 @@ func (s *service) eventToView(event models.Event) (*EventView, error) {
 			Longitude: event.LocationLongitude,
 			Latitude:  event.LocationLatitude,
 		})
-		if err != nil {
-			fmt.Println(location, err)
-			return nil, NewErrServerError()
+		if err == nil {
+			view.Location = location
+		} else {
+			s.logger.Error().Err(err).Msg("Error getting event location")
 		}
 
-		view.Location = location
 	}
 
 	view.EventSchedule = &EventSchedule{}
