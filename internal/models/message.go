@@ -14,16 +14,23 @@ const (
 	MessageTypeVolunteerRequestAcceptance = "MESSAGE_VOLUNTEER_REQUEST_ACCEPTANCE"
 )
 
+// Sender perspectives.
+const (
+	MessageSenderPerspectiveVolunteer    uint = iota
+	MessageSenderPerspectiveOrganization uint = iota
+)
+
 // Message represents a single message in a conversation.
 type Message struct {
 	Model
-	Timestamp       time.Time      `json:"timestamp"`
-	ConversationID  int64          `json:"conversationId"`
-	SenderID        int64          `json:"senderId"`
-	Type            string         `json:"type"`
-	Body            postgres.Jsonb `json:"body"`
-	Edited          bool           `json:"edited"`
-	EditedTimestamp time.Time      `json:"editedTimestamp,omitempty"`
+	Timestamp         time.Time      `json:"timestamp"`
+	ConversationID    int64          `json:"conversationId"`
+	SenderID          int64          `json:"senderId"`
+	SenderPerspective *uint          `json:"senderPerspective"`
+	Type              string         `json:"type"`
+	Body              postgres.Jsonb `json:"body"`
+	Edited            bool           `json:"edited"`
+	EditedTimestamp   time.Time      `json:"editedTimestamp,omitempty"`
 }
 
 // MessagesResponse represents a response from the MessageRepository with multiple messages.

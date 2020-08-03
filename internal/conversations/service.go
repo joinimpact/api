@@ -33,10 +33,14 @@ type Service interface {
 	GetUserConversationMemberships(userID int64) ([]models.ConversationMembership, error)
 	// GetUserConversations gets all of a user's conversations.
 	GetUserConversations(ctx context.Context, userID int64) (*ConversationsResponse, error)
+	// GetUserConversation gets a single conversation from a user perspective.
+	GetUserConversation(ctx context.Context, conversationID int64) (*models.Conversation, error)
 	// GetOrganizationConversations gets an organization's internal conversations.
 	GetOrganizationConversations(ctx context.Context, organizationID int64) (*ConversationsResponse, error)
+	// GetOrganizationConversation gets a single conversation from a conversation perspective.
+	GetOrganizationConversation(ctx context.Context, conversationID int64) (*models.Conversation, error)
 	// SendStandardMessage sends a standard message to a conversation, returning the ID on success.
-	SendStandardMessage(ctx context.Context, conversationID, senderID int64, messageText string) (int64, error)
+	SendStandardMessage(ctx context.Context, conversationID, senderID int64, messageText string, asOrganization bool) (int64, error)
 	// GetConversationMessages gets messages by conversation ID.
 	GetConversationMessages(ctx context.Context, conversationID int64) (*ConversationMessagesResponse, error)
 }
@@ -184,6 +188,28 @@ func (s *service) GetUserConversations(ctx context.Context, userID int64) (*Conv
 	}, nil
 }
 
+// GetUserConversation gets a single conversation from a user perspective.
+func (s *service) GetUserConversation(ctx context.Context, conversationID int64) (*models.Conversation, error) {
+	conversation, err := s.conversationRepository.FindByID(conversationID)
+	if err != nil {
+		return nil, NewErrConversationNotFound()
+	}
+
+	conversation.Name = conversation.Organization.Name
+	conversation.ProfilePicture = conversation.Organization.ProfilePicture
+
+	requests, err := s.conversationOpportunityMembershipRequestRepository.FindByConversationID(conversationID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	for _, request := range requests {
+		conversation.OpportunityMembershipRequests = append(conversation.OpportunityMembershipRequests, *request.OpportunityMembershipRequest)
+	}
+
+	return conversation, nil
+}
+
 // GetOrganizationConversations gets an organization's internal conversations.
 func (s *service) GetOrganizationConversations(ctx context.Context, organizationID int64) (*ConversationsResponse, error) {
 	res, err := s.conversationRepository.FindByOrganizationID(ctx, organizationID)
@@ -212,14 +238,45 @@ func (s *service) GetOrganizationConversations(ctx context.Context, organization
 	}, nil
 }
 
+// GetOrganizationConversation gets a single conversation from a conversation perspective.
+func (s *service) GetOrganizationConversation(ctx context.Context, conversationID int64) (*models.Conversation, error) {
+	conversation, err := s.conversationRepository.FindByID(conversationID)
+	if err != nil {
+		return nil, NewErrConversationNotFound()
+	}
+
+	memberships, err := s.conversationMembershipRepository.FindByConversationID(conversation.ID)
+	if err == nil && len(memberships) < 1 {
+		conversation.Name = fmt.Sprintf("%s %s", memberships[0].User.FirstName, memberships[0].User.LastName)
+		conversation.ProfilePicture = memberships[0].User.ProfilePicture
+	}
+
+	requests, err := s.conversationOpportunityMembershipRequestRepository.FindByConversationID(conversationID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	for _, request := range requests {
+		conversation.OpportunityMembershipRequests = append(conversation.OpportunityMembershipRequests, *request.OpportunityMembershipRequest)
+	}
+
+	return conversation, nil
+}
+
 // SendStandardMessage sends a standard message to a conversation, returning the ID on success.
-func (s *service) SendStandardMessage(ctx context.Context, conversationID, senderID int64, messageText string) (int64, error) {
+func (s *service) SendStandardMessage(ctx context.Context, conversationID, senderID int64, messageText string, asOrganization bool) (int64, error) {
 	message := models.Message{}
 	message.ID = s.snowflakeService.GenerateID()
 	message.Timestamp = time.Now()
 	message.ConversationID = conversationID
 	message.SenderID = senderID
 	message.Type = models.MessageTypeStandard
+	perspective := models.MessageSenderPerspectiveVolunteer
+	if asOrganization {
+		perspective = models.MessageSenderPerspectiveOrganization
+	}
+
+	message.SenderPerspective = &perspective
 
 	messageBody := MessageStandard{
 		Text: messageText,

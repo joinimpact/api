@@ -75,7 +75,21 @@ func (app *App) Router() *chi.Mux {
 				r.With(permissions.Require(scopes.ScopeOwner)).Get("/organizations", organizations.GetUserOrganizations(app.organizationsService))
 				r.With(permissions.Require(scopes.ScopeOwner)).Get("/opportunities", opportunities.GetByVolunteer(app.opportunitiesService))
 				r.With(permissions.Require(scopes.ScopeOwner)).Get("/events", events.GetByVolunteer(app.eventsService))
-				r.With(permissions.Require(scopes.ScopeOwner)).Get("/conversations", conversations.GetByUser(app.conversationsService))
+
+				r.Route("/conversations", func(r chi.Router) {
+					r.Use(permissions.Require(scopes.ScopeOwner))
+					r.Get("/", conversations.GetByUser(app.conversationsService))
+
+					r.Route("/{conversationID}", func(r chi.Router) {
+						r.Use(idctx.Prepare("conversationID"))
+						r.Get("/", conversations.Get(app.conversationsService, false))
+
+						r.Route("/messages", func(r chi.Router) {
+							r.Get("/", conversations.MessagesGet(app.conversationsService))
+							r.Post("/", conversations.MessagesPost(app.conversationsService, false))
+						})
+					})
+				})
 			})
 		})
 
@@ -105,6 +119,19 @@ func (app *App) Router() *chi.Mux {
 				r.Route("/opportunities", func(r chi.Router) {
 					r.With(permissions.Require(scopes.ScopeManager)).Post("/", opportunities.Post(app.opportunitiesService))
 					r.With(permissions.Require(scopes.ScopeAuthenticated)).Get("/", opportunities.Get(app.opportunitiesService))
+				})
+			})
+
+			r.Route("/conversations", func(r chi.Router) {
+				r.Use(permissions.Require(scopes.ScopeManager))
+				r.Route("/{conversationID}", func(r chi.Router) {
+					r.Use(idctx.Prepare("conversationID"))
+					r.Get("/", conversations.Get(app.conversationsService, true))
+
+					r.Route("/messages", func(r chi.Router) {
+						r.Get("/", conversations.MessagesGet(app.conversationsService))
+						r.Post("/", conversations.MessagesPost(app.conversationsService, true))
+					})
 				})
 			})
 		})
@@ -198,18 +225,6 @@ func (app *App) Router() *chi.Mux {
 				})
 
 				r.Get("/responses", events.ResponsesGet(app.eventsService, app.usersService))
-			})
-		})
-
-		router.Route("/conversations", func(r chi.Router) {
-			r.Route("/{conversationID}", func(r chi.Router) {
-				r.Use(idctx.Prepare("conversationID"))
-				r.Use(permissions.Require(scopes.ScopeAuthenticated))
-
-				r.Route("/messages", func(r chi.Router) {
-					r.Get("/", conversations.MessagesGet(app.conversationsService))
-					r.Post("/", conversations.MessagesPost(app.conversationsService))
-				})
 			})
 		})
 	})

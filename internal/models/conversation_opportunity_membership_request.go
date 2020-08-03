@@ -4,6 +4,7 @@ package models
 type ConversationOpportunityMembershipRequest struct {
 	Model
 	ConversationID                 int64
+	OpportunityMembershipRequest   *OpportunityMembershipRequest `json:"-"`
 	OpportunityMembershipRequestID int64
 }
 
