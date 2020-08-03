@@ -310,6 +310,13 @@ func (s *service) GetUserEvents(ctx context.Context, userID int64) ([]EventView,
 			return nil, NewErrServerError()
 		}
 
+		responsesSummary, err := s.getEventResponsesSummary(ctx, event.ID)
+		if err != nil {
+			s.logger.Error().Err(err).Msg("Error getting EventResponsesSummary")
+			return nil, NewErrServerError()
+		}
+		view.EventResponsesSummary = responsesSummary
+
 		views = append(views, *view)
 	}
 
