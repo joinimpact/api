@@ -23,7 +23,7 @@ func NewConversationRepository(db *gorm.DB, logger *zerolog.Logger) models.Conve
 // FindByID finds a single entity by ID.
 func (r *conversationRepository) FindByID(id int64) (*models.Conversation, error) {
 	var conversation models.Conversation
-	if err := r.db.First(&conversation, id).Error; err != nil {
+	if err := r.db.Preload("Organization").First(&conversation, id).Error; err != nil {
 		return &conversation, err
 	}
 	return &conversation, nil
@@ -37,6 +37,7 @@ func (r *conversationRepository) FindByIDs(ctx context.Context, ids []int64) (*m
 
 	db := r.db.
 		Model(&models.Conversation{}).
+		Preload("Organization").
 		Limit(dbctx.Limit).
 		Joins("LEFT JOIN (select distinct on (timestamp) * from messages order by timestamp desc limit 1) as message ON message.conversation_id = conversations.id").
 		Where("conversations.id IN (?) AND active = True", ids).

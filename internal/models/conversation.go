@@ -5,11 +5,14 @@ import "context"
 // Conversation represents a single chat conversation in the database.
 type Conversation struct {
 	Model
-	Active         bool         `json:"-"`
-	CreatorID      int64        `json:"creatorId"`
-	OrganizationID int64        `json:"organizationID"`
-	Organization   Organization `json:"-"`
-	Type           int          `json:"type"`
+	Active                       bool                          `json:"-"`
+	Name                         string                        `json:"name" gorm:"-"`
+	ProfilePicture               string                        `json:"profilePicture" gorm:"-"`
+	OpportunityMembershipRequest *OpportunityMembershipRequest `json:"membershipRequest,omitempty" gorm:"-"`
+	CreatorID                    int64                         `json:"creatorId"`
+	OrganizationID               int64                         `json:"organizationID"`
+	Organization                 Organization                  `json:"-"`
+	Type                         int                           `json:"type"`
 }
 
 // ConversationsResponse represents a database response with multiple Conversations.

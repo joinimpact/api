@@ -6,6 +6,7 @@ type ConversationMembership struct {
 	Active         bool  `json:"-"`
 	ConversationID int64 `json:"conversationId"`
 	UserID         int64 `json:"userId"`
+	User           User  `json:"-"`
 	Role           int   `json:"role"`
 }
 

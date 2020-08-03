@@ -3,6 +3,7 @@ package conversations
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/jinzhu/gorm/dialects/postgres"
@@ -172,6 +173,11 @@ func (s *service) GetUserConversations(ctx context.Context, userID int64) (*Conv
 		return nil, NewErrServerError()
 	}
 
+	for i := 0; i < len(res.Conversations); i++ {
+		res.Conversations[i].Name = res.Conversations[i].Organization.Name
+		res.Conversations[i].ProfilePicture = res.Conversations[i].Organization.ProfilePicture
+	}
+
 	return &ConversationsResponse{
 		Conversations: res.Conversations,
 		Pages:         uint(res.TotalResults/dbctx.Get(ctx).Limit) + 1,
@@ -184,6 +190,20 @@ func (s *service) GetOrganizationConversations(ctx context.Context, organization
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Error getting conversations by organization ID")
 		return nil, NewErrServerError()
+	}
+
+	for i := 0; i < len(res.Conversations); i++ {
+		memberships, err := s.conversationMembershipRepository.FindByConversationID(res.Conversations[i].ID)
+		if err != nil {
+			continue
+		}
+
+		if len(memberships) < 1 {
+			continue
+		}
+
+		res.Conversations[i].Name = fmt.Sprintf("%s %s", memberships[0].User.FirstName, memberships[0].User.LastName)
+		res.Conversations[i].ProfilePicture = memberships[0].User.ProfilePicture
 	}
 
 	return &ConversationsResponse{

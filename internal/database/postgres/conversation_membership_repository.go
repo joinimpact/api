@@ -29,7 +29,7 @@ func (r *conversationMembershipRepository) FindByID(id int64) (*models.Conversat
 // FindByConversationID finds multiple entities by the conversation ID.
 func (r *conversationMembershipRepository) FindByConversationID(conversationID int64) ([]models.ConversationMembership, error) {
 	var opportunities []models.ConversationMembership
-	if err := r.db.Where("conversation_id = ? AND active = True", conversationID).Find(&opportunities).Error; err != nil {
+	if err := r.db.Preload("User").Where("conversation_id = ? AND active = True", conversationID).Find(&opportunities).Error; err != nil {
 		return opportunities, err
 	}
 	return opportunities, nil
