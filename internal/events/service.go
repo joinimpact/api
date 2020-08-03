@@ -94,11 +94,6 @@ func (s *service) CreateEvent(ctx context.Context, request ModifyEventRequest) (
 func (s *service) UpdateEvent(ctx context.Context, request ModifyEventRequest) error {
 	event := s.requestToEvent(request)
 
-	// Validate the event to the minimum requirements.
-	if !validateEvent(&event) {
-		return NewErrServerError()
-	}
-
 	err := s.eventRepository.Update(ctx, event)
 	if err != nil {
 		return NewErrEventNotFound()
