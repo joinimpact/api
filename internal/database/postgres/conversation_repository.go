@@ -1,8 +1,11 @@
 package postgres
 
 import (
+	"context"
+
 	"github.com/jinzhu/gorm"
 	"github.com/joinimpact/api/internal/models"
+	"github.com/joinimpact/api/pkg/dbctx"
 	"github.com/rs/zerolog"
 )
 
@@ -20,19 +23,55 @@ func NewConversationRepository(db *gorm.DB, logger *zerolog.Logger) models.Conve
 // FindByID finds a single entity by ID.
 func (r *conversationRepository) FindByID(id int64) (*models.Conversation, error) {
 	var conversation models.Conversation
-	if err := r.db.First(&conversation, id).Error; err != nil {
+	if err := r.db.Preload("Organization").First(&conversation, id).Error; err != nil {
 		return &conversation, err
 	}
 	return &conversation, nil
 }
 
-// FindByOrganizationID finds multiple entities by the organization ID.
-func (r *conversationRepository) FindByOrganizationID(organizationID int64) ([]models.Conversation, error) {
-	var opportunities []models.Conversation
-	if err := r.db.Where("organization_id = ? AND active = True", organizationID).Find(&opportunities).Error; err != nil {
-		return opportunities, err
+// FindByIDs finds multiple entities by IDs.
+func (r *conversationRepository) FindByIDs(ctx context.Context, ids []int64) (*models.ConversationsResponse, error) {
+	response := &models.ConversationsResponse{}
+
+	dbctx := dbctx.Get(ctx)
+
+	db := r.db.
+		Model(&models.Conversation{}).
+		Preload("Organization").
+		Limit(dbctx.Limit).
+		Joins("LEFT JOIN (select distinct on (timestamp) * from messages order by timestamp desc limit 1) as message ON message.conversation_id = conversations.id").
+		Where("conversations.id IN (?) AND active = True", ids).
+		Order("message.timestamp asc").
+		Count(&response.TotalResults).
+		Offset(dbctx.Page * dbctx.Limit)
+
+	if err := db.Find(&response.Conversations).Error; err != nil {
+		return response, err
 	}
-	return opportunities, nil
+
+	return response, nil
+}
+
+// FindByOrganizationID finds multiple entities by the organization ID.
+func (r *conversationRepository) FindByOrganizationID(ctx context.Context, organizationID int64) (*models.ConversationsResponse, error) {
+	response := &models.ConversationsResponse{}
+
+	dbctx := dbctx.Get(ctx)
+
+	db := r.db.
+		Model(&models.Conversation{}).
+		Limit(dbctx.Limit).
+		Joins("LEFT JOIN (select distinct on (timestamp) * from messages order by timestamp desc limit 1) as message ON message.conversation_id = conversations.id").
+		Where("conversations.organization_id = ? AND active = True", organizationID).
+		Order("message.timestamp asc").
+		Count(&response.TotalResults).
+		Offset(dbctx.Page * dbctx.Limit)
+
+	if err := db.Find(&response.Conversations).Error; err != nil {
+		return response, err
+	}
+
+	return response, nil
 }
 
 // FindByCreatorID finds multiple entities by the creator ID.

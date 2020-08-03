@@ -11,7 +11,7 @@ import (
 )
 
 // MessagesPost sends a standard message to a single conversation.
-func MessagesPost(conversationsService conversations.Service) http.HandlerFunc {
+func MessagesPost(conversationsService conversations.Service, asOrganization bool) http.HandlerFunc {
 	type messageBody struct {
 		Text string `json:"text" validate:"min=1,max=1024"`
 	}
@@ -42,7 +42,7 @@ func MessagesPost(conversationsService conversations.Service) http.HandlerFunc {
 			return
 		}
 
-		id, err := conversationsService.SendStandardMessage(ctx, conversationID, userID, req.Body.Text)
+		id, err := conversationsService.SendStandardMessage(ctx, conversationID, userID, req.Body.Text, asOrganization)
 		if err != nil {
 			switch err.(type) {
 			case *conversations.ErrConversationNotFound, *conversations.ErrUserNotFound:
