@@ -189,6 +189,7 @@ func (app *App) Router() *chi.Mux {
 				r.Use(permissions.Require(scopes.ScopeCollaborator))
 
 				r.Get("/", events.GetOne(app.eventsService))
+				r.With(permissions.Require(scopes.ScopeManager)).Delete("/", events.Delete(app.eventsService))
 
 				r.Route("/response", func(r chi.Router) {
 					r.Get("/", events.ResponseGet(app.eventsService))

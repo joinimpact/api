@@ -32,6 +32,8 @@ type Service interface {
 	GetOpportunityEvents(ctx context.Context, opportunityID int64) ([]EventView, error)
 	// GetUserEvents gets events from all of a user's enrolled opportunities.
 	GetUserEvents(ctx context.Context, userID int64) ([]EventView, error)
+	// DeleteEvent deletes a single event by ID.
+	DeleteEvent(ctx context.Context, eventID int64) error
 }
 
 // service represents the internal implementation of the Service.
@@ -286,4 +288,13 @@ func (s *service) GetUserEvents(ctx context.Context, userID int64) ([]EventView,
 	}
 
 	return views, nil
+}
+
+// DeleteEvent deletes a single event by ID.
+func (s *service) DeleteEvent(ctx context.Context, eventID int64) error {
+	if err := s.eventRepository.DeleteByID(ctx, eventID); err != nil {
+		return NewErrServerError()
+	}
+
+	return nil
 }
