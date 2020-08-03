@@ -16,6 +16,8 @@ import (
 type Service interface {
 	// CreateEvent creates an event and returns the ID of the newly created event.
 	CreateEvent(ctx context.Context, request ModifyEventRequest) (int64, error)
+	// UpdateEvent updates an event.
+	UpdateEvent(ctx context.Context, request ModifyEventRequest) error
 	// GetEvent gets a single event by ID.
 	GetEvent(ctx context.Context, eventID int64) (*EventView, error)
 	// GetMinimalEvent gets a single event with only the event base fields.
@@ -86,6 +88,23 @@ func (s *service) CreateEvent(ctx context.Context, request ModifyEventRequest) (
 	}
 
 	return event.ID, nil
+}
+
+// UpdateEvent updates an event.
+func (s *service) UpdateEvent(ctx context.Context, request ModifyEventRequest) error {
+	event := s.requestToEvent(request)
+
+	// Validate the event to the minimum requirements.
+	if !validateEvent(&event) {
+		return NewErrServerError()
+	}
+
+	err := s.eventRepository.Update(ctx, event)
+	if err != nil {
+		return NewErrEventNotFound()
+	}
+
+	return nil
 }
 
 // GetEvent gets a single event by ID.
