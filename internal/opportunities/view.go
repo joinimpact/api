@@ -8,6 +8,7 @@ import (
 // OpportunityView is a representation of how the opportunities will be returned by the API.
 type OpportunityView struct {
 	ID                             int64                           `json:"id"`
+	ColorIndex                     uint                            `json:"colorIndex"`
 	Publishable                    bool                            `json:"publishable"`
 	OrganizationID                 int64                           `json:"organizationId"`
 	CreatorID                      int64                           `json:"creatorId" scope:"manager"`
