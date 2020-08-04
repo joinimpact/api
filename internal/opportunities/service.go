@@ -18,6 +18,11 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// ColorsCount of how many opportunity colors there are.
+const (
+	ColorsCount = 9
+)
+
 // Service represents a service for interacting with opportunities.
 type Service interface {
 	// GetOrganizationOpportunities gets all opportunities by organization ID.
@@ -186,6 +191,7 @@ func (s *service) GetOpportunity(ctx context.Context, id int64) (*OpportunityVie
 	}
 
 	view.ID = opportunity.ID
+	view.ColorIndex = uint(opportunity.ID % ColorsCount)
 	view.OrganizationID = opportunity.OrganizationID
 	view.CreatorID = opportunity.CreatorID
 	view.ProfilePicture = opportunity.ProfilePicture
@@ -288,6 +294,7 @@ func (s *service) GetMinimalOpportunity(ctx context.Context, id int64) (*Opportu
 	}
 
 	view.ID = opportunity.ID
+	view.ColorIndex = uint(opportunity.ID % ColorsCount)
 	view.OrganizationID = opportunity.OrganizationID
 	view.CreatorID = opportunity.CreatorID
 	view.ProfilePicture = opportunity.ProfilePicture
