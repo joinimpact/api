@@ -312,6 +312,11 @@ func (s *service) GetUserEvents(ctx context.Context, userID int64) ([]EventView,
 		}
 		view.EventResponsesSummary = responsesSummary
 
+		response, err := s.GetUserEventResponse(ctx, userID, event.ID)
+		if err == nil {
+			view.UserResponse = response
+		}
+
 		views = append(views, *view)
 	}
 
