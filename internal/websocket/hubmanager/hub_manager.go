@@ -4,6 +4,7 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/joinimpact/api/internal/conversations"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/pubsub"
 	"github.com/joinimpact/api/internal/websocket"
@@ -118,7 +119,7 @@ func (h *HubManager) messagePump(channel <-chan pubsub.Event) {
 
 			switch m.EventName {
 			case "messages.MESSAGE_SENT":
-				message, ok := m.Payload.(models.Message)
+				message, ok := m.Payload.(conversations.MessageView)
 				if !ok {
 					return
 				}

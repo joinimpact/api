@@ -145,7 +145,8 @@ func (s *service) CreateOpportunityMembershipRequestConversation(ctx context.Con
 		RawMessage: json.RawMessage(jsonBytes),
 	}
 
-	if err := s.messageRepository.Create(ctx, message); err != nil {
+	if err := s.sendMessage(ctx, message); err != nil {
+		s.logger.Error().Err(err).Msg("Error creating message")
 		return 0, NewErrServerError()
 	}
 
@@ -301,19 +302,42 @@ func (s *service) SendStandardMessage(ctx context.Context, conversationID, sende
 
 	message.Body = *jsonBytes
 	message.Edited = false
-	if err := s.messageRepository.Create(ctx, message); err != nil {
+	if err := s.sendMessage(ctx, message); err != nil {
 		s.logger.Error().Err(err).Msg("Error creating message")
 		return 0, NewErrServerError()
 	}
 
-	if err := s.broker.Publish(stream, pubsub.Event{
-		EventName: MessageSent,
-		Payload:   message,
-	}); err != nil {
-		s.logger.Error().Err(err).Msg("Error publishing message to pub/sub")
+	return message.ID, nil
+}
+
+func (s *service) sendMessage(ctx context.Context, message models.Message) error {
+	if err := s.messageRepository.Create(ctx, message); err != nil {
+		s.logger.Error().Err(err).Msg("Error creating message")
+		return err
 	}
 
-	return message.ID, nil
+	go s.brokerPublishMessageSent(message)
+
+	return nil
+}
+
+// brokerPublishMessageSent publishes a message as a MessageSent event.
+// Should be called asynchronously/spawned as a goroutine.
+func (s *service) brokerPublishMessageSent(message models.Message) error {
+	view, err := s.messageToView(context.Background(), message)
+	if err != nil {
+		return err
+	}
+
+	if err := s.broker.Publish(stream, pubsub.Event{
+		EventName: MessageSent,
+		Payload:   *view,
+	}); err != nil {
+		s.logger.Error().Err(err).Msg("Error publishing message to pub/sub")
+		return err
+	}
+
+	return nil
 }
 
 // ConversationMessagesResponse represents a response containing messages and paging information.
@@ -333,27 +357,42 @@ func (s *service) GetConversationMessages(ctx context.Context, conversationID in
 	views := []MessageView{}
 
 	for _, message := range res.Messages {
-		body, err := s.parseMessage(ctx, message.Type, message.Body.RawMessage)
+		view, err := s.messageToView(ctx, message)
 		if err != nil {
-			s.logger.Error().Err(err).Msg("Error parsing message")
+			s.logger.Error().Err(err).Msg("Error converting message to view")
 			continue
 		}
-		views = append(views, MessageView{
-			ID:              message.ID,
-			ConversationID:  message.ConversationID,
-			SenderID:        message.SenderID,
-			Timestamp:       message.Timestamp,
-			Type:            message.Type,
-			Edited:          message.Edited,
-			EditedTimestamp: message.EditedTimestamp,
-			Body:            body,
-		})
+
+		views = append(views, *view)
 	}
 
 	return &ConversationMessagesResponse{
 		Messages: views,
 		Pages:    uint(res.TotalResults/dbctx.Get(ctx).Limit) + 1,
 	}, nil
+}
+
+// messageToView converts a raw models.Message object into a *MessageView
+// with a parsed body.
+func (s *service) messageToView(ctx context.Context, message models.Message) (*MessageView, error) {
+	body, err := s.parseMessage(ctx, message.Type, message.Body.RawMessage)
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Error parsing message body")
+		return nil, err
+	}
+
+	view := &MessageView{
+		ID:              message.ID,
+		ConversationID:  message.ConversationID,
+		SenderID:        message.SenderID,
+		Timestamp:       message.Timestamp,
+		Type:            message.Type,
+		Edited:          message.Edited,
+		EditedTimestamp: message.EditedTimestamp,
+		Body:            body,
+	}
+
+	return view, nil
 }
 
 // parseMessage takes in a raw JSON message and adds necessary data to a message before returning it as an interface{}.
