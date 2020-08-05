@@ -14,7 +14,7 @@ func SetAuthCookies(w http.ResponseWriter, r *http.Request, tokenPair *authentic
 		Name:     "auth_token",
 		Value:    tokenPair.AuthToken,
 		Expires:  time.Unix(tokenPair.AuthExpiry, 0),
-		Path:     "/api/v1",
+		Path:     "/",
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &authTokenCookie)
@@ -24,7 +24,7 @@ func SetAuthCookies(w http.ResponseWriter, r *http.Request, tokenPair *authentic
 		Name:     "refresh_token",
 		Value:    tokenPair.RefreshToken,
 		Expires:  time.Unix(tokenPair.RefreshExpiry, 0),
-		Path:     "/api/v1",
+		Path:     "/",
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &refreshTokenCookie)
@@ -36,7 +36,7 @@ func ClearAuthCookies(w http.ResponseWriter, r *http.Request) {
 	authTokenCookie := http.Cookie{
 		Name:     "auth_token",
 		Value:    "",
-		Path:     "/api/v1",
+		Path:     "/",
 		HttpOnly: true,
 		MaxAge:   -1, // a MaxAge of less than 0 will effectively delete the cookie immediately.
 	}
@@ -46,7 +46,7 @@ func ClearAuthCookies(w http.ResponseWriter, r *http.Request) {
 	refreshTokenCookie := http.Cookie{
 		Name:     "refresh_token",
 		Value:    "",
-		Path:     "/api/v1",
+		Path:     "/",
 		HttpOnly: true,
 		MaxAge:   -1, // a MaxAge of less than 0 will effectively delete the cookie immediately.
 	}
