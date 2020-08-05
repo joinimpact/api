@@ -13,8 +13,8 @@ import (
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/pubsub"
 	"github.com/joinimpact/api/internal/snowflakes"
-	"github.com/joinimpact/api/internal/users"
 	"github.com/joinimpact/api/pkg/dbctx"
+	"github.com/joinimpact/api/pkg/location"
 	"github.com/rs/zerolog"
 )
 
@@ -52,29 +52,39 @@ type service struct {
 	conversationOpportunityMembershipRequestRepository models.ConversationOpportunityMembershipRequestRepository
 	conversationOrganizationMembershipRepository       models.ConversationOrganizationMembershipRepository
 	messageRepository                                  models.MessageRepository
-	usersService                                       users.Service // TODO: find a way to use the users service without a dependency like this
+	opportunityRepository                              models.OpportunityRepository
+	userRepository                                     models.UserRepository
+	userProfileFieldRepository                         models.UserProfileFieldRepository
+	userTagRepository                                  models.UserTagRepository
+	tagRepository                                      models.TagRepository
 	config                                             *config.Config
 	logger                                             *zerolog.Logger
 	snowflakeService                                   snowflakes.SnowflakeService
 	emailService                                       email.Service
 	broker                                             pubsub.Broker
+	locationService                                    location.Service
 	cdnClient                                          *cdn.Client
 }
 
 // NewService creates and returns a new conversations.Service.
-func NewService(conversationRepository models.ConversationRepository, conversationMembershipRepository models.ConversationMembershipRepository, conversationOpportunityMembershipRequestRepository models.ConversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository models.ConversationOrganizationMembershipRepository, messageRepository models.MessageRepository, usersService users.Service, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service, broker pubsub.Broker) Service {
+func NewService(conversationRepository models.ConversationRepository, conversationMembershipRepository models.ConversationMembershipRepository, conversationOpportunityMembershipRequestRepository models.ConversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository models.ConversationOrganizationMembershipRepository, messageRepository models.MessageRepository, opportunityRepository models.OpportunityRepository, userRepository models.UserRepository, userProfileFieldRepository models.UserProfileFieldRepository, userTagRepository models.UserTagRepository, tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service, broker pubsub.Broker, locationService location.Service) Service {
 	return &service{
 		conversationRepository,
 		conversationMembershipRepository,
 		conversationOpportunityMembershipRequestRepository,
 		conversationOrganizationMembershipRepository,
 		messageRepository,
-		usersService,
+		opportunityRepository,
+		userRepository,
+		userProfileFieldRepository,
+		userTagRepository,
+		tagRepository,
 		config,
 		logger,
 		snowflakeService,
 		emailService,
 		broker,
+		locationService,
 		cdn.NewCDNClient(config),
 	}
 }
@@ -135,7 +145,8 @@ func (s *service) CreateOpportunityMembershipRequestConversation(ctx context.Con
 		RawMessage: json.RawMessage(jsonBytes),
 	}
 
-	if err := s.messageRepository.Create(ctx, message); err != nil {
+	if err := s.sendMessage(ctx, message); err != nil {
+		s.logger.Error().Err(err).Msg("Error creating message")
 		return 0, NewErrServerError()
 	}
 
@@ -204,7 +215,9 @@ func (s *service) GetUserConversation(ctx context.Context, conversationID int64)
 	}
 
 	for _, request := range requests {
-		conversation.OpportunityMembershipRequests = append(conversation.OpportunityMembershipRequests, *request.OpportunityMembershipRequest)
+		if request.OpportunityMembershipRequest != nil {
+			conversation.OpportunityMembershipRequests = append(conversation.OpportunityMembershipRequests, *request.OpportunityMembershipRequest)
+		}
 	}
 
 	return conversation, nil
@@ -289,19 +302,42 @@ func (s *service) SendStandardMessage(ctx context.Context, conversationID, sende
 
 	message.Body = *jsonBytes
 	message.Edited = false
-	if err := s.messageRepository.Create(ctx, message); err != nil {
+	if err := s.sendMessage(ctx, message); err != nil {
 		s.logger.Error().Err(err).Msg("Error creating message")
 		return 0, NewErrServerError()
 	}
 
-	if err := s.broker.Publish(stream, pubsub.Event{
-		EventName: MessageSent,
-		Payload:   message,
-	}); err != nil {
-		s.logger.Error().Err(err).Msg("Error publishing message to pub/sub")
+	return message.ID, nil
+}
+
+func (s *service) sendMessage(ctx context.Context, message models.Message) error {
+	if err := s.messageRepository.Create(ctx, message); err != nil {
+		s.logger.Error().Err(err).Msg("Error creating message")
+		return err
 	}
 
-	return message.ID, nil
+	go s.brokerPublishMessageSent(message)
+
+	return nil
+}
+
+// brokerPublishMessageSent publishes a message as a MessageSent event.
+// Should be called asynchronously/spawned as a goroutine.
+func (s *service) brokerPublishMessageSent(message models.Message) error {
+	view, err := s.messageToView(context.Background(), message)
+	if err != nil {
+		return err
+	}
+
+	if err := s.broker.Publish(stream, pubsub.Event{
+		EventName: MessageSent,
+		Payload:   *view,
+	}); err != nil {
+		s.logger.Error().Err(err).Msg("Error publishing message to pub/sub")
+		return err
+	}
+
+	return nil
 }
 
 // ConversationMessagesResponse represents a response containing messages and paging information.
@@ -321,27 +357,164 @@ func (s *service) GetConversationMessages(ctx context.Context, conversationID in
 	views := []MessageView{}
 
 	for _, message := range res.Messages {
-		body := map[string]interface{}{}
-		err := json.Unmarshal(message.Body.RawMessage, &body)
+		view, err := s.messageToView(ctx, message)
 		if err != nil {
+			s.logger.Error().Err(err).Msg("Error converting message to view")
 			continue
 		}
-		views = append(views, MessageView{
-			ID:              message.ID,
-			ConversationID:  message.ConversationID,
-			SenderID:        message.SenderID,
-			Timestamp:       message.Timestamp,
-			Type:            message.Type,
-			Edited:          message.Edited,
-			EditedTimestamp: message.EditedTimestamp,
-			Body:            body,
-		})
+
+		views = append(views, *view)
 	}
 
 	return &ConversationMessagesResponse{
 		Messages: views,
 		Pages:    uint(res.TotalResults/dbctx.Get(ctx).Limit) + 1,
 	}, nil
+}
+
+// messageToView converts a raw models.Message object into a *MessageView
+// with a parsed body.
+func (s *service) messageToView(ctx context.Context, message models.Message) (*MessageView, error) {
+	body, err := s.parseMessage(ctx, message.Type, message.Body.RawMessage)
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Error parsing message body")
+		return nil, err
+	}
+
+	view := &MessageView{
+		ID:              message.ID,
+		ConversationID:  message.ConversationID,
+		SenderID:        message.SenderID,
+		Timestamp:       message.Timestamp,
+		Type:            message.Type,
+		Edited:          message.Edited,
+		EditedTimestamp: message.EditedTimestamp,
+		Body:            body,
+	}
+
+	return view, nil
+}
+
+// parseMessage takes in a raw JSON message and adds necessary data to a message before returning it as an interface{}.
+func (s *service) parseMessage(ctx context.Context, messageType string, rawMessage json.RawMessage) (interface{}, error) {
+	switch messageType {
+	case models.MessageTypeVolunteerRequestProfile:
+		body := MessageVolunteerRequestProfile{}
+		err := json.Unmarshal(rawMessage, &body)
+		if err != nil {
+			return nil, err
+		}
+
+		view, err := s.getMessageVolunteerRequestProfileView(ctx, body.UserID)
+		if err != nil {
+			return nil, err
+		}
+
+		return view, nil
+	case models.MessageTypeVolunteerRequestAcceptance:
+		body := MessageTypeVolunteerRequestAcceptance{}
+		err := json.Unmarshal(rawMessage, &body)
+		if err != nil {
+			return nil, err
+		}
+
+		view, err := s.getMessageVolunteerRequestAcceptance(ctx, body.UserID, body.OpportunityID)
+		if err != nil {
+			return nil, err
+		}
+
+		return view, nil
+	}
+
+	// Fallback
+	body := map[string]interface{}{}
+	err := json.Unmarshal(rawMessage, &body)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
+}
+
+// getMessageVolunteerRequestProfileView gets a MessageVolunteerRequestProfileView for a user by ID.
+func (s *service) getMessageVolunteerRequestProfileView(ctx context.Context, userID int64) (*MessageVolunteerRequestProfileView, error) {
+	profile := &MessageVolunteerRequestProfileView{}
+	// Find the user to verify that it is active.
+	user, err := s.userRepository.FindByID(userID)
+	if err != nil {
+		return nil, NewErrUserNotFound()
+	}
+
+	profile.UserID = user.ID
+	profile.FirstName = user.FirstName
+	profile.LastName = user.LastName
+	profile.ProfilePicture = user.ProfilePicture
+	profile.DateOfBirth = user.DateOfBirth
+
+	// Find all UserTag objects by UserID.
+	userTags, err := s.userTagRepository.FindByUserID(userID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	tags := []models.Tag{}
+	for _, userTag := range userTags {
+		// Get the tag by ID.
+		tag, err := s.tagRepository.FindByID(userTag.TagID)
+		if err != nil {
+			// Tag not found, skip.
+			s.logger.Error().Err(err).Msg("Error getting user tags: UserTag object missing valid Tag")
+			continue
+		}
+
+		// Append the tag to the tags array.
+		tags = append(tags, *tag)
+	}
+
+	profile.Tags = tags
+
+	// Location
+	if user.LocationLatitude != 0.0 || user.LocationLongitude != 0.0 {
+		coordinates := &location.Coordinates{
+			Latitude:  user.LocationLatitude,
+			Longitude: user.LocationLongitude,
+		}
+
+		location, err := s.locationService.CoordinatesToCity(coordinates)
+		if err == nil {
+			profile.Location = location
+		}
+	}
+
+	// Profile fields
+	fields, err := s.userProfileFieldRepository.FindByUserID(userID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	profile.ProfileFields = fields
+
+	profile.PreviousExperience = &PreviousExperience{
+		Count: 0,
+	}
+
+	return profile, nil
+}
+
+// getMessageVolunteerRequestAcceptance gets a MessageTypeVolunteerRequestAcceptanceView by user ID and opportunity ID.
+func (s *service) getMessageVolunteerRequestAcceptance(ctx context.Context, userID, opportunityID int64) (*MessageTypeVolunteerRequestAcceptanceView, error) {
+	view := &MessageTypeVolunteerRequestAcceptanceView{}
+
+	opportunity, err := s.opportunityRepository.FindByID(ctx, opportunityID)
+	if err != nil {
+		return nil, err
+	}
+
+	view.UserID = userID
+	view.OpportunityID = opportunityID
+	view.OpportunityTitle = opportunity.Title
+
+	return view, nil
 }
 
 // marshalMessageBody marshals an interface of a message body to a postgres Jsonb value.

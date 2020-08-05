@@ -44,6 +44,9 @@ func InitChannel(id ChannelID) *Channel {
 func (c *Channel) Fanout(m websocket.Message) {
 	// Loop through all connected sessions
 	for _, s := range c.subscriptions {
+		if s.Closed {
+			continue
+		}
 		// Send message to session
 		s.SendMessage(m)
 	}
