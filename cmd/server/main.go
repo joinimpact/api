@@ -85,6 +85,7 @@ func main() {
 		&models.UserTag{},
 		&models.Tag{},
 		&models.ThirdPartyIdentity{},
+		&models.VolunteeringHourLog{},
 	)
 	if err != nil {
 		// Error migrating the database, panic.

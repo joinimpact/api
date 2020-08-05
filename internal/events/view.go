@@ -3,6 +3,7 @@ package events
 import (
 	"time"
 
+	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/pkg/location"
 )
 
@@ -23,6 +24,7 @@ type EventView struct {
 	EventBase             `validate:"dive"`
 	EventSchedule         *EventSchedule         `json:"schedule"`
 	EventResponsesSummary *EventResponsesSummary `json:"responses,omitempty" scope:"manager"`
+	UserResponse          *models.EventResponse  `json:"userResponse,omitempty"`
 	Location              *location.Location     `json:"location"`
 }
 
