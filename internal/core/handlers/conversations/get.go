@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/joinimpact/api/internal/conversations"
-	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/pkg/idctx"
 	"github.com/joinimpact/api/pkg/resp"
 )
@@ -20,7 +19,7 @@ func Get(conversationsService conversations.Service, asOrganization bool) http.H
 		}
 
 		err = nil
-		var conversation *models.Conversation
+		var conversation *conversations.ConversationView
 		if asOrganization {
 			conversation, err = conversationsService.GetOrganizationConversation(ctx, conversationID)
 		} else {

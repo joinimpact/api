@@ -11,6 +11,7 @@ import (
 type ConversationView struct {
 	models.Conversation
 	LastMessageView *MessageView `json:"lastMessage"`
+	UnreadCount     int          `json:"unreadCount"`
 }
 
 // MessageView represents a view of a message.
