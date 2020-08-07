@@ -10,7 +10,7 @@ type Conversation struct {
 	ProfilePicture                string                         `json:"profilePicture" gorm:"-"`
 	OpportunityMembershipRequests []OpportunityMembershipRequest `json:"membershipRequests,omitempty" gorm:"-"`
 	CreatorID                     int64                          `json:"creatorId"`
-	OrganizationID                int64                          `json:"organizationID"`
+	OrganizationID                int64                          `json:"organizationId"`
 	Organization                  Organization                   `json:"-"`
 	LastMessage                   Message                        `json:"-"`
 	Type                          int                            `json:"type"`
