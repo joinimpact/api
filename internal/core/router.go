@@ -114,23 +114,23 @@ func (app *App) Router() *chi.Mux {
 
 				r.With(permissions.Require(scopes.ScopeManager)).Get("/members", organizations.MembersGet(app.organizationsService, app.usersService))
 
-				r.With(permissions.Require(scopes.ScopeManager)).Get("/conversations", conversations.GetByOrganization(app.conversationsService))
-
 				r.Route("/opportunities", func(r chi.Router) {
 					r.With(permissions.Require(scopes.ScopeManager)).Post("/", opportunities.Post(app.opportunitiesService))
 					r.With(permissions.Require(scopes.ScopeAuthenticated)).Get("/", opportunities.Get(app.opportunitiesService))
 				})
-			})
 
-			r.Route("/conversations", func(r chi.Router) {
-				r.Use(permissions.Require(scopes.ScopeManager))
-				r.Route("/{conversationID}", func(r chi.Router) {
-					r.Use(idctx.Prepare("conversationID"))
-					r.Get("/", conversations.Get(app.conversationsService, true))
+				r.Route("/conversations", func(r chi.Router) {
+					r.Use(permissions.Require(scopes.ScopeManager))
 
-					r.Route("/messages", func(r chi.Router) {
-						r.Get("/", conversations.MessagesGet(app.conversationsService))
-						r.Post("/", conversations.MessagesPost(app.conversationsService, true))
+					r.Get("/", conversations.GetByOrganization(app.conversationsService))
+					r.Route("/{conversationID}", func(r chi.Router) {
+						r.Use(idctx.Prepare("conversationID"))
+						r.Get("/", conversations.Get(app.conversationsService, true))
+
+						r.Route("/messages", func(r chi.Router) {
+							r.Get("/", conversations.MessagesGet(app.conversationsService))
+							r.Post("/", conversations.MessagesPost(app.conversationsService, true))
+						})
 					})
 				})
 			})
