@@ -12,6 +12,7 @@ type Conversation struct {
 	CreatorID                     int64                          `json:"creatorId"`
 	OrganizationID                int64                          `json:"organizationID"`
 	Organization                  Organization                   `json:"-"`
+	LastMessage                   Message                        `json:"-"`
 	Type                          int                            `json:"type"`
 }
 
