@@ -6,15 +6,15 @@ import "context"
 type VolunteeringHourLogRequest struct {
 	Model
 	Accepted       bool         `json:"accepted"`
-	OpportunityID  int64        `json:"opportunityId"`
+	OpportunityID  int64        `json:"opportunityId,omitempty"`
 	Opportunity    Opportunity  `json:"-" gorm:"foreignkey:OpportunityID"`
-	OrganizationID int64        `json:"organizationId"`
+	OrganizationID int64        `json:"organizationId,omitempty"`
 	Organization   Organization `json:"-" gorm:"foreignkey:OrganizationID"`
-	EventID        int64        `json:"eventID"`
+	EventID        int64        `json:"eventID,omitempty"`
 	Event          Event        `json:"-" gorm:"foreignkey:EventID"`
 	VolunteerID    int64        `json:"volunteerId"`
 	Volunteer      User         `json:"-" gorm:"foreignkey:VolunteerID"`
-	RequestedHours float32      `json:"grantedHours"`
+	RequestedHours float32      `json:"requestedHours"`
 }
 
 // VolunteeringHourLogRequestsResponse wraps an array of VolunteeringHourLogRequests and contains information from the database.

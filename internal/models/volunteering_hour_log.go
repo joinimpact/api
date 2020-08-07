@@ -1,20 +1,24 @@
 package models
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 // VolunteeringHourLog represents a log of a volunteer's verified hours.
 type VolunteeringHourLog struct {
 	Model
-	OpportunityID  int64        `json:"opportunityId"`
+	OpportunityID  int64        `json:"opportunityId,omitempty"`
 	Opportunity    Opportunity  `json:"-" gorm:"foreignkey:OpportunityID"`
-	OrganizationID int64        `json:"organizationId"`
+	OrganizationID int64        `json:"organizationId,omitempty"`
 	Organization   Organization `json:"-" gorm:"foreignkey:OrganizationID"`
 	VolunteerID    int64        `json:"volunteerId"`
 	Volunteer      User         `json:"-" gorm:"foreignkey:VolunteerID"`
-	EventID        int64        `json:"eventID"`
+	EventID        int64        `json:"eventID,omitempty"`
 	Event          Event        `json:"-" gorm:"foreignkey:EventID"`
-	GranterID      int64        `json:"granterId"`
+	GranterID      int64        `json:"granterId,omitempty"`
 	Granter        User         `json:"-" gorm:"foreignkey:GranterID"`
+	GrantedOn      time.Time    `json:"grantedOn"`
 	GrantedHours   float32      `json:"grantedHours"`
 }
 

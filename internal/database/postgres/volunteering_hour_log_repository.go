@@ -62,6 +62,14 @@ func (r *volunteeringHourLogRepository) FindByOrganizationID(ctx context.Context
 		Count(&response.TotalResults).
 		Offset(dbctx.Page * dbctx.Limit)
 
+	if dbctx.From != nil {
+		db = db.Where("granted_on >= ?", *dbctx.From)
+	}
+
+	if dbctx.To != nil {
+		db = db.Where("granted_on < ?", *dbctx.To)
+	}
+
 	if err := db.Find(&response.VolunteeringHourLogs).Error; err != nil {
 		return response, err
 	}
@@ -82,6 +90,14 @@ func (r *volunteeringHourLogRepository) FindByOpportunityID(ctx context.Context,
 		Count(&response.TotalResults).
 		Offset(dbctx.Page * dbctx.Limit)
 
+	if dbctx.From != nil {
+		db = db.Where("granted_on >= ?", *dbctx.From)
+	}
+
+	if dbctx.To != nil {
+		db = db.Where("granted_on < ?", *dbctx.To)
+	}
+
 	if err := db.Find(&response.VolunteeringHourLogs).Error; err != nil {
 		return response, err
 	}
@@ -101,6 +117,14 @@ func (r *volunteeringHourLogRepository) FindByVolunteerID(ctx context.Context, v
 		Where("volunteer_id = ?", volunteerID).
 		Count(&response.TotalResults).
 		Offset(dbctx.Page * dbctx.Limit)
+
+	if dbctx.From != nil {
+		db = db.Where("granted_on >= ?", *dbctx.From)
+	}
+
+	if dbctx.To != nil {
+		db = db.Where("granted_on < ?", *dbctx.To)
+	}
 
 	if err := db.Find(&response.VolunteeringHourLogs).Error; err != nil {
 		return response, err
