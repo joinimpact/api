@@ -233,9 +233,12 @@ func (s *service) GetUserConversation(ctx context.Context, conversationID int64)
 	}
 
 	for _, request := range requests {
-		if request.OpportunityMembershipRequest != nil {
-			view.Conversation.OpportunityMembershipRequests = append(conversation.OpportunityMembershipRequests, *request.OpportunityMembershipRequest)
+		if request.OpportunityMembershipRequest == nil {
+			s.logger.Warn().Msgf("ConversationOpportunityMembershipRequest %d linked to missing OpportunityMembershipRequest", request.ID)
+			continue
 		}
+
+		view.Conversation.OpportunityMembershipRequests = append(conversation.OpportunityMembershipRequests, *request.OpportunityMembershipRequest)
 	}
 
 	return view, nil
@@ -267,6 +270,7 @@ func (s *service) GetOrganizationConversations(ctx context.Context, organization
 
 		view.Conversation.Name = fmt.Sprintf("%s %s", memberships[0].User.FirstName, memberships[0].User.LastName)
 		view.Conversation.ProfilePicture = memberships[0].User.ProfilePicture
+
 		// Temporary dummy value
 		view.UnreadCount = 0
 		view.LastMessageView, _ = s.messageToView(ctx, conversation.LastMessage)
@@ -303,6 +307,11 @@ func (s *service) GetOrganizationConversation(ctx context.Context, conversationI
 	}
 
 	for _, request := range requests {
+		if request.OpportunityMembershipRequest == nil {
+			s.logger.Warn().Msgf("ConversationOpportunityMembershipRequest %d linked to missing OpportunityMembershipRequest", request.ID)
+			continue
+		}
+
 		view.Conversation.OpportunityMembershipRequests = append(conversation.OpportunityMembershipRequests, *request.OpportunityMembershipRequest)
 	}
 
