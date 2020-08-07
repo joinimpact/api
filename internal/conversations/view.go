@@ -7,6 +7,13 @@ import (
 	"github.com/joinimpact/api/pkg/location"
 )
 
+// ConversationView represents a view of a conversation.
+type ConversationView struct {
+	models.Conversation
+	LastMessageView *MessageView `json:"lastMessage"`
+	UnreadCount     int          `json:"unreadCount"`
+}
+
 // MessageView represents a view of a message.
 type MessageView struct {
 	ID                int64       `json:"id"`
