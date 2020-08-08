@@ -44,3 +44,8 @@ type MessageTypeVolunteerRequestAcceptanceView struct {
 	OpportunityID    int64  `json:"opportunityId"`
 	OpportunityTitle string `json:"opportunityTitle"`
 }
+
+// MessageTypeHoursRequestedView represents the message sent when a volunteer requests hours from an organization.
+type MessageTypeHoursRequestedView struct {
+	models.VolunteeringHourLogRequest
+}

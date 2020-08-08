@@ -142,7 +142,7 @@ func (app *App) Router() *chi.Mux {
 
 				r.Route("/hours", func(r chi.Router) {
 					r.Route("/requests", func(r chi.Router) {
-						r.With(permissions.Require(scopes.ScopeCollaborator)).Post("/", hours.OrganizationRequestsPost(app.hoursService))
+						r.With(permissions.Require(scopes.ScopeCollaborator)).Post("/", hours.OrganizationRequestsPost(app.hoursService, app.conversationsService))
 
 						r.Route("/{requestID}", func(r chi.Router) {
 							r.Use(idctx.Prepare("requestID"))

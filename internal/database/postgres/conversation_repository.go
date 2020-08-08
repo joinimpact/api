@@ -83,6 +83,16 @@ func (r *conversationRepository) FindByCreatorID(creatorID int64) ([]models.Conv
 	return opportunities, nil
 }
 
+// FindUserOrganizationConversation finds a user's conversation with an organization.
+func (r *conversationRepository) FindUserOrganizationConversation(ctx context.Context, userID, organizationID int64) (*models.Conversation, error) {
+	var conversation models.Conversation
+	if err := r.db.Joins("JOIN conversation_memberships on conversation_memberships.conversation_id = conversations.id").Where("conversations.organization_id = ? AND conversation_memberships.user_id = ? AND conversations.active = True", organizationID, userID).First(&conversation).Error; err != nil {
+		return &conversation, err
+	}
+
+	return &conversation, nil
+}
+
 // Create creates a new User.
 func (r *conversationRepository) Create(conversation models.Conversation) error {
 	return r.db.Create(&conversation).Error

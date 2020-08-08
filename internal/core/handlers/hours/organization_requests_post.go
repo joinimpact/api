@@ -3,6 +3,8 @@ package hours
 import (
 	"net/http"
 
+	"github.com/joinimpact/api/internal/conversations"
+	"github.com/joinimpact/api/internal/core/middleware/auth"
 	"github.com/joinimpact/api/internal/hours"
 	"github.com/joinimpact/api/pkg/idctx"
 	"github.com/joinimpact/api/pkg/parse"
@@ -10,19 +12,21 @@ import (
 )
 
 // OrganizationRequestsPost requests hours from an organization.
-func OrganizationRequestsPost(hoursService hours.Service) http.HandlerFunc {
+func OrganizationRequestsPost(hoursService hours.Service, conversationsService conversations.Service) http.HandlerFunc {
 	type request struct {
 		Hours float32 `json:"hours" validate:"min=1,max=100"`
 	}
 	type response struct {
+		MessageID         int64 `json:"messageId"`
 		HoursLogRequestID int64 `json:"hoursLogRequestID"`
 		Success           bool  `json:"success"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		userID, err := idctx.Get(r, "userID")
-		if err != nil {
+		userID, ok := ctx.Value(auth.KeyUserID).(int64)
+		if !ok {
+			resp.ServerError(w, r, resp.UnknownError)
 			return
 		}
 
@@ -50,7 +54,19 @@ func OrganizationRequestsPost(hoursService hours.Service) http.HandlerFunc {
 			return
 		}
 
+		messageID, err := conversationsService.SendHoursRequestMessage(ctx, userID, organizationID, id)
+		if err != nil {
+			switch err.(type) {
+			case *conversations.ErrServerError:
+				resp.ServerError(w, r, resp.APIError(err, nil))
+			default:
+				resp.ServerError(w, r, resp.UnknownError)
+			}
+			return
+		}
+
 		resp.OK(w, r, response{
+			MessageID:         messageID,
 			HoursLogRequestID: id,
 			Success:           true,
 		})
