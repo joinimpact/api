@@ -134,6 +134,7 @@ func (s *service) CreateOpportunityMembershipRequestConversation(ctx context.Con
 	message.SenderID = volunteerID
 	message.ID = s.snowflakeService.GenerateID()
 	message.Type = models.MessageTypeVolunteerRequestProfile
+	message.Timestamp = time.Now()
 	message.Edited = false
 	messageBody := MessageVolunteerRequestProfile{
 		Message: messageStr,
