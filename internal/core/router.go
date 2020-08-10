@@ -8,6 +8,7 @@ import (
 	"github.com/joinimpact/api/internal/core/handlers/browse"
 	"github.com/joinimpact/api/internal/core/handlers/conversations"
 	"github.com/joinimpact/api/internal/core/handlers/events"
+	"github.com/joinimpact/api/internal/core/handlers/hours"
 	"github.com/joinimpact/api/internal/core/handlers/opportunities"
 	"github.com/joinimpact/api/internal/core/handlers/organizations"
 	"github.com/joinimpact/api/internal/core/handlers/tags"
@@ -90,6 +91,11 @@ func (app *App) Router() *chi.Mux {
 						})
 					})
 				})
+
+				r.Route("/hours", func(r chi.Router) {
+					r.Use(permissions.Require(scopes.ScopeOwner))
+					r.Get("/", hours.GetByUser(app.hoursService))
+				})
 			})
 		})
 
@@ -133,7 +139,20 @@ func (app *App) Router() *chi.Mux {
 						})
 					})
 				})
+
+				r.Route("/hours", func(r chi.Router) {
+					r.Route("/requests", func(r chi.Router) {
+						r.With(permissions.Require(scopes.ScopeCollaborator)).Post("/", hours.OrganizationRequestsPost(app.hoursService, app.conversationsService))
+
+						r.Route("/{requestID}", func(r chi.Router) {
+							r.Use(idctx.Prepare("requestID"))
+							r.With(permissions.Require(scopes.ScopeManager)).Post("/accept", hours.OrganizationRequestAcceptPost(app.hoursService, app.conversationsService))
+							r.With(permissions.Require(scopes.ScopeManager)).Post("/decline", hours.OrganizationRequestDeclinePost(app.hoursService, app.conversationsService))
+						})
+					})
+				})
 			})
+
 		})
 
 		router.Route("/opportunities", func(r chi.Router) {

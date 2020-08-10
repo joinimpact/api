@@ -51,3 +51,18 @@ type MessageTypeVolunteerRequestAcceptanceView struct {
 	OpportunityID    int64  `json:"opportunityId"`
 	OpportunityTitle string `json:"opportunityTitle"`
 }
+
+// MessageTypeHoursRequestedView represents the message sent when a volunteer requests hours from an organization.
+type MessageTypeHoursRequestedView struct {
+	models.VolunteeringHourLogRequest
+}
+
+// MessageTypeHoursAcceptedView represents the message sent when a volunteer's request is accepted.
+type MessageTypeHoursAcceptedView struct {
+	models.VolunteeringHourLogRequest
+}
+
+// MessageTypeHoursDeclinedView represents the message sent when a volunteer's request is declined.
+type MessageTypeHoursDeclinedView struct {
+	models.VolunteeringHourLogRequest
+}

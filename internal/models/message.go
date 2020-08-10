@@ -13,6 +13,9 @@ const (
 	MessageTypeVolunteerRequestProfile    = "MESSAGE_VOLUNTEER_REQUEST_PROFILE"
 	MessageTypeVolunteerRequestAcceptance = "MESSAGE_VOLUNTEER_REQUEST_ACCEPTANCE"
 	MessageTypeEventCreated               = "MESSAGE_EVENT_CREATED"
+	MessageTypeHoursRequested             = "MESSAGE_HOURS_REQUESTED"
+	MessageTypeHoursAccepted              = "MESSAGE_HOURS_ACCEPTED"
+	MessageTypeHoursDeclined              = "MESSAGE_HOURS_DECLINED"
 )
 
 // Sender perspectives.
