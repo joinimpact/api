@@ -146,8 +146,8 @@ func (app *App) Router() *chi.Mux {
 
 						r.Route("/{requestID}", func(r chi.Router) {
 							r.Use(idctx.Prepare("requestID"))
-							r.With(permissions.Require(scopes.ScopeManager)).Post("/accept", hours.OrganizationRequestAcceptPost(app.hoursService))
-							r.With(permissions.Require(scopes.ScopeManager)).Post("/decline", hours.OrganizationRequestDeclinePost(app.hoursService))
+							r.With(permissions.Require(scopes.ScopeManager)).Post("/accept", hours.OrganizationRequestAcceptPost(app.hoursService, app.conversationsService))
+							r.With(permissions.Require(scopes.ScopeManager)).Post("/decline", hours.OrganizationRequestDeclinePost(app.hoursService, app.conversationsService))
 						})
 					})
 				})

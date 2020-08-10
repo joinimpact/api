@@ -15,6 +15,7 @@ const (
 	MessageTypeEventCreated               = "MESSAGE_EVENT_CREATED"
 	MessageTypeHoursRequested             = "MESSAGE_HOURS_REQUESTED"
 	MessageTypeHoursAccepted              = "MESSAGE_HOURS_ACCEPTED"
+	MessageTypeHoursDeclined              = "MESSAGE_HOURS_DECLINED"
 )
 
 // Sender perspectives.

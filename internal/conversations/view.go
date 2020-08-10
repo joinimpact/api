@@ -49,3 +49,13 @@ type MessageTypeVolunteerRequestAcceptanceView struct {
 type MessageTypeHoursRequestedView struct {
 	models.VolunteeringHourLogRequest
 }
+
+// MessageTypeHoursAcceptedView represents the message sent when a volunteer's request is accepted.
+type MessageTypeHoursAcceptedView struct {
+	models.VolunteeringHourLogRequest
+}
+
+// MessageTypeHoursDeclinedView represents the message sent when a volunteer's request is declined.
+type MessageTypeHoursDeclinedView struct {
+	models.VolunteeringHourLogRequest
+}

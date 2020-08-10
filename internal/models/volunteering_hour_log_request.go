@@ -5,7 +5,9 @@ import "context"
 // VolunteeringHourLogRequest represents a volunteer's request from an organization to log hours.
 type VolunteeringHourLogRequest struct {
 	Model
-	Accepted       bool         `json:"accepted"`
+	Accepted       *bool        `json:"accepted"`
+	Declined       *bool        `json:"declined"`
+	Description    string       `json:"description"`
 	OpportunityID  int64        `json:"opportunityId,omitempty"`
 	Opportunity    Opportunity  `json:"-" gorm:"foreignkey:OpportunityID"`
 	OrganizationID int64        `json:"organizationId,omitempty"`

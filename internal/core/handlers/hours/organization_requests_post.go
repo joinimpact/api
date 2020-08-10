@@ -14,7 +14,8 @@ import (
 // OrganizationRequestsPost requests hours from an organization.
 func OrganizationRequestsPost(hoursService hours.Service, conversationsService conversations.Service) http.HandlerFunc {
 	type request struct {
-		Hours float32 `json:"hours" validate:"min=1,max=100"`
+		Hours       float32 `json:"hours" validate:"min=1,max=100"`
+		Description string  `json:"description" validate:"omitempty,max=512"`
 	}
 	type response struct {
 		MessageID         int64 `json:"messageId"`
@@ -41,7 +42,7 @@ func OrganizationRequestsPost(hoursService hours.Service, conversationsService c
 			return
 		}
 
-		id, err := hoursService.RequestHours(ctx, userID, organizationID, req.Hours)
+		id, err := hoursService.RequestHours(ctx, userID, organizationID, req.Hours, req.Description)
 		if err != nil {
 			switch err.(type) {
 			case *hours.ErrRequestNotFound:

@@ -21,3 +21,13 @@ type MessageTypeVolunteerRequestAcceptance struct {
 type MessageTypeHoursRequested struct {
 	VolunteeringHourLogRequestID int64 `json:"requestId"`
 }
+
+// MessageTypeHoursAccepted represents the message sent when a volunteer's request is accepted.
+type MessageTypeHoursAccepted struct {
+	VolunteeringHourLogRequestID int64 `json:"requestId"`
+}
+
+// MessageTypeHoursDeclined represents the message sent when a volunteer's request is declined.
+type MessageTypeHoursDeclined struct {
+	VolunteeringHourLogRequestID int64 `json:"requestId"`
+}

@@ -3,15 +3,17 @@ package hours
 import (
 	"net/http"
 
+	"github.com/joinimpact/api/internal/conversations"
 	"github.com/joinimpact/api/internal/hours"
 	"github.com/joinimpact/api/pkg/idctx"
 	"github.com/joinimpact/api/pkg/resp"
 )
 
 // OrganizationRequestDeclinePost declines a volunteer's hour request.
-func OrganizationRequestDeclinePost(hoursService hours.Service) http.HandlerFunc {
+func OrganizationRequestDeclinePost(hoursService hours.Service, conversationsService conversations.Service) http.HandlerFunc {
 	type response struct {
-		Success bool `json:"success"`
+		Success   bool  `json:"success"`
+		MessageID int64 `json:"messageId"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -39,8 +41,20 @@ func OrganizationRequestDeclinePost(hoursService hours.Service) http.HandlerFunc
 			return
 		}
 
+		id, err := conversationsService.SendHoursRequestDeclinedMessage(ctx, userID, requestID)
+		if err != nil {
+			switch err.(type) {
+			case *conversations.ErrServerError:
+				resp.ServerError(w, r, resp.APIError(err, nil))
+			default:
+				resp.ServerError(w, r, resp.UnknownError)
+			}
+			return
+		}
+
 		resp.OK(w, r, response{
-			Success: true,
+			Success:   true,
+			MessageID: id,
 		})
 	}
 }

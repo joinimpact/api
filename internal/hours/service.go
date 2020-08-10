@@ -18,7 +18,7 @@ import (
 // Service represents a service for tracking volunteer hours.
 type Service interface {
 	// RequestHours requests hour validation from an organization as a volunteer.
-	RequestHours(ctx context.Context, volunteerID, organizationID int64, requestedHours float32) (int64, error)
+	RequestHours(ctx context.Context, volunteerID, organizationID int64, requestedHours float32, description string) (int64, error)
 	// GetOrganizationRequests gets all volunteer hour requests per organization.
 	GetOrganizationRequests(ctx context.Context, organizationID int64) (*VolunteeringHourLogRequestsResponse, error)
 	// GetOpportunityRequests gets all volunteer hour requests per opportunity.
@@ -68,13 +68,17 @@ func NewService(volunteeringHourLogRepository models.VolunteeringHourLogReposito
 }
 
 // RequestHours requests hour validation from an organization as a volunteer.
-func (s *service) RequestHours(ctx context.Context, volunteerID, organizationID int64, requestedHours float32) (int64, error) {
+func (s *service) RequestHours(ctx context.Context, volunteerID, organizationID int64, requestedHours float32, description string) (int64, error) {
 	volunteeringHourLogRequest := models.VolunteeringHourLogRequest{}
-	volunteeringHourLogRequest.Accepted = false
+	accepted := false
+	volunteeringHourLogRequest.Accepted = &accepted
+	declined := false
+	volunteeringHourLogRequest.Declined = &declined
 	volunteeringHourLogRequest.ID = s.snowflakeService.GenerateID()
 	volunteeringHourLogRequest.VolunteerID = volunteerID
 	volunteeringHourLogRequest.OrganizationID = organizationID
 	volunteeringHourLogRequest.RequestedHours = requestedHours
+	volunteeringHourLogRequest.Description = description
 
 	if err := s.volunteeringHourLogRequestRepository.Create(ctx, volunteeringHourLogRequest); err != nil {
 		return 0, NewErrServerError()
@@ -128,6 +132,10 @@ func (s *service) AcceptRequest(ctx context.Context, granterID, requestID int64)
 		return NewErrRequestNotFound()
 	}
 
+	if *request.Declined || *request.Accepted {
+		return NewErrRequestNotFound()
+	}
+
 	hourLog := models.VolunteeringHourLog{}
 	hourLog.ID = s.snowflakeService.GenerateID()
 	hourLog.VolunteerID = request.VolunteerID
@@ -142,7 +150,12 @@ func (s *service) AcceptRequest(ctx context.Context, granterID, requestID int64)
 		return NewErrServerError()
 	}
 
-	err = s.volunteeringHourLogRequestRepository.DeleteByID(ctx, request.ID)
+	accepted := true
+	request.Accepted = &accepted
+	declined := false
+	request.Declined = &declined
+
+	err = s.volunteeringHourLogRequestRepository.Update(ctx, *request)
 	if err != nil {
 		return NewErrServerError()
 	}
@@ -157,7 +170,14 @@ func (s *service) DeclineRequest(ctx context.Context, granterID, requestID int64
 		return NewErrRequestNotFound()
 	}
 
-	err = s.volunteeringHourLogRequestRepository.DeleteByID(ctx, request.ID)
+	if *request.Declined || *request.Accepted {
+		return NewErrRequestNotFound()
+	}
+
+	declined := true
+	request.Declined = &declined
+
+	err = s.volunteeringHourLogRequestRepository.Update(ctx, *request)
 	if err != nil {
 		return NewErrServerError()
 	}
