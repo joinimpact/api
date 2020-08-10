@@ -456,7 +456,7 @@ func (s *service) parseMessage(ctx context.Context, messageType string, rawMessa
 			return nil, err
 		}
 
-		view, err := s.getMessageVolunteerRequestProfileView(ctx, body.UserID)
+		view, err := s.getMessageVolunteerRequestProfileView(ctx, body.UserID, body.Message)
 		if err != nil {
 			return nil, err
 		}
@@ -527,7 +527,7 @@ func (s *service) parseMessage(ctx context.Context, messageType string, rawMessa
 }
 
 // getMessageVolunteerRequestProfileView gets a MessageVolunteerRequestProfileView for a user by ID.
-func (s *service) getMessageVolunteerRequestProfileView(ctx context.Context, userID int64) (*MessageVolunteerRequestProfileView, error) {
+func (s *service) getMessageVolunteerRequestProfileView(ctx context.Context, userID int64, message string) (*MessageVolunteerRequestProfileView, error) {
 	profile := &MessageVolunteerRequestProfileView{}
 	// Find the user to verify that it is active.
 	user, err := s.userRepository.FindByID(userID)
@@ -540,6 +540,7 @@ func (s *service) getMessageVolunteerRequestProfileView(ctx context.Context, use
 	profile.LastName = user.LastName
 	profile.ProfilePicture = user.ProfilePicture
 	profile.DateOfBirth = user.DateOfBirth
+	profile.Message = message
 
 	// Find all UserTag objects by UserID.
 	userTags, err := s.userTagRepository.FindByUserID(userID)
