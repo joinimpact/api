@@ -38,6 +38,7 @@ type MessageVolunteerRequestProfileView struct {
 	Tags               []models.Tag              `json:"tags"`                             // the user's tags
 	Location           *location.Location        `json:"location,omitempty" scope:"owner"` // a formatted location
 	ProfileFields      []models.UserProfileField `json:"profile"`                          // the user's profile fields
+	Message            string                    `json:"message"`
 }
 
 // PreviousExperience represents a user's previous experience.
