@@ -5,6 +5,7 @@ import (
 
 	gsw "github.com/gorilla/websocket"
 	"github.com/joinimpact/api/internal/websocket"
+	"github.com/joinimpact/api/pkg/scopes"
 )
 
 // SessionID is an int64 ID reference to one session/user
@@ -29,8 +30,10 @@ func (s *Session) SendMessage(message websocket.Message) error {
 	message.SequenceNumber = s.SequenceNumber
 	s.SequenceNumber++
 
+	marshaled := scopes.Marshal(scopes.ScopeAuthenticated, message)
+
 	// Push the message to the channel
-	s.Channel <- message
+	s.Channel <- marshaled
 	return nil
 }
 
