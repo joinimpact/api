@@ -3,6 +3,7 @@ package opportunities
 import (
 	"net/http"
 
+	"github.com/joinimpact/api/internal/conversations"
 	"github.com/joinimpact/api/internal/core/middleware/auth"
 	"github.com/joinimpact/api/internal/opportunities"
 	"github.com/joinimpact/api/pkg/idctx"
@@ -10,9 +11,10 @@ import (
 )
 
 // VolunteersAcceptPost accepts a volunteer's request.
-func VolunteersAcceptPost(opportunitiesService opportunities.Service) http.HandlerFunc {
+func VolunteersAcceptPost(opportunitiesService opportunities.Service, conversationsService conversations.Service) http.HandlerFunc {
 	type response struct {
-		Success bool `json:"success"`
+		Success   bool  `json:"success"`
+		MessageID int64 `json:"messageId"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -46,6 +48,22 @@ func VolunteersAcceptPost(opportunitiesService opportunities.Service) http.Handl
 			return
 		}
 
-		resp.OK(w, r, response{true})
+		id, err := conversationsService.SendVolunteerRequestAcceptanceMessage(ctx, volunteerID, userID, opportunityID)
+		if err != nil {
+			switch err.(type) {
+			case *conversations.ErrConversationNotFound, *conversations.ErrUserNotFound:
+				resp.NotFound(w, r, resp.APIError(err, nil))
+			case *conversations.ErrServerError:
+				resp.ServerError(w, r, resp.APIError(err, nil))
+			default:
+				resp.ServerError(w, r, resp.UnknownError)
+			}
+			return
+		}
+
+		resp.OK(w, r, response{
+			Success:   true,
+			MessageID: id,
+		})
 	}
 }
