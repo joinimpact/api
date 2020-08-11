@@ -49,6 +49,8 @@ type Service interface {
 	SendHoursRequestAcceptedMessage(ctx context.Context, userID, requestID int64) (int64, error)
 	// SendHoursRequestDeclinedMessage sends an hours request decline message to a user's organization message.
 	SendHoursRequestDeclinedMessage(ctx context.Context, userID, requestID int64) (int64, error)
+	// SendVolunteerRequestAcceptanceMessage sends a VolunteerRequestAcceptance message based on request ID and opportunity ID.
+	SendVolunteerRequestAcceptanceMessage(ctx context.Context, userID, accepterID, opportunityID int64) (int64, error)
 }
 
 // service represents the internal implementation of the conversations Service.
@@ -469,7 +471,7 @@ func (s *service) parseMessage(ctx context.Context, messageType string, rawMessa
 			return nil, err
 		}
 
-		view, err := s.getMessageVolunteerRequestAcceptance(ctx, body.UserID, body.OpportunityID)
+		view, err := s.getMessageVolunteerRequestAcceptance(ctx, body.UserID, body.AccepterID, body.OpportunityID)
 		if err != nil {
 			return nil, err
 		}
@@ -593,7 +595,7 @@ func (s *service) getMessageVolunteerRequestProfileView(ctx context.Context, use
 }
 
 // getMessageVolunteerRequestAcceptance gets a MessageTypeVolunteerRequestAcceptanceView by user ID and opportunity ID.
-func (s *service) getMessageVolunteerRequestAcceptance(ctx context.Context, userID, opportunityID int64) (*MessageTypeVolunteerRequestAcceptanceView, error) {
+func (s *service) getMessageVolunteerRequestAcceptance(ctx context.Context, userID, accepterID, opportunityID int64) (*MessageTypeVolunteerRequestAcceptanceView, error) {
 	view := &MessageTypeVolunteerRequestAcceptanceView{}
 
 	opportunity, err := s.opportunityRepository.FindByID(ctx, opportunityID)
@@ -601,7 +603,26 @@ func (s *service) getMessageVolunteerRequestAcceptance(ctx context.Context, user
 		return nil, err
 	}
 
-	view.UserID = userID
+	volunteer, err := s.userRepository.FindByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	accepter, err := s.userRepository.FindByID(accepterID)
+	if err != nil {
+		return nil, err
+	}
+
+	view.Volunteer = &MessageUserWithName{
+		ID:        userID,
+		FirstName: volunteer.FirstName,
+		LastName:  volunteer.LastName,
+	}
+	view.Accepter = &MessageUserWithName{
+		ID:        accepterID,
+		FirstName: accepter.FirstName,
+		LastName:  accepter.LastName,
+	}
 	view.OpportunityID = opportunityID
 	view.OpportunityTitle = opportunity.Title
 
@@ -688,7 +709,7 @@ func (s *service) SendHoursRequestAcceptedMessage(ctx context.Context, userID, r
 	message.ConversationID = conversation.ID
 	message.SenderID = userID
 	message.Type = models.MessageTypeHoursAccepted
-	perspective := models.MessageSenderPerspectiveVolunteer
+	perspective := models.MessageSenderPerspectiveOrganization
 
 	message.SenderPerspective = &perspective
 
@@ -729,12 +750,55 @@ func (s *service) SendHoursRequestDeclinedMessage(ctx context.Context, userID, r
 	message.ConversationID = conversation.ID
 	message.SenderID = userID
 	message.Type = models.MessageTypeHoursDeclined
-	perspective := models.MessageSenderPerspectiveVolunteer
+	perspective := models.MessageSenderPerspectiveOrganization
 
 	message.SenderPerspective = &perspective
 
 	messageBody := MessageTypeHoursDeclined{
 		VolunteeringHourLogRequestID: requestID,
+	}
+
+	jsonBytes, err := marshalMessageBody(messageBody)
+	if err != nil {
+		return 0, NewErrServerError()
+	}
+
+	message.Body = *jsonBytes
+	message.Edited = false
+	if err := s.sendMessage(ctx, message); err != nil {
+		s.logger.Error().Err(err).Msg("Error creating message")
+		return 0, NewErrServerError()
+	}
+
+	return message.ID, nil
+}
+
+// SendVolunteerRequestAcceptanceMessage sends a VolunteerRequestAcceptance message based on request ID and opportunity ID.
+func (s *service) SendVolunteerRequestAcceptanceMessage(ctx context.Context, userID, accepterID, opportunityID int64) (int64, error) {
+	opportunity, err := s.opportunityRepository.FindByID(ctx, opportunityID)
+	if err != nil {
+		return 0, NewErrServerError()
+	}
+
+	conversation, err := s.conversationRepository.FindUserOrganizationConversation(ctx, userID, opportunity.OrganizationID)
+	if err != nil {
+		return 0, NewErrConversationNotFound()
+	}
+
+	message := models.Message{}
+	message.ID = s.snowflakeService.GenerateID()
+	message.Timestamp = time.Now()
+	message.ConversationID = conversation.ID
+	message.SenderID = accepterID
+	message.Type = models.MessageTypeVolunteerRequestAcceptance
+	perspective := models.MessageSenderPerspectiveOrganization
+
+	message.SenderPerspective = &perspective
+
+	messageBody := MessageTypeVolunteerRequestAcceptance{
+		UserID:        userID,
+		AccepterID:    accepterID,
+		OpportunityID: opportunityID,
 	}
 
 	jsonBytes, err := marshalMessageBody(messageBody)

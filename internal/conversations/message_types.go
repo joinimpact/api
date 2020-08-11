@@ -14,6 +14,7 @@ type MessageVolunteerRequestProfile struct {
 // MessageTypeVolunteerRequestAcceptance represents the message sent when a user is accepted to an opportunity.
 type MessageTypeVolunteerRequestAcceptance struct {
 	UserID        int64 `json:"userId"`
+	AccepterID    int64 `json:"accepterId"`
 	OpportunityID int64 `json:"opportunityId"`
 }
 

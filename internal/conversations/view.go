@@ -48,9 +48,17 @@ type PreviousExperience struct {
 
 // MessageTypeVolunteerRequestAcceptanceView represents a view of a message containing an opportunity acceptance.
 type MessageTypeVolunteerRequestAcceptanceView struct {
-	UserID           int64  `json:"userId"`
-	OpportunityID    int64  `json:"opportunityId"`
-	OpportunityTitle string `json:"opportunityTitle"`
+	Volunteer        *MessageUserWithName `json:"volunteer"`
+	Accepter         *MessageUserWithName `json:"accepter"`
+	OpportunityID    int64                `json:"opportunityId"`
+	OpportunityTitle string               `json:"opportunityTitle"`
+}
+
+// MessageUserWithName represents a first and last name pair.
+type MessageUserWithName struct {
+	ID        int64  `json:"id"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
 }
 
 // MessageTypeHoursRequestedView represents the message sent when a volunteer requests hours from an organization.
