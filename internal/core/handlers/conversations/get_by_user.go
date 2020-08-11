@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/joinimpact/api/internal/conversations"
-	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/pkg/idctx"
 	"github.com/joinimpact/api/pkg/resp"
 )
@@ -12,8 +11,8 @@ import (
 // GetByUser gets a user's conversations.
 func GetByUser(conversationsService conversations.Service) http.HandlerFunc {
 	type response struct {
-		Conversations []models.Conversation `json:"conversations"`
-		Pages         uint                  `json:"pages"`
+		Conversations []conversations.ConversationView `json:"conversations"`
+		Pages         uint                             `json:"pages"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()

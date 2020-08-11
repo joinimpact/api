@@ -9,6 +9,7 @@ import (
 	"github.com/joinimpact/api/internal/database/postgres"
 	"github.com/joinimpact/api/internal/email"
 	"github.com/joinimpact/api/internal/events"
+	"github.com/joinimpact/api/internal/hours"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/joinimpact/api/internal/opportunities"
 	"github.com/joinimpact/api/internal/organizations"
@@ -86,6 +87,7 @@ func main() {
 		&models.Tag{},
 		&models.ThirdPartyIdentity{},
 		&models.VolunteeringHourLog{},
+		&models.VolunteeringHourLogRequest{},
 	)
 	if err != nil {
 		// Error migrating the database, panic.
@@ -134,6 +136,8 @@ func main() {
 	messageRepository := postgres.NewMessageRepository(db, &log.Logger)
 	eventRepository := postgres.NewEventRepository(db, &log.Logger)
 	eventResponseRepository := postgres.NewEventResponseRepository(db, &log.Logger)
+	volunteeringHourLogRepository := postgres.NewVolunteeringHourLogRepository(db, &log.Logger)
+	volunteeringHourLogRequestRepository := postgres.NewVolunteeringHourLogRequestRepository(db, &log.Logger)
 
 	// Elastic client
 	elasticClient, err := search.NewElasticsearch(config.ElasticHost, config.ElasticPort)
@@ -156,8 +160,10 @@ func main() {
 	organizationsService := organizations.NewService(organizationRepository, organizationMembershipRepository, organizationMembershipInviteRepository, organizationProfileFieldRepository, organizationTagRepository, userRepository, tagRepository, config, &log.Logger, snowflakeService, emailService, locationService)
 	opportunitiesService := opportunities.NewService(opportunityRepository, opportunityRequirementsRepository, opportunityLimitsRepository, opportunityTagRepository, opportunityMembershipRepository, opportunityMembershipRequestRepository, opportunityMembershipInviteRepository, tagRepository, userRepository, userTagRepository, organizationRepository, config, &log.Logger, snowflakeService, emailService, opportunitiesSearchService, locationService)
 	eventsService := events.NewService(eventRepository, eventResponseRepository, opportunityMembershipRepository, tagRepository, config, &log.Logger, snowflakeService, emailService, locationService)
-	conversationsService := conversations.NewService(conversationRepository, conversationMembershipRepository, conversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository, messageRepository, opportunityRepository, userRepository, userProfileFieldRepository, userTagRepository, tagRepository, config, &log.Logger, snowflakeService, emailService, broker, locationService)
+	conversationsService := conversations.NewService(conversationRepository, conversationMembershipRepository, conversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository, messageRepository, opportunityRepository, userRepository, userProfileFieldRepository, userTagRepository, tagRepository, volunteeringHourLogRequestRepository, config, &log.Logger, snowflakeService, emailService, broker, locationService)
 	tagsService := tags.NewService(tagRepository, config, &log.Logger, snowflakeService)
+	hoursService := hours.NewService(volunteeringHourLogRepository, volunteeringHourLogRequestRepository, opportunityRepository, organizationRepository,
+		userRepository, eventRepository, config, &log.Logger, snowflakeService, emailService, broker, locationService)
 
 	// WebSocket services
 	wsHub := hub.NewHub(hub.Options{})
@@ -167,7 +173,7 @@ func main() {
 	websocketService := socketserver.NewService(wsManager)
 
 	// Create a new app using the new config.
-	app := core.NewApp(config, &log.Logger, websocketService, authenticationService, usersService, organizationsService, tagsService, opportunitiesService, eventsService, conversationsService)
+	app := core.NewApp(config, &log.Logger, websocketService, authenticationService, usersService, organizationsService, tagsService, opportunitiesService, eventsService, conversationsService, hoursService)
 
 	// Print a message.
 	log.Info().Int("port", int(config.Port)).Str("version", APIVersion).Msg("Listening")

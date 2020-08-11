@@ -34,15 +34,23 @@ type Service interface {
 	// GetUserConversations gets all of a user's conversations.
 	GetUserConversations(ctx context.Context, userID int64) (*ConversationsResponse, error)
 	// GetUserConversation gets a single conversation from a user perspective.
-	GetUserConversation(ctx context.Context, conversationID int64) (*models.Conversation, error)
+	GetUserConversation(ctx context.Context, conversationID int64) (*ConversationView, error)
 	// GetOrganizationConversations gets an organization's internal conversations.
 	GetOrganizationConversations(ctx context.Context, organizationID int64) (*ConversationsResponse, error)
 	// GetOrganizationConversation gets a single conversation from a conversation perspective.
-	GetOrganizationConversation(ctx context.Context, conversationID int64) (*models.Conversation, error)
+	GetOrganizationConversation(ctx context.Context, conversationID int64) (*ConversationView, error)
 	// SendStandardMessage sends a standard message to a conversation, returning the ID on success.
 	SendStandardMessage(ctx context.Context, conversationID, senderID int64, messageText string, asOrganization bool) (int64, error)
 	// GetConversationMessages gets messages by conversation ID.
 	GetConversationMessages(ctx context.Context, conversationID int64) (*ConversationMessagesResponse, error)
+	// SendHoursRequestMessage sends an hours request message to a user's organization message.
+	SendHoursRequestMessage(ctx context.Context, userID, organizationID, requestID int64) (int64, error)
+	// SendHoursRequestAcceptedMessage sends an hours request accept message to a user's organization message.
+	SendHoursRequestAcceptedMessage(ctx context.Context, userID, requestID int64) (int64, error)
+	// SendHoursRequestDeclinedMessage sends an hours request decline message to a user's organization message.
+	SendHoursRequestDeclinedMessage(ctx context.Context, userID, requestID int64) (int64, error)
+	// SendVolunteerRequestAcceptanceMessage sends a VolunteerRequestAcceptance message based on request ID and opportunity ID.
+	SendVolunteerRequestAcceptanceMessage(ctx context.Context, userID, accepterID, opportunityID int64) (int64, error)
 }
 
 // service represents the internal implementation of the conversations Service.
@@ -57,6 +65,7 @@ type service struct {
 	userProfileFieldRepository                         models.UserProfileFieldRepository
 	userTagRepository                                  models.UserTagRepository
 	tagRepository                                      models.TagRepository
+	volunteeringHourLogRequestRepository               models.VolunteeringHourLogRequestRepository
 	config                                             *config.Config
 	logger                                             *zerolog.Logger
 	snowflakeService                                   snowflakes.SnowflakeService
@@ -67,7 +76,7 @@ type service struct {
 }
 
 // NewService creates and returns a new conversations.Service.
-func NewService(conversationRepository models.ConversationRepository, conversationMembershipRepository models.ConversationMembershipRepository, conversationOpportunityMembershipRequestRepository models.ConversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository models.ConversationOrganizationMembershipRepository, messageRepository models.MessageRepository, opportunityRepository models.OpportunityRepository, userRepository models.UserRepository, userProfileFieldRepository models.UserProfileFieldRepository, userTagRepository models.UserTagRepository, tagRepository models.TagRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service, broker pubsub.Broker, locationService location.Service) Service {
+func NewService(conversationRepository models.ConversationRepository, conversationMembershipRepository models.ConversationMembershipRepository, conversationOpportunityMembershipRequestRepository models.ConversationOpportunityMembershipRequestRepository, conversationOrganizationMembershipRepository models.ConversationOrganizationMembershipRepository, messageRepository models.MessageRepository, opportunityRepository models.OpportunityRepository, userRepository models.UserRepository, userProfileFieldRepository models.UserProfileFieldRepository, userTagRepository models.UserTagRepository, tagRepository models.TagRepository, volunteeringHourLogRequestRepository models.VolunteeringHourLogRequestRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service, broker pubsub.Broker, locationService location.Service) Service {
 	return &service{
 		conversationRepository,
 		conversationMembershipRepository,
@@ -79,6 +88,7 @@ func NewService(conversationRepository models.ConversationRepository, conversati
 		userProfileFieldRepository,
 		userTagRepository,
 		tagRepository,
+		volunteeringHourLogRequestRepository,
 		config,
 		logger,
 		snowflakeService,
@@ -130,6 +140,7 @@ func (s *service) CreateOpportunityMembershipRequestConversation(ctx context.Con
 	message.SenderID = volunteerID
 	message.ID = s.snowflakeService.GenerateID()
 	message.Type = models.MessageTypeVolunteerRequestProfile
+	message.Timestamp = time.Now()
 	message.Edited = false
 	messageBody := MessageVolunteerRequestProfile{
 		Message: messageStr,
@@ -165,8 +176,8 @@ func (s *service) GetUserConversationMemberships(userID int64) ([]models.Convers
 
 // ConversationsResponse contains conversations and total number of pages.
 type ConversationsResponse struct {
-	Conversations []models.Conversation `json:"conversations"`
-	Pages         uint                  `json:"pages"`
+	Conversations []ConversationView `json:"conversations"`
+	Pages         uint               `json:"pages"`
 }
 
 // GetUserConversations gets all of a user's conversations.
@@ -188,26 +199,44 @@ func (s *service) GetUserConversations(ctx context.Context, userID int64) (*Conv
 		return nil, NewErrServerError()
 	}
 
-	for i := 0; i < len(res.Conversations); i++ {
-		res.Conversations[i].Name = res.Conversations[i].Organization.Name
-		res.Conversations[i].ProfilePicture = res.Conversations[i].Organization.ProfilePicture
+	views := []ConversationView{}
+
+	for _, conversation := range res.Conversations {
+		view := ConversationView{
+			Conversation: conversation,
+		}
+
+		view.Conversation.Name = conversation.Organization.Name
+		view.Conversation.ProfilePicture = conversation.Organization.ProfilePicture
+		// Temporary dummy value
+		view.UnreadCount = 0
+		view.LastMessageView, _ = s.messageToView(ctx, conversation.LastMessage)
+
+		views = append(views, view)
 	}
 
 	return &ConversationsResponse{
-		Conversations: res.Conversations,
+		Conversations: views,
 		Pages:         uint(res.TotalResults/dbctx.Get(ctx).Limit) + 1,
 	}, nil
 }
 
 // GetUserConversation gets a single conversation from a user perspective.
-func (s *service) GetUserConversation(ctx context.Context, conversationID int64) (*models.Conversation, error) {
+func (s *service) GetUserConversation(ctx context.Context, conversationID int64) (*ConversationView, error) {
 	conversation, err := s.conversationRepository.FindByID(conversationID)
 	if err != nil {
 		return nil, NewErrConversationNotFound()
 	}
 
-	conversation.Name = conversation.Organization.Name
-	conversation.ProfilePicture = conversation.Organization.ProfilePicture
+	view := &ConversationView{
+		Conversation: *conversation,
+	}
+
+	view.Conversation.Name = conversation.Organization.Name
+	view.Conversation.ProfilePicture = conversation.Organization.ProfilePicture
+	// Temporary dummy value
+	view.UnreadCount = 0
+	view.LastMessageView, _ = s.messageToView(ctx, conversation.LastMessage)
 
 	requests, err := s.conversationOpportunityMembershipRequestRepository.FindByConversationID(conversationID)
 	if err != nil {
@@ -215,12 +244,15 @@ func (s *service) GetUserConversation(ctx context.Context, conversationID int64)
 	}
 
 	for _, request := range requests {
-		if request.OpportunityMembershipRequest != nil {
-			conversation.OpportunityMembershipRequests = append(conversation.OpportunityMembershipRequests, *request.OpportunityMembershipRequest)
+		if request.OpportunityMembershipRequest == nil {
+			s.logger.Warn().Msgf("ConversationOpportunityMembershipRequest %d linked to missing OpportunityMembershipRequest", request.ID)
+			continue
 		}
+
+		view.Conversation.OpportunityMembershipRequests = append(conversation.OpportunityMembershipRequests, *request.OpportunityMembershipRequest)
 	}
 
-	return conversation, nil
+	return view, nil
 }
 
 // GetOrganizationConversations gets an organization's internal conversations.
@@ -231,8 +263,14 @@ func (s *service) GetOrganizationConversations(ctx context.Context, organization
 		return nil, NewErrServerError()
 	}
 
-	for i := 0; i < len(res.Conversations); i++ {
-		memberships, err := s.conversationMembershipRepository.FindByConversationID(res.Conversations[i].ID)
+	views := []ConversationView{}
+
+	for _, conversation := range res.Conversations {
+		view := ConversationView{
+			Conversation: conversation,
+		}
+
+		memberships, err := s.conversationMembershipRepository.FindByConversationID(conversation.ID)
 		if err != nil {
 			continue
 		}
@@ -241,27 +279,37 @@ func (s *service) GetOrganizationConversations(ctx context.Context, organization
 			continue
 		}
 
-		res.Conversations[i].Name = fmt.Sprintf("%s %s", memberships[0].User.FirstName, memberships[0].User.LastName)
-		res.Conversations[i].ProfilePicture = memberships[0].User.ProfilePicture
+		view.Conversation.Name = fmt.Sprintf("%s %s", memberships[0].User.FirstName, memberships[0].User.LastName)
+		view.Conversation.ProfilePicture = memberships[0].User.ProfilePicture
+
+		// Temporary dummy value
+		view.UnreadCount = 0
+		view.LastMessageView, _ = s.messageToView(ctx, conversation.LastMessage)
+
+		views = append(views, view)
 	}
 
 	return &ConversationsResponse{
-		Conversations: res.Conversations,
+		Conversations: views,
 		Pages:         uint(res.TotalResults/dbctx.Get(ctx).Limit) + 1,
 	}, nil
 }
 
 // GetOrganizationConversation gets a single conversation from a conversation perspective.
-func (s *service) GetOrganizationConversation(ctx context.Context, conversationID int64) (*models.Conversation, error) {
+func (s *service) GetOrganizationConversation(ctx context.Context, conversationID int64) (*ConversationView, error) {
 	conversation, err := s.conversationRepository.FindByID(conversationID)
 	if err != nil {
 		return nil, NewErrConversationNotFound()
 	}
 
+	view := &ConversationView{
+		Conversation: *conversation,
+	}
+
 	memberships, err := s.conversationMembershipRepository.FindByConversationID(conversation.ID)
 	if err == nil && len(memberships) < 1 {
-		conversation.Name = fmt.Sprintf("%s %s", memberships[0].User.FirstName, memberships[0].User.LastName)
-		conversation.ProfilePicture = memberships[0].User.ProfilePicture
+		view.Conversation.Name = fmt.Sprintf("%s %s", memberships[0].User.FirstName, memberships[0].User.LastName)
+		view.Conversation.ProfilePicture = memberships[0].User.ProfilePicture
 	}
 
 	requests, err := s.conversationOpportunityMembershipRequestRepository.FindByConversationID(conversationID)
@@ -270,10 +318,15 @@ func (s *service) GetOrganizationConversation(ctx context.Context, conversationI
 	}
 
 	for _, request := range requests {
-		conversation.OpportunityMembershipRequests = append(conversation.OpportunityMembershipRequests, *request.OpportunityMembershipRequest)
+		if request.OpportunityMembershipRequest == nil {
+			s.logger.Warn().Msgf("ConversationOpportunityMembershipRequest %d linked to missing OpportunityMembershipRequest", request.ID)
+			continue
+		}
+
+		view.Conversation.OpportunityMembershipRequests = append(conversation.OpportunityMembershipRequests, *request.OpportunityMembershipRequest)
 	}
 
-	return conversation, nil
+	return view, nil
 }
 
 // SendStandardMessage sends a standard message to a conversation, returning the ID on success.
@@ -405,7 +458,7 @@ func (s *service) parseMessage(ctx context.Context, messageType string, rawMessa
 			return nil, err
 		}
 
-		view, err := s.getMessageVolunteerRequestProfileView(ctx, body.UserID)
+		view, err := s.getMessageVolunteerRequestProfileView(ctx, body.UserID, body.Message)
 		if err != nil {
 			return nil, err
 		}
@@ -418,7 +471,46 @@ func (s *service) parseMessage(ctx context.Context, messageType string, rawMessa
 			return nil, err
 		}
 
-		view, err := s.getMessageVolunteerRequestAcceptance(ctx, body.UserID, body.OpportunityID)
+		view, err := s.getMessageVolunteerRequestAcceptance(ctx, body.UserID, body.AccepterID, body.OpportunityID)
+		if err != nil {
+			return nil, err
+		}
+
+		return view, nil
+	case models.MessageTypeHoursRequested:
+		body := MessageTypeHoursRequested{}
+		err := json.Unmarshal(rawMessage, &body)
+		if err != nil {
+			return nil, err
+		}
+
+		view, err := s.getMessageTypeHoursRequestedView(ctx, body.VolunteeringHourLogRequestID)
+		if err != nil {
+			return nil, err
+		}
+
+		return view, nil
+	case models.MessageTypeHoursAccepted:
+		body := MessageTypeHoursAccepted{}
+		err := json.Unmarshal(rawMessage, &body)
+		if err != nil {
+			return nil, err
+		}
+
+		view, err := s.getMessageTypeHoursRequestedView(ctx, body.VolunteeringHourLogRequestID)
+		if err != nil {
+			return nil, err
+		}
+
+		return view, nil
+	case models.MessageTypeHoursDeclined:
+		body := MessageTypeHoursDeclined{}
+		err := json.Unmarshal(rawMessage, &body)
+		if err != nil {
+			return nil, err
+		}
+
+		view, err := s.getMessageTypeHoursRequestedView(ctx, body.VolunteeringHourLogRequestID)
 		if err != nil {
 			return nil, err
 		}
@@ -437,7 +529,7 @@ func (s *service) parseMessage(ctx context.Context, messageType string, rawMessa
 }
 
 // getMessageVolunteerRequestProfileView gets a MessageVolunteerRequestProfileView for a user by ID.
-func (s *service) getMessageVolunteerRequestProfileView(ctx context.Context, userID int64) (*MessageVolunteerRequestProfileView, error) {
+func (s *service) getMessageVolunteerRequestProfileView(ctx context.Context, userID int64, message string) (*MessageVolunteerRequestProfileView, error) {
 	profile := &MessageVolunteerRequestProfileView{}
 	// Find the user to verify that it is active.
 	user, err := s.userRepository.FindByID(userID)
@@ -450,6 +542,7 @@ func (s *service) getMessageVolunteerRequestProfileView(ctx context.Context, use
 	profile.LastName = user.LastName
 	profile.ProfilePicture = user.ProfilePicture
 	profile.DateOfBirth = user.DateOfBirth
+	profile.Message = message
 
 	// Find all UserTag objects by UserID.
 	userTags, err := s.userTagRepository.FindByUserID(userID)
@@ -502,7 +595,7 @@ func (s *service) getMessageVolunteerRequestProfileView(ctx context.Context, use
 }
 
 // getMessageVolunteerRequestAcceptance gets a MessageTypeVolunteerRequestAcceptanceView by user ID and opportunity ID.
-func (s *service) getMessageVolunteerRequestAcceptance(ctx context.Context, userID, opportunityID int64) (*MessageTypeVolunteerRequestAcceptanceView, error) {
+func (s *service) getMessageVolunteerRequestAcceptance(ctx context.Context, userID, accepterID, opportunityID int64) (*MessageTypeVolunteerRequestAcceptanceView, error) {
 	view := &MessageTypeVolunteerRequestAcceptanceView{}
 
 	opportunity, err := s.opportunityRepository.FindByID(ctx, opportunityID)
@@ -510,9 +603,42 @@ func (s *service) getMessageVolunteerRequestAcceptance(ctx context.Context, user
 		return nil, err
 	}
 
-	view.UserID = userID
+	volunteer, err := s.userRepository.FindByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	accepter, err := s.userRepository.FindByID(accepterID)
+	if err != nil {
+		return nil, err
+	}
+
+	view.Volunteer = &MessageUserWithName{
+		ID:        userID,
+		FirstName: volunteer.FirstName,
+		LastName:  volunteer.LastName,
+	}
+	view.Accepter = &MessageUserWithName{
+		ID:        accepterID,
+		FirstName: accepter.FirstName,
+		LastName:  accepter.LastName,
+	}
 	view.OpportunityID = opportunityID
 	view.OpportunityTitle = opportunity.Title
+
+	return view, nil
+}
+
+// getMessageTypeHoursRequestedView gets a MessageTypeHoursRequestedView by request ID.
+func (s *service) getMessageTypeHoursRequestedView(ctx context.Context, requestID int64) (*MessageTypeHoursRequestedView, error) {
+	view := &MessageTypeHoursRequestedView{}
+
+	request, err := s.volunteeringHourLogRequestRepository.FindByID(ctx, requestID)
+	if err != nil {
+		return nil, err
+	}
+
+	view.VolunteeringHourLogRequest = *request
 
 	return view, nil
 }
@@ -527,4 +653,165 @@ func marshalMessageBody(body interface{}) (*postgres.Jsonb, error) {
 	return &postgres.Jsonb{
 		RawMessage: json.RawMessage(jsonBytes),
 	}, nil
+}
+
+// SendHoursRequestMessage sends an hours request message to a user's organization message.
+func (s *service) SendHoursRequestMessage(ctx context.Context, userID, organizationID, requestID int64) (int64, error) {
+	conversation, err := s.conversationRepository.FindUserOrganizationConversation(ctx, userID, organizationID)
+	if err != nil {
+		return 0, NewErrConversationNotFound()
+	}
+
+	message := models.Message{}
+	message.ID = s.snowflakeService.GenerateID()
+	message.Timestamp = time.Now()
+	message.ConversationID = conversation.ID
+	message.SenderID = userID
+	message.Type = models.MessageTypeHoursRequested
+	perspective := models.MessageSenderPerspectiveVolunteer
+
+	message.SenderPerspective = &perspective
+
+	messageBody := MessageTypeHoursRequested{
+		VolunteeringHourLogRequestID: requestID,
+	}
+
+	jsonBytes, err := marshalMessageBody(messageBody)
+	if err != nil {
+		return 0, NewErrServerError()
+	}
+
+	message.Body = *jsonBytes
+	message.Edited = false
+	if err := s.sendMessage(ctx, message); err != nil {
+		s.logger.Error().Err(err).Msg("Error creating message")
+		return 0, NewErrServerError()
+	}
+
+	return message.ID, nil
+}
+
+// SendHoursRequestAcceptedMessage sends an hours request accept message to a user's organization message.
+func (s *service) SendHoursRequestAcceptedMessage(ctx context.Context, userID, requestID int64) (int64, error) {
+	request, err := s.volunteeringHourLogRequestRepository.FindByID(ctx, requestID)
+	if err != nil {
+		return 0, NewErrServerError()
+	}
+
+	conversation, err := s.conversationRepository.FindUserOrganizationConversation(ctx, request.VolunteerID, request.OrganizationID)
+	if err != nil {
+		return 0, NewErrConversationNotFound()
+	}
+
+	message := models.Message{}
+	message.ID = s.snowflakeService.GenerateID()
+	message.Timestamp = time.Now()
+	message.ConversationID = conversation.ID
+	message.SenderID = userID
+	message.Type = models.MessageTypeHoursAccepted
+	perspective := models.MessageSenderPerspectiveOrganization
+
+	message.SenderPerspective = &perspective
+
+	messageBody := MessageTypeHoursAccepted{
+		VolunteeringHourLogRequestID: requestID,
+	}
+
+	jsonBytes, err := marshalMessageBody(messageBody)
+	if err != nil {
+		return 0, NewErrServerError()
+	}
+
+	message.Body = *jsonBytes
+	message.Edited = false
+	if err := s.sendMessage(ctx, message); err != nil {
+		s.logger.Error().Err(err).Msg("Error creating message")
+		return 0, NewErrServerError()
+	}
+
+	return message.ID, nil
+}
+
+// SendHoursRequestDeclinedMessage sends an hours request accept message to a user's organization message.
+func (s *service) SendHoursRequestDeclinedMessage(ctx context.Context, userID, requestID int64) (int64, error) {
+	request, err := s.volunteeringHourLogRequestRepository.FindByID(ctx, requestID)
+	if err != nil {
+		return 0, NewErrServerError()
+	}
+
+	conversation, err := s.conversationRepository.FindUserOrganizationConversation(ctx, request.VolunteerID, request.OrganizationID)
+	if err != nil {
+		return 0, NewErrConversationNotFound()
+	}
+
+	message := models.Message{}
+	message.ID = s.snowflakeService.GenerateID()
+	message.Timestamp = time.Now()
+	message.ConversationID = conversation.ID
+	message.SenderID = userID
+	message.Type = models.MessageTypeHoursDeclined
+	perspective := models.MessageSenderPerspectiveOrganization
+
+	message.SenderPerspective = &perspective
+
+	messageBody := MessageTypeHoursDeclined{
+		VolunteeringHourLogRequestID: requestID,
+	}
+
+	jsonBytes, err := marshalMessageBody(messageBody)
+	if err != nil {
+		return 0, NewErrServerError()
+	}
+
+	message.Body = *jsonBytes
+	message.Edited = false
+	if err := s.sendMessage(ctx, message); err != nil {
+		s.logger.Error().Err(err).Msg("Error creating message")
+		return 0, NewErrServerError()
+	}
+
+	return message.ID, nil
+}
+
+// SendVolunteerRequestAcceptanceMessage sends a VolunteerRequestAcceptance message based on request ID and opportunity ID.
+func (s *service) SendVolunteerRequestAcceptanceMessage(ctx context.Context, userID, accepterID, opportunityID int64) (int64, error) {
+	opportunity, err := s.opportunityRepository.FindByID(ctx, opportunityID)
+	if err != nil {
+		return 0, NewErrServerError()
+	}
+
+	conversation, err := s.conversationRepository.FindUserOrganizationConversation(ctx, userID, opportunity.OrganizationID)
+	if err != nil {
+		return 0, NewErrConversationNotFound()
+	}
+
+	message := models.Message{}
+	message.ID = s.snowflakeService.GenerateID()
+	message.Timestamp = time.Now()
+	message.ConversationID = conversation.ID
+	message.SenderID = accepterID
+	message.Type = models.MessageTypeVolunteerRequestAcceptance
+	perspective := models.MessageSenderPerspectiveOrganization
+
+	message.SenderPerspective = &perspective
+
+	messageBody := MessageTypeVolunteerRequestAcceptance{
+		UserID:        userID,
+		AccepterID:    accepterID,
+		OpportunityID: opportunityID,
+	}
+
+	jsonBytes, err := marshalMessageBody(messageBody)
+	if err != nil {
+		return 0, NewErrServerError()
+	}
+
+	message.Body = *jsonBytes
+	message.Edited = false
+	if err := s.sendMessage(ctx, message); err != nil {
+		s.logger.Error().Err(err).Msg("Error creating message")
+		return 0, NewErrServerError()
+	}
+
+	return message.ID, nil
 }

@@ -7,6 +7,13 @@ import (
 	"github.com/joinimpact/api/pkg/location"
 )
 
+// ConversationView represents a view of a conversation.
+type ConversationView struct {
+	models.Conversation
+	LastMessageView *MessageView `json:"lastMessage"`
+	UnreadCount     int          `json:"unreadCount"`
+}
+
 // MessageView represents a view of a message.
 type MessageView struct {
 	ID                int64       `json:"id"`
@@ -31,6 +38,7 @@ type MessageVolunteerRequestProfileView struct {
 	Tags               []models.Tag              `json:"tags"`                             // the user's tags
 	Location           *location.Location        `json:"location,omitempty" scope:"owner"` // a formatted location
 	ProfileFields      []models.UserProfileField `json:"profile"`                          // the user's profile fields
+	Message            string                    `json:"message"`
 }
 
 // PreviousExperience represents a user's previous experience.
@@ -40,7 +48,30 @@ type PreviousExperience struct {
 
 // MessageTypeVolunteerRequestAcceptanceView represents a view of a message containing an opportunity acceptance.
 type MessageTypeVolunteerRequestAcceptanceView struct {
-	UserID           int64  `json:"userId"`
-	OpportunityID    int64  `json:"opportunityId"`
-	OpportunityTitle string `json:"opportunityTitle"`
+	Volunteer        *MessageUserWithName `json:"volunteer"`
+	Accepter         *MessageUserWithName `json:"accepter"`
+	OpportunityID    int64                `json:"opportunityId"`
+	OpportunityTitle string               `json:"opportunityTitle"`
+}
+
+// MessageUserWithName represents a first and last name pair.
+type MessageUserWithName struct {
+	ID        int64  `json:"id"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+}
+
+// MessageTypeHoursRequestedView represents the message sent when a volunteer requests hours from an organization.
+type MessageTypeHoursRequestedView struct {
+	models.VolunteeringHourLogRequest
+}
+
+// MessageTypeHoursAcceptedView represents the message sent when a volunteer's request is accepted.
+type MessageTypeHoursAcceptedView struct {
+	models.VolunteeringHourLogRequest
+}
+
+// MessageTypeHoursDeclinedView represents the message sent when a volunteer's request is declined.
+type MessageTypeHoursDeclinedView struct {
+	models.VolunteeringHourLogRequest
 }

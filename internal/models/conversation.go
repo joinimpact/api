@@ -10,8 +10,9 @@ type Conversation struct {
 	ProfilePicture                string                         `json:"profilePicture" gorm:"-"`
 	OpportunityMembershipRequests []OpportunityMembershipRequest `json:"membershipRequests,omitempty" gorm:"-"`
 	CreatorID                     int64                          `json:"creatorId"`
-	OrganizationID                int64                          `json:"organizationID"`
+	OrganizationID                int64                          `json:"organizationId"`
 	Organization                  Organization                   `json:"-"`
+	LastMessage                   Message                        `json:"-"`
 	Type                          int                            `json:"type"`
 }
 
@@ -31,6 +32,8 @@ type ConversationRepository interface {
 	FindByCreatorID(creatorID int64) ([]Conversation, error)
 	// FindByOrganizationID finds multiple entities by the organization ID.
 	FindByOrganizationID(ctx context.Context, organizationID int64) (*ConversationsResponse, error)
+	// FindUserOrganizationConversation finds a user's conversation with an organization.
+	FindUserOrganizationConversation(ctx context.Context, userID, organizationID int64) (*Conversation, error)
 	// Create creates a new entity.
 	Create(conversation Conversation) error
 	// Update updates an entity with the ID in the provided entity.

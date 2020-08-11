@@ -13,6 +13,7 @@ import (
 	"github.com/joinimpact/api/internal/conversations"
 	authm "github.com/joinimpact/api/internal/core/middleware/auth"
 	"github.com/joinimpact/api/internal/events"
+	"github.com/joinimpact/api/internal/hours"
 	"github.com/joinimpact/api/internal/opportunities"
 	"github.com/joinimpact/api/internal/organizations"
 	"github.com/joinimpact/api/internal/tags"
@@ -36,10 +37,11 @@ type App struct {
 	opportunitiesService  opportunities.Service
 	eventsService         events.Service
 	conversationsService  conversations.Service
+	hoursService          hours.Service
 }
 
 // NewApp creates and returns a new *App with the provided Config.
-func NewApp(config *config.Config, logger *zerolog.Logger, websocketService socketserver.Service, authenticationService authentication.Service, usersService users.Service, organizationsService organizations.Service, tagsService tags.Service, opportunitiesService opportunities.Service, eventsService events.Service, conversationsService conversations.Service) *App {
+func NewApp(config *config.Config, logger *zerolog.Logger, websocketService socketserver.Service, authenticationService authentication.Service, usersService users.Service, organizationsService organizations.Service, tagsService tags.Service, opportunitiesService opportunities.Service, eventsService events.Service, conversationsService conversations.Service, hoursService hours.Service) *App {
 	return &App{
 		config,
 		logger,
@@ -51,6 +53,7 @@ func NewApp(config *config.Config, logger *zerolog.Logger, websocketService sock
 		opportunitiesService,
 		eventsService,
 		conversationsService,
+		hoursService,
 	}
 }
 
