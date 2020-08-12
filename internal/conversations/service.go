@@ -395,8 +395,9 @@ func (s *service) brokerPublishMessageSent(message models.Message) error {
 
 // ConversationMessagesResponse represents a response containing messages and paging information.
 type ConversationMessagesResponse struct {
-	Messages []MessageView `json:"messages"`
-	Pages    uint          `json:"pages"`
+	Messages     []MessageView `json:"messages"`
+	Pages        uint          `json:"pages"`
+	TotalResults uint          `json:"totalResults"`
 }
 
 // GetConversationMessages gets messages by conversation ID.
@@ -420,8 +421,9 @@ func (s *service) GetConversationMessages(ctx context.Context, conversationID in
 	}
 
 	return &ConversationMessagesResponse{
-		Messages: views,
-		Pages:    uint(res.TotalResults/dbctx.Get(ctx).Limit) + 1,
+		Messages:     views,
+		Pages:        uint(res.TotalResults/dbctx.Get(ctx).Limit) + 1,
+		TotalResults: uint(res.TotalResults),
 	}, nil
 }
 
