@@ -140,7 +140,7 @@ func (s *service) GetOrganizationOpportunities(ctx context.Context, organization
 	}
 
 	for _, opportunity := range opportunities {
-		view, err := s.GetOpportunity(ctx, opportunity.ID)
+		view, err := s.getOpportunityView(ctx, &opportunity)
 		if err != nil {
 			continue
 		}
