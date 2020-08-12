@@ -104,6 +104,10 @@ func (s *service) claimsFromToken(token string) (*jwtClaims, error) {
 		return []byte(secret), nil
 	})
 
+	if err != nil {
+		return nil, err
+	}
+
 	if claims, ok := jwt.Claims.(*jwtClaims); ok && jwt.Valid {
 		return claims, nil
 	}
