@@ -6119,6 +6119,229 @@
           }
         }
       }
+    },
+    "/organizations/{organizationId}/hours/requests": {
+      "post": {
+        "tags": [
+          "Organizations"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "description": "The ID of the organization.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "summary": "Sends a request to an organization for verification of hours as a volunteer. The request will be sent in the user's conversation with the organization.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "hours"
+                ],
+                "properties": {
+                  "hours": {
+                    "type": "number",
+                    "description": "Number of hours being asked for (can have a decimal).",
+                    "example": 4.5
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "The reason why the user is requesting the hours.",
+                    "example": "Watching birds on the weekend"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! The request was submitted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "required": [
+                        "messageId",
+                        "success"
+                      ],
+                      "properties": {
+                        "hoursLogRequestId": {
+                          "type": "string",
+                          "example": "1292710783133683712"
+                        },
+                        "messageId": {
+                          "type": "string",
+                          "example": "1292710853128228864"
+                        },
+                        "success": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      },
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Organization not found."
+          },
+          "400": {
+            "description": "Bad request."
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/hours/requests/{requestId}/accept": {
+      "post": {
+        "tags": [
+          "Organizations"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "description": "The ID of the organization.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "requestId",
+            "description": "The ID of the hours logging request.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "summary": "Accepts a volunteer's hour logging request. Requires manager status.",
+        "responses": {
+          "200": {
+            "description": "Success! The request was accepted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "required": [
+                        "messageId",
+                        "success"
+                      ],
+                      "properties": {
+                        "messageId": {
+                          "type": "string",
+                          "example": "1292710853128228864"
+                        },
+                        "success": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      },
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The request was not found."
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/hours/requests/{requestId}/decline": {
+      "post": {
+        "tags": [
+          "Organizations"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "description": "The ID of the organization.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "requestId",
+            "description": "The ID of the hours logging request.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "summary": "Declines a volunteer's hour logging request. Requires manager status.",
+        "responses": {
+          "200": {
+            "description": "Success! The request was declined.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "required": [
+                        "messageId",
+                        "success"
+                      ],
+                      "properties": {
+                        "messageId": {
+                          "type": "string",
+                          "example": "1292710853128228864"
+                        },
+                        "success": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      },
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The request was not found."
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
     }
   }
 }
