@@ -19,7 +19,7 @@ func OrganizationRequestsPost(hoursService hours.Service, conversationsService c
 	}
 	type response struct {
 		MessageID         int64 `json:"messageId"`
-		HoursLogRequestID int64 `json:"hoursLogRequestID"`
+		HoursLogRequestID int64 `json:"hoursLogRequestId"`
 		Success           bool  `json:"success"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
