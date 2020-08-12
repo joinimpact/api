@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/joinimpact/api/internal/authentication"
 	"github.com/joinimpact/api/internal/config"
 	"github.com/joinimpact/api/internal/conversations"
@@ -95,6 +97,11 @@ func main() {
 	}
 
 	// Dependencies/external services
+	cache := memcache.New(fmt.Sprintf("%s:%s", config.MemcachedHost, config.MemcachedPort))
+	if err := cache.Ping(); err != nil {
+		log.Warn().Msgf("Memcached instance at %s:%s not responding, cache will be disabled", config.MemcachedHost, config.MemcachedPort)
+		cache = nil
+	}
 	snowflakeService, err := snowflakes.NewSnowflakeService()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error initializing snowflake service")
@@ -103,7 +110,7 @@ func main() {
 		"Impact",
 		"no-reply@joinimpact.org",
 	))
-	locationService, err := location.NewService(&location.Options{
+	locationService, err := location.NewService(cache, &location.Options{
 		APIKey: config.GoogleMapsAPIKey,
 	})
 	if err != nil {

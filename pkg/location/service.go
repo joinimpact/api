@@ -3,8 +3,15 @@ package location
 import (
 	"context"
 	"errors"
+	"fmt"
 
+	"github.com/bradfitz/gomemcache/memcache"
 	"googlemaps.github.io/maps"
+)
+
+const (
+	prefixCity    = "loc_city"
+	prefixAddress = "loc_addr"
 )
 
 // Service exposes methods for interacting with location data.
@@ -25,11 +32,12 @@ type Options struct {
 // service represents the internal implementation of the Service.
 type service struct {
 	client  *maps.Client
+	cache   *memcache.Client
 	options *Options
 }
 
 // NewService creates and returns a new Service with the provided Options struct.
-func NewService(options *Options) (Service, error) {
+func NewService(cache *memcache.Client, options *Options) (Service, error) {
 	// Connect to the Google Maps API.
 	client, err := maps.NewClient(maps.WithAPIKey(options.APIKey))
 	if err != nil {
@@ -38,6 +46,7 @@ func NewService(options *Options) (Service, error) {
 
 	return &service{
 		client,
+		cache,
 		options,
 	}, nil
 }
@@ -45,6 +54,13 @@ func NewService(options *Options) (Service, error) {
 // CoordinatesToCity converts a Coordinates struct to a legible city, state
 // format.
 func (s *service) CoordinatesToCity(coordinates *Coordinates) (*Location, error) {
+	item, err := s.cacheGet(prefixCity, coordinates)
+	if err == nil {
+		return item, nil
+	}
+
+	fmt.Println(err)
+
 	res, err := s.client.ReverseGeocode(context.Background(), &maps.GeocodingRequest{
 		LatLng: &maps.LatLng{
 			Lat: coordinates.Latitude,
@@ -86,12 +102,19 @@ func (s *service) CoordinatesToCity(coordinates *Coordinates) (*Location, error)
 		}
 	}
 
+	s.cacheSet(prefixCity, coordinates, &location)
+
 	return &location, nil
 }
 
 // CoordinatesToStreetAddress converts a Coordinates struct to a legible address, city, state
 // format.
 func (s *service) CoordinatesToStreetAddress(coordinates *Coordinates) (*Location, error) {
+	item, err := s.cacheGet(prefixAddress, coordinates)
+	if err == nil {
+		return item, nil
+	}
+
 	res, err := s.client.ReverseGeocode(context.Background(), &maps.GeocodingRequest{
 		LatLng: &maps.LatLng{
 			Lat: coordinates.Latitude,
@@ -133,6 +156,8 @@ func (s *service) CoordinatesToStreetAddress(coordinates *Coordinates) (*Locatio
 		ShortName: res[0].FormattedAddress,
 		LongName:  res[0].FormattedAddress,
 	}
+
+	s.cacheSet(prefixAddress, coordinates, &location)
 
 	return &location, nil
 }

@@ -35,6 +35,8 @@ type Config struct {
 	GoogleMapsAPIKey    string // the api key for accessing Google Places and Geocoding APIs
 	ElasticHost         string
 	ElasticPort         string
+	MemcachedHost       string
+	MemcachedPort       string
 }
 
 // NewConfig generates a new config from environment variables and returns a Config struct.
@@ -62,6 +64,8 @@ func NewConfig() *Config {
 		GoogleMapsAPIKey:    envString("IMPACT_GOOGLE_MAPS_API_KEY", ""),
 		ElasticHost:         envString("IMPACT_ELASTIC_HOST", "localhost"),
 		ElasticPort:         envString("IMPACT_ELASTIC_PORT", "9200"),
+		MemcachedHost:       envString("IMPACT_MEMCACHED_HOST", "localhost"),
+		MemcachedPort:       envString("IMPACT_MEMCACHED_PORT", "11211"),
 	}
 }
 
