@@ -15,10 +15,10 @@ const (
 // OpportunityMembership creates a relationship between Oppourtunities and their volunteers.
 type OpportunityMembership struct {
 	Model
-	Active          bool      `json:"-"` // controls whether or not the entity is active
-	UserID          int64     `json:"-"` // the ID of the user being granted membership
+	Active          bool      `json:"-"`              // controls whether or not the entity is active
+	UserID          int64     `json:"-" gorm:"index"` // the ID of the user being granted membership
 	JoinedAt        time.Time `json:"joinedAt"`
-	OpportunityID   int64     `json:"-"`               // the ID of the opportunity the user is being granted access to
+	OpportunityID   int64     `json:"-" gorm:"index"`  // the ID of the opportunity the user is being granted access to
 	PermissionsFlag int       `json:"permissionsFlag"` // a flag which designates permissions the user has
 	InviterID       int64     `json:"inviterId"`       // the ID of the user who invited the member to the opportunity
 }

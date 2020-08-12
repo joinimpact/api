@@ -86,6 +86,9 @@ func (w *WebSocketManager) Reader(s *hub.Session) {
 				Opcode: websocket.OpcodeHeartbeatAck,
 			})
 		case websocket.OpcodeClientAuthenticate:
+			if m.Data == nil {
+				continue
+			}
 			data := m.Data.(map[string]interface{})
 			w.WebSocketAuthenticate(s, data)
 		}

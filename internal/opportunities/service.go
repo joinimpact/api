@@ -32,6 +32,8 @@ type Service interface {
 	GetVolunteerOpportunities(ctx context.Context, userID int64) ([]OpportunityView, error)
 	// GetOpportunity returns an opportunity by ID.
 	GetOpportunity(ctx context.Context, id int64) (*OpportunityView, error)
+	// GetOpportunities gets multiple opportunity views by IDs.
+	GetOpportunities(ctx context.Context, ids []int64) ([]OpportunityView, error)
 	// GetMinimalOpportunity returns an opportunity without tags or a profile.
 	GetMinimalOpportunity(ctx context.Context, id int64) (*OpportunityView, error)
 	// CreateOpportunity creates a new opportunity and returns the ID on success.
@@ -138,7 +140,7 @@ func (s *service) GetOrganizationOpportunities(ctx context.Context, organization
 	}
 
 	for _, opportunity := range opportunities {
-		view, err := s.GetOpportunity(ctx, opportunity.ID)
+		view, err := s.getOpportunityView(ctx, &opportunity)
 		if err != nil {
 			continue
 		}
@@ -156,15 +158,39 @@ func (s *service) GetOrganizationOpportunities(ctx context.Context, organization
 // GetVolunteerOpportunities gets all opportunities by user ID where
 // user is a registered volunteer.
 func (s *service) GetVolunteerOpportunities(ctx context.Context, userID int64) ([]OpportunityView, error) {
-	views := []OpportunityView{}
-
 	memberships, err := s.opportunityMembershipRepository.FindByUserID(ctx, userID)
 	if err != nil {
 		return nil, NewErrServerError()
 	}
 
+	ids := []int64{}
 	for _, membership := range memberships {
-		view, err := s.GetOpportunity(ctx, membership.OpportunityID)
+		ids = append(ids, membership.OpportunityID)
+	}
+
+	return s.GetOpportunities(ctx, ids)
+}
+
+// GetOpportunity returns an opportunity by ID.
+func (s *service) GetOpportunity(ctx context.Context, id int64) (*OpportunityView, error) {
+	opportunity, err := s.opportunityRepository.FindByID(ctx, id)
+	if err != nil {
+		return nil, NewErrOpportunityNotFound()
+	}
+
+	return s.getOpportunityView(ctx, opportunity)
+}
+
+// GetOpportunities gets multiple opportunity views by IDs.
+func (s *service) GetOpportunities(ctx context.Context, ids []int64) ([]OpportunityView, error) {
+	opportunities, err := s.opportunityRepository.FindByIDs(ctx, ids)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	views := []OpportunityView{}
+	for _, opportunity := range opportunities {
+		view, err := s.getOpportunityView(ctx, &opportunity)
 		if err != nil {
 			continue
 		}
@@ -179,17 +205,11 @@ func (s *service) GetVolunteerOpportunities(ctx context.Context, userID int64) (
 	return views, nil
 }
 
-// GetOpportunity returns an opportunity by ID.
-func (s *service) GetOpportunity(ctx context.Context, id int64) (*OpportunityView, error) {
+// getOpportunityView gets an opportunity view from an opportunity.
+func (s *service) getOpportunityView(ctx context.Context, opportunity *models.Opportunity) (*OpportunityView, error) {
 	view := &OpportunityView{}
 	view.Requirements = &Requirements{}
 	view.Limits = &Limits{}
-
-	opportunity, err := s.opportunityRepository.FindByID(ctx, id)
-	if err != nil {
-		return nil, NewErrOpportunityNotFound()
-	}
-
 	view.ID = opportunity.ID
 	view.ColorIndex = uint(opportunity.ID % ColorsCount)
 	view.OrganizationID = opportunity.OrganizationID
@@ -201,8 +221,8 @@ func (s *service) GetOpportunity(ctx context.Context, id int64) (*OpportunityVie
 
 	_, view.Publishable = isPublishable(*opportunity)
 
-	opportunityRequirements, err := s.opportunityRequirementsRepository.FindByOpportunityID(opportunity.ID)
-	if err == nil {
+	opportunityRequirements := opportunity.OpportunityRequirements
+	if opportunityRequirements != nil {
 		if opportunityRequirements.AgeLimitActive {
 			view.Requirements.AgeLimit = AgeLimit{
 				Active: true,
@@ -218,8 +238,8 @@ func (s *service) GetOpportunity(ctx context.Context, id int64) (*OpportunityVie
 		}
 	}
 
-	opportunityLimits, err := s.opportunityLimitsRepository.FindByOpportunityID(opportunity.ID)
-	if err == nil {
+	opportunityLimits := opportunity.OpportunityLimits
+	if opportunityLimits != nil {
 		if opportunityLimits.VolunteersCapActive {
 			view.Limits.VolunteersCap = VolunteersCap{
 				Active: true,
@@ -256,7 +276,7 @@ func (s *service) GetOpportunity(ctx context.Context, id int64) (*OpportunityVie
 		return nil, NewErrServerError()
 	}
 
-	view.Tags, _ = s.GetOpportunityTags(ctx, opportunity.ID)
+	view.Tags, _ = s.getOpportunityTags(ctx, opportunity.OpportunityTags)
 
 	return view, nil
 }
@@ -440,18 +460,23 @@ func (s *service) GetOpportunityTags(ctx context.Context, opportunityID int64) (
 		return nil, NewErrServerError()
 	}
 
+	return s.getOpportunityTags(ctx, opportunityTags)
+}
+
+// getOpportunityTags gets all of an opportunity's tags without verifying its existance.
+func (s *service) getOpportunityTags(ctx context.Context, opportunityTags []models.OpportunityTag) ([]models.Tag, error) {
 	tags := []models.Tag{}
 	for _, opportunityTag := range opportunityTags {
-		// Get the tag by ID.
-		tag, err := s.tagRepository.FindByID(opportunityTag.TagID)
-		if err != nil {
-			// Tag not found, skip.
-			s.logger.Error().Err(err).Msg("Error in GetOpportunityTags: OpportunityTag object missing valid Tag")
-			continue
-		}
+		// // Get the tag by ID.
+		// tag, err := s.tagRepository.FindByID(opportunityTag.TagID)
+		// if err != nil {
+		// 	// Tag not found, skip.
+		// 	s.logger.Error().Err(err).Msg("Error in GetOpportunityTags: OpportunityTag object missing valid Tag")
+		// 	continue
+		// }
 
 		// Append the tag to the tags array.
-		tags = append(tags, *tag)
+		tags = append(tags, opportunityTag.Tag)
 	}
 
 	return tags, nil

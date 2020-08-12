@@ -23,7 +23,7 @@ func NewOpportunityTagRepository(db *gorm.DB, logger *zerolog.Logger) models.Opp
 // FindByID finds a single entity by ID.
 func (r *opportunityTagRepository) FindByID(id int64) (*models.OpportunityTag, error) {
 	var opportunityTag models.OpportunityTag
-	if err := r.db.First(&opportunityTag, id).Error; err != nil {
+	if err := r.db.Preload("Tag").First(&opportunityTag, id).Error; err != nil {
 		return &opportunityTag, err
 	}
 	return &opportunityTag, nil
@@ -32,7 +32,7 @@ func (r *opportunityTagRepository) FindByID(id int64) (*models.OpportunityTag, e
 // FindByOpportunityID finds entities by Opportunity ID.
 func (r *opportunityTagRepository) FindByOpportunityID(opportunityID int64) ([]models.OpportunityTag, error) {
 	var opportunityTags []models.OpportunityTag
-	if err := r.db.Where("opportunity_id = ?", opportunityID).Find(&opportunityTags).Error; err != nil {
+	if err := r.db.Preload("Tag").Where("opportunity_id = ?", opportunityID).Find(&opportunityTags).Error; err != nil {
 		return opportunityTags, err
 	}
 	return opportunityTags, nil
@@ -41,7 +41,7 @@ func (r *opportunityTagRepository) FindByOpportunityID(opportunityID int64) ([]m
 // FindOpportunityTagByID finds a single entity by OpportunityID and tag ID.
 func (r *opportunityTagRepository) FindOpportunityTagByID(opportunityID int64, tagID int64) (*models.OpportunityTag, error) {
 	var opportunityTag models.OpportunityTag
-	if err := r.db.Where("opportunity_id = ? AND tag_id = ?", opportunityID, tagID).First(&opportunityTag).Error; err != nil {
+	if err := r.db.Preload("Tag").Where("opportunity_id = ? AND tag_id = ?", opportunityID, tagID).First(&opportunityTag).Error; err != nil {
 		return &opportunityTag, err
 	}
 	return &opportunityTag, nil

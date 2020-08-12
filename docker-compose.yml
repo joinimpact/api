@@ -64,6 +64,15 @@ services:
       retries: 3
       start_period: 10s
 
+  memcached:
+    image: memcached:1.6.6-alpine
+    container_name: memcached
+    hostname: memcached
+    ports:
+      - "127.0.0.1:11211:11211/tcp"
+    expose:
+      - "11211"
+
   postgres:
     image: postgres:11-alpine
     container_name: postgres

@@ -25,16 +25,28 @@ func NewOpportunityRepository(db *gorm.DB, logger *zerolog.Logger) models.Opport
 // FindByID finds a single entity by ID.
 func (r *opportunityRepository) FindByID(ctx context.Context, id int64) (*models.Opportunity, error) {
 	var opportunity models.Opportunity
-	if err := r.db.First(&opportunity, id).Error; err != nil {
+	if err := r.db.Preload("OpportunityRequirements").Preload("OpportunityLimits").First(&opportunity, id).Error; err != nil {
 		return &opportunity, err
 	}
 	return &opportunity, nil
 }
 
+// FindByIDs finds multiple entities by an array of IDs.
+func (r *opportunityRepository) FindByIDs(ctx context.Context, ids []int64) ([]models.Opportunity, error) {
+	var opportunities []models.Opportunity
+	if err := r.db.Preload("OpportunityRequirements").Preload("OpportunityLimits").
+		Where("id IN (?) AND active = True", ids).
+		Find(&opportunities).
+		Error; err != nil {
+		return opportunities, err
+	}
+	return opportunities, nil
+}
+
 // FindByOrganizationID finds multiple entities by the organization ID.
 func (r *opportunityRepository) FindByOrganizationID(ctx context.Context, organizationID int64) ([]models.Opportunity, error) {
 	var opportunities []models.Opportunity
-	if err := r.db.
+	if err := r.db.Preload("OpportunityRequirements").Preload("OpportunityLimits").
 		Limit(dbctx.Get(ctx).Limit).
 		Offset(dbctx.Get(ctx).Page*dbctx.Get(ctx).Limit).
 		Where("organization_id = ? AND active = True AND LOWER(title) LIKE ?", organizationID, strings.ToLower(fmt.Sprintf("%%%s%%", dbctx.Get(ctx).Query))).
@@ -48,7 +60,7 @@ func (r *opportunityRepository) FindByOrganizationID(ctx context.Context, organi
 // FindByCreatorID finds multiple entities by the creator ID.
 func (r *opportunityRepository) FindByCreatorID(ctx context.Context, creatorID int64) ([]models.Opportunity, error) {
 	var opportunities []models.Opportunity
-	if err := r.db.Where("creator_id = ? AND active = True", creatorID).Find(&opportunities).Error; err != nil {
+	if err := r.db.Preload("OpportunityRequirements").Preload("OpportunityLimits").Where("creator_id = ? AND active = True", creatorID).Find(&opportunities).Error; err != nil {
 		return opportunities, err
 	}
 	return opportunities, nil
