@@ -11,8 +11,9 @@ import (
 // MessagesGet gets messages by conversation ID.
 func MessagesGet(conversationsService conversations.Service) http.HandlerFunc {
 	type response struct {
-		Messages []conversations.MessageView `json:"messages"`
-		Pages    uint                        `json:"pages"`
+		Messages     []conversations.MessageView `json:"messages"`
+		Pages        uint                        `json:"pages"`
+		TotalResults uint                        `json:"totalResults"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -36,8 +37,9 @@ func MessagesGet(conversationsService conversations.Service) http.HandlerFunc {
 		}
 
 		resp.OK(w, r, response{
-			Messages: res.Messages,
-			Pages:    res.Pages,
+			Messages:     res.Messages,
+			Pages:        res.Pages,
+			TotalResults: res.TotalResults,
 		})
 	}
 }
