@@ -13,6 +13,10 @@ const StructTag = "scope"
 // Marshal takes a scope and an interface and marshals it according to the
 // provided scope.
 func Marshal(scope Scope, input interface{}) interface{} {
+	if input == nil {
+		return nil
+	}
+
 	inputType := reflect.TypeOf(input)
 	value := reflect.ValueOf(input)
 	if inputType.Kind() == reflect.Ptr {
