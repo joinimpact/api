@@ -21,3 +21,6 @@ vendor/
 docker-compose.override.yml
 envvars.conf.*
 docker/nginx/conf.d/all*.conf
+
+# binaries
+server
