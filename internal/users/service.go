@@ -78,6 +78,7 @@ func (s *service) GetUserProfile(userID int64, self bool) (*UserProfile, error) 
 	profile.FirstName = user.FirstName
 	profile.LastName = user.LastName
 	profile.ProfilePicture = user.ProfilePicture
+	profile.LastOnline = user.LastOnline
 
 	if self {
 		profile.Email = user.Email
@@ -140,6 +141,7 @@ func (s *service) GetMinimalUserProfile(userID int64) (*UserProfile, error) {
 	profile.FirstName = user.FirstName
 	profile.LastName = user.LastName
 	profile.ProfilePicture = user.ProfilePicture
+	profile.LastOnline = user.LastOnline
 
 	return profile, nil
 }

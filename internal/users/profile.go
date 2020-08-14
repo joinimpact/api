@@ -14,6 +14,7 @@ type UserProfile struct {
 	FirstName      string                    `json:"firstName"`                           // the user's first name
 	LastName       string                    `json:"lastName"`                            // the user's last name
 	Email          string                    `json:"email,omitempty" scope:"owner"`       // the user's email
+	LastOnline     *time.Time                `json:"lastOnline,omitempty"`                // the last time the user was online
 	DateOfBirth    time.Time                 `json:"dateOfBirth,omitempty" scope:"owner"` // the user's date of birth, used for calculating age
 	CreatedAt      time.Time                 `json:"createdAt,omitempty" scope:"owner"`   // the time the user was created at
 	Tags           []models.Tag              `json:"tags"`                                // the user's tags

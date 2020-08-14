@@ -53,6 +53,9 @@ func AuthMiddleware(authService authentication.Service) func(next http.Handler) 
 			ctx = context.WithValue(ctx, KeyUserID, userID)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
+
+			// Update the user's last online time.
+			authService.UpdateLastOnline(ctx, userID)
 		})
 	}
 }
