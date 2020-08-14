@@ -38,6 +38,8 @@ type Service interface {
 	OauthLogin(serviceName, accessToken string) (*OauthResponse, error)
 	// RefreshToken generates a new token pair from a refresh token.
 	RefreshToken(ctx context.Context, refreshToken string) (*TokenPair, error)
+	// UpdateLastOnline updates a user's last online time.
+	UpdateLastOnline(ctx context.Context, userID int64) error
 }
 
 // service represents the default authentication service of this package.
@@ -370,4 +372,25 @@ func (s *service) RefreshToken(ctx context.Context, refreshToken string) (*Token
 
 	// No errors, generate a token pair.
 	return s.generateTokenPair(claims.UserID)
+}
+
+// UpdateLastOnline updates a user's last online time.
+func (s *service) UpdateLastOnline(ctx context.Context, userID int64) error {
+	user, err := s.userRepository.FindByID(userID)
+	if err != nil {
+		return err
+	}
+
+	if user.LastOnline != nil && time.Now().Sub(*user.LastOnline) < 30*time.Minute {
+		return nil
+	}
+
+	now := time.Now()
+
+	return s.userRepository.Update(models.User{
+		Model: models.Model{
+			ID: user.ID,
+		},
+		LastOnline: &now,
+	})
 }
