@@ -78,6 +78,10 @@ func (r *opportunityRepository) Update(ctx context.Context, opportunity models.O
 
 // Save saves all fields in the provided entity.
 func (r *opportunityRepository) Save(ctx context.Context, opportunity models.Opportunity) error {
+	opportunity.OpportunityLimits = nil
+	opportunity.OpportunityRequirements = nil
+	opportunity.OpportunityTags = nil
+
 	return r.db.Save(opportunity).Error
 }
 
