@@ -14,7 +14,7 @@ import (
 // RequestPost creates an opportunity request for a user on the specified opportunity.
 func RequestPost(opportunitiesService opportunities.Service, conversationsService conversations.Service) http.HandlerFunc {
 	type request struct {
-		Message string `json:"message" validate:"omitempty,min=12,max=128"`
+		Message string `json:"message" validate:"omitempty,min=12,max=512"`
 	}
 	type response struct {
 		Success        bool  `json:"success"`
