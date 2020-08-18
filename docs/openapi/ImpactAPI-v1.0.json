@@ -3487,7 +3487,7 @@
                     "type": "string",
                     "description": "The message which will be sent along with the volunteer profile. Leave blank for the default message.",
                     "minLength": 6,
-                    "maxLength": 128,
+                    "maxLength": 512,
                     "example": "Hi! I'd like to join your opportunity. Here is my profile:"
                   }
                 }
