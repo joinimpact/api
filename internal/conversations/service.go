@@ -102,21 +102,28 @@ func NewService(conversationRepository models.ConversationRepository, conversati
 // CreateOpportunityMembershipRequestConversation creates an opportunity membership request conversation and adds a message to it. Returns conversation ID on success.
 func (s *service) CreateOpportunityMembershipRequestConversation(ctx context.Context, organizationID, opportunityID, opportunityMembershipRequestID, volunteerID int64, messageStr string) (int64, error) {
 	// Conversation
-	conversation := models.Conversation{}
-	conversation.ID = s.snowflakeService.GenerateID()
-	conversation.Active = true
-	conversation.OrganizationID = organizationID
-	conversation.Type = 1 // TODO: make this a constant in the models package
+	var conversationID int64
+	if conversation, err := s.conversationRepository.FindUserOrganizationConversation(ctx, volunteerID, organizationID); err == nil {
+		conversationID = conversation.ID
+	} else {
+		conversation := models.Conversation{}
+		conversation.ID = s.snowflakeService.GenerateID()
+		conversation.Active = true
+		conversation.OrganizationID = organizationID
+		conversation.Type = 1 // TODO: make this a constant in the models package
 
-	if err := s.conversationRepository.Create(conversation); err != nil {
-		return 0, NewErrServerError()
+		if err := s.conversationRepository.Create(conversation); err != nil {
+			return 0, NewErrServerError()
+		}
+
+		conversationID = conversation.ID
 	}
 
 	// ConversationMembership
 	conversationMembership := models.ConversationMembership{}
 	conversationMembership.ID = s.snowflakeService.GenerateID()
 	conversationMembership.Active = true
-	conversationMembership.ConversationID = conversation.ID
+	conversationMembership.ConversationID = conversationID
 	conversationMembership.UserID = volunteerID
 	conversationMembership.Role = 0 // TODO: make this a constant in the models package
 
@@ -127,7 +134,7 @@ func (s *service) CreateOpportunityMembershipRequestConversation(ctx context.Con
 	// ConversationOpportunityMembershipRequest
 	conversationOpportunityMembershipRequest := models.ConversationOpportunityMembershipRequest{}
 	conversationOpportunityMembershipRequest.ID = s.snowflakeService.GenerateID()
-	conversationOpportunityMembershipRequest.ConversationID = conversation.ID
+	conversationOpportunityMembershipRequest.ConversationID = conversationID
 	conversationOpportunityMembershipRequest.OpportunityMembershipRequestID = opportunityMembershipRequestID
 
 	if err := s.conversationOpportunityMembershipRequestRepository.Create(conversationOpportunityMembershipRequest); err != nil {
@@ -136,7 +143,7 @@ func (s *service) CreateOpportunityMembershipRequestConversation(ctx context.Con
 
 	// Message
 	message := models.Message{}
-	message.ConversationID = conversation.ID
+	message.ConversationID = conversationID
 	message.SenderID = volunteerID
 	message.ID = s.snowflakeService.GenerateID()
 	message.Type = models.MessageTypeVolunteerRequestProfile
@@ -161,7 +168,7 @@ func (s *service) CreateOpportunityMembershipRequestConversation(ctx context.Con
 		return 0, NewErrServerError()
 	}
 
-	return conversation.ID, nil
+	return conversationID, nil
 }
 
 // GetUserConversationMemberships gets a user's volunteer conversation memberships.
