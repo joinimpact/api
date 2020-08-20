@@ -9,8 +9,9 @@ type OrganizationMembershipInvite struct {
 	Invitee        User   `gorm:"foreignkey:InviteeID"`
 	OrganizationID int64  `json:"organizationId"`
 	Organization   Organization
-	InviterID      int64 `json:"inviterId"`
-	Inviter        User  `gorm:"foreignkey:InviterID"`
+	InviterID      int64  `json:"inviterId"`
+	Inviter        User   `gorm:"foreignkey:InviterID"`
+	Key            string `json:"-"` // the secret key which is sent to the invitee for authorization
 }
 
 // OrganizationMembershipInviteRepository represents the interface for a repository of membership invite entities.

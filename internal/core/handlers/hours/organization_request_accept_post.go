@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/joinimpact/api/internal/conversations"
+	"github.com/joinimpact/api/internal/core/middleware/auth"
 	"github.com/joinimpact/api/internal/hours"
 	"github.com/joinimpact/api/pkg/idctx"
 	"github.com/joinimpact/api/pkg/resp"
@@ -18,8 +19,8 @@ func OrganizationRequestAcceptPost(hoursService hours.Service, conversationsServ
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		userID, err := idctx.Get(r, "userID")
-		if err != nil {
+		userID, ok := ctx.Value(auth.KeyUserID).(int64)
+		if !ok {
 			return
 		}
 

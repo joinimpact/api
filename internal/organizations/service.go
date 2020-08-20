@@ -386,6 +386,7 @@ func (s *service) InviteUser(inviterID, organizationID int64, userEmail string, 
 func (s *service) inviteByEmail(inviterID int64, organization *models.Organization, userEmail string, permissionsFlag int) error {
 	// Generate an ID for the invite.
 	id := s.snowflakeService.GenerateID()
+	key := generateKey()
 	err := s.organizationMembershipInviteRepository.Create(models.OrganizationMembershipInvite{
 		Model: models.Model{
 			ID: id,
@@ -394,6 +395,7 @@ func (s *service) inviteByEmail(inviterID int64, organization *models.Organizati
 		InviteeEmail:   userEmail,
 		OrganizationID: organization.ID,
 		InviterID:      inviterID,
+		Key:            key,
 	})
 	if err != nil {
 		return NewErrServerError()
@@ -403,7 +405,7 @@ func (s *service) inviteByEmail(inviterID int64, organization *models.Organizati
 	email := s.emailService.NewEmail(
 		email.NewRecipient(fmt.Sprintf("%s %s", "Impact", "User"), userEmail),
 		fmt.Sprintf("You've been invited to join %s!", organization.Name),
-		templates.OrganizationInvitationTemplate("friend", organization.Name, organization.ID, id),
+		templates.OrganizationInvitationTemplate("friend", organization.Name, organization.ID, id, key),
 	)
 	err = s.emailService.Send(email)
 	if err != nil {
@@ -422,6 +424,7 @@ func (s *service) inviteByID(inviterID int64, organization *models.Organization,
 
 	// Generate an ID for the invite.
 	id := s.snowflakeService.GenerateID()
+	key := generateKey()
 	err = s.organizationMembershipInviteRepository.Create(models.OrganizationMembershipInvite{
 		Model: models.Model{
 			ID: id,
@@ -430,6 +433,7 @@ func (s *service) inviteByID(inviterID int64, organization *models.Organization,
 		InviteeID:      user.ID,
 		OrganizationID: organization.ID,
 		InviterID:      inviterID,
+		Key:            key,
 	})
 	if err != nil {
 		return NewErrServerError()
@@ -439,7 +443,7 @@ func (s *service) inviteByID(inviterID int64, organization *models.Organization,
 	email := s.emailService.NewEmail(
 		email.NewRecipient(fmt.Sprintf("%s %s", user.FirstName, user.LastName), user.Email),
 		fmt.Sprintf("You've been invited to join %s!", organization.Name),
-		templates.OrganizationInvitationTemplate(user.FirstName, organization.Name, organization.ID, id),
+		templates.OrganizationInvitationTemplate(user.FirstName, organization.Name, organization.ID, id, key),
 	)
 	err = s.emailService.Send(email)
 	if err != nil {
