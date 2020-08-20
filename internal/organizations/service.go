@@ -394,6 +394,7 @@ func (s *service) inviteByEmail(inviterID int64, organization *models.Organizati
 		InviteeEmail:   userEmail,
 		OrganizationID: organization.ID,
 		InviterID:      inviterID,
+		Key:            generateKey(),
 	})
 	if err != nil {
 		return NewErrServerError()
@@ -430,6 +431,7 @@ func (s *service) inviteByID(inviterID int64, organization *models.Organization,
 		InviteeID:      user.ID,
 		OrganizationID: organization.ID,
 		InviterID:      inviterID,
+		Key:            generateKey(),
 	})
 	if err != nil {
 		return NewErrServerError()

@@ -68,7 +68,7 @@ const organizationInvitationTemplate = `
         <td>
           <a
             style="color: initial;"
-            href="https://joinimpact.org/dashboard/user/organizations/{{organizationID}}/invites/{{inviteID}}"
+            href="https://joinimpact.org/dashboard/user/organizations/{{organizationID}}/invites/{{inviteID}}?key={{key}}"
             >Click here to join {{organizationName}}</a
           >
         </td>
@@ -96,7 +96,7 @@ const organizationInvitationTemplate = `
 
 // OrganizationInvitationTemplate generates and returns a reset password email with the
 // provied name, email and key.
-func OrganizationInvitationTemplate(name, organizationName string, organizationID, inviteID int64) string {
+func OrganizationInvitationTemplate(name, organizationName string, organizationID, inviteID int64, key string) string {
 	template := organizationInvitationTemplate
 
 	// Replace the template variables with the provided params.
@@ -104,6 +104,7 @@ func OrganizationInvitationTemplate(name, organizationName string, organizationI
 	template = strings.Replace(template, `{{organizationName}}`, organizationName, -1)
 	template = strings.Replace(template, `{{organizationID}}`, fmt.Sprintf("%d", organizationID), -1)
 	template = strings.Replace(template, `{{inviteID}}`, fmt.Sprintf("%d", inviteID), -1)
+	template = strings.Replace(template, `{{key}}`, fmt.Sprintf("%s", key), -1)
 
 	// Return the HTML string.
 	return template
