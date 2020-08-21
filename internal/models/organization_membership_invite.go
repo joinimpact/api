@@ -6,11 +6,11 @@ type OrganizationMembershipInvite struct {
 	Accepted       bool   `json:"accepted"`
 	InviteeEmail   string `json:"inviteeEmail,omitempty"`
 	InviteeID      int64  `json:"inviteeId"`
-	Invitee        User   `gorm:"foreignkey:InviteeID"`
+	Invitee        User   `json:"-" gorm:"foreignkey:InviteeID"`
 	OrganizationID int64  `json:"organizationId"`
 	Organization   Organization
 	InviterID      int64  `json:"inviterId"`
-	Inviter        User   `gorm:"foreignkey:InviterID"`
+	Inviter        User   `json:"-" gorm:"foreignkey:InviterID"`
 	Key            string `json:"-"` // the secret key which is sent to the invitee for authorization
 }
 
