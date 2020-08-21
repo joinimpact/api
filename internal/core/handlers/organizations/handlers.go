@@ -511,8 +511,14 @@ func MembersGet(organizationsService organizations.Service, usersService users.S
 		models.OrganizationMembership
 		users.UserProfile
 	}
+	type invitedMember struct {
+		EmailOnly bool `json:"emailOnly"`
+		models.OrganizationMembershipInvite
+		users.UserProfile
+	}
 	type response struct {
-		Members []membership `json:"members"`
+		Members []membership    `json:"members"`
+		Invited []invitedMember `json:"invited"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		organizationIDString := chi.URLParam(r, "organizationID")
@@ -527,7 +533,7 @@ func MembersGet(organizationsService organizations.Service, usersService users.S
 			resp.ServerError(w, r, resp.ErrorRef(500, "error getting members", "generic.server_error", nil))
 		}
 
-		users := []membership{}
+		members := []membership{}
 		for _, member := range memberships {
 			user, err := usersService.GetMinimalUserProfile(member.UserID)
 			if err != nil {
@@ -535,10 +541,26 @@ func MembersGet(organizationsService organizations.Service, usersService users.S
 				return
 			}
 
-			users = append(users, membership{member, *user})
+			members = append(members, membership{member, *user})
 		}
 
-		resp.OK(w, r, response{users})
+		invites, err := organizationsService.GetOrganizationInvitedVolunteers(r.Context(), organizationID)
+		if err != nil {
+			resp.ServerError(w, r, resp.ErrorRef(500, "error getting members", "generic.server_error", nil))
+		}
+
+		invitedMembers := []invitedMember{}
+		for _, invite := range invites {
+			user, err := usersService.GetMinimalUserProfile(invite.InviteeID)
+			if err != nil {
+				invitedMembers = append(invitedMembers, invitedMember{true, invite, users.UserProfile{}})
+				continue
+			}
+
+			invitedMembers = append(invitedMembers, invitedMember{false, invite, *user})
+		}
+
+		resp.OK(w, r, response{members, invitedMembers})
 	}
 }
 

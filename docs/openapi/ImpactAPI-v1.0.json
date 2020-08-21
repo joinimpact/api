@@ -2247,6 +2247,55 @@
                               }
                             }
                           }
+                        },
+                        "invited": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "accepted": {
+                                "type": "boolean",
+                                "example": false
+                              },
+                              "emailOnly": {
+                                "type": "boolean",
+                                "example": false,
+                                "description": "When true, it means that the user has not yet made an account, and should be displayed in a list with only the email."
+                              },
+                              "firstName": {
+                                "type": "string",
+                                "example": "tyler"
+                              },
+                              "id": {
+                                "type": "string",
+                                "example": "1273884565403865088"
+                              },
+                              "inviteeEmail": {
+                                "type": "string",
+                                "example": "tylerlafayette@gmail.com"
+                              },
+                              "inviteeId": {
+                                "type": "string",
+                                "example": "1273884565403865088"
+                              },
+                              "inviterId": {
+                                "type": "string",
+                                "example": "1273884565403865088"
+                              },
+                              "lastName": {
+                                "type": "string",
+                                "example": "Lafayette"
+                              },
+                              "opportunityId": {
+                                "type": "string",
+                                "example": "1282893821989883904"
+                              },
+                              "profilePicture": {
+                                "type": "string",
+                                "example": "https://cdn.joinimpact.org/profile-picture-1273884565403865088-1593076042.png"
+                              }
+                            }
+                          }
                         }
                       }
                     }

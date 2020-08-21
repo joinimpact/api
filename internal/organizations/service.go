@@ -43,6 +43,8 @@ type Service interface {
 	UploadProfilePicture(organizationID int64, fileReader io.Reader) (string, error)
 	// InviteUser invites a user by user email to an organization.
 	InviteUser(inviterID, organizationID int64, userEmail string, permissionsFlag int) error
+	// GetOrganizationInvitedVolunteers returns an array of OrganizationMembershipRequest objects for a specified organization by ID.
+	GetOrganizationInvitedVolunteers(ctx context.Context, organizationID int64) ([]models.OrganizationMembershipInvite, error)
 	// GetOrganizationMemberships gets all users in an organization.
 	GetOrganizationMemberships(organizationID int64) ([]models.OrganizationMembership, error)
 	// GetOrganizationMembership returns the membership level of a user in an organization.
@@ -458,6 +460,17 @@ func (s *service) inviteByID(inviterID int64, organization *models.Organization,
 	}
 
 	return nil
+}
+
+// GetOrganizationInvitedVolunteers returns an array of OrganizationMembershipRequest objects for a specified organization by ID.
+func (s *service) GetOrganizationInvitedVolunteers(ctx context.Context, organizationID int64) ([]models.OrganizationMembershipInvite, error) {
+	// Get all membership invites by opportunity ID.
+	invites, err := s.organizationMembershipInviteRepository.FindByOrganizationID(organizationID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	return invites, nil
 }
 
 // GetOrganizationMemberships gets all users in an organization.
