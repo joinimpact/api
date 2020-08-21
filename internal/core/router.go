@@ -121,7 +121,7 @@ func (app *App) Router() *chi.Mux {
 					r.With(permissions.Require(scopes.ScopeAdmin)).Post("/", organizations.PostInvite(app.organizationsService))
 
 					r.Route("/{inviteID}", func(r chi.Router) {
-						r.With(permissions.Require(scopes.ScopeAuthenticated))
+						r.Use(permissions.Require(scopes.ScopeAuthenticated))
 						r.Use(idctx.Prepare("inviteID"))
 
 						r.Post("/validate", organizations.InviteValidatePost(app.organizationsService))

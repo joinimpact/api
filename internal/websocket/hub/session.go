@@ -6,6 +6,7 @@ import (
 	gsw "github.com/gorilla/websocket"
 	"github.com/joinimpact/api/internal/websocket"
 	"github.com/joinimpact/api/pkg/scopes"
+	"github.com/rs/zerolog/log"
 )
 
 // SessionID is an int64 ID reference to one session/user
@@ -31,6 +32,12 @@ func (s *Session) SendMessage(message websocket.Message) error {
 	s.SequenceNumber++
 
 	marshaled := scopes.Marshal(scopes.ScopeAuthenticated, message)
+
+	log.Logger.Info().Fields(map[string]interface{}{
+		"userId":        s.UserID,
+		"subscriptions": s.Susbcriptions,
+		"payload":       message,
+	}).Msg("Debug: message sent to WebSocket session")
 
 	// Push the message to the channel
 	s.Channel <- marshaled
