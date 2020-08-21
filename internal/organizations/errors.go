@@ -69,3 +69,46 @@ func NewErrUserAlreadyInOrganization() error {
 func (e *ErrUserAlreadyInOrganization) Error() string {
 	return "user already a member of organization"
 }
+
+// Ref provides a string reference representation of the error.
+func (e *ErrUserAlreadyInOrganization) Ref() string {
+	return "organizations.user_already_in_organization"
+}
+
+// ErrUserAlreadyInvited is thrown when a user has already been invited to an opportunity.
+type ErrUserAlreadyInvited struct {
+}
+
+// NewErrUserAlreadyInvited creates and returns a ErrUserAlreadyInvited.
+func NewErrUserAlreadyInvited() error {
+	return &ErrUserAlreadyInvited{}
+}
+
+// Error provides a string representation of the error.
+func (e *ErrUserAlreadyInvited) Error() string {
+	return "user already invited"
+}
+
+// Ref provides a representation of the error.
+func (e *ErrUserAlreadyInvited) Ref() string {
+	return "organizations.user_already_invited"
+}
+
+// ErrInviteInvalid is thrown when an invite is invalid in any way.
+type ErrInviteInvalid struct {
+}
+
+// NewErrInviteInvalid creates and returns a ErrInviteInvalid.
+func NewErrInviteInvalid() error {
+	return &ErrInviteInvalid{}
+}
+
+// Error provides a string representation of the error.
+func (e *ErrInviteInvalid) Error() string {
+	return "invite invalid"
+}
+
+// Ref provides a representation of the error.
+func (e *ErrInviteInvalid) Ref() string {
+	return "organizations.invite_invalid"
+}

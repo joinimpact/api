@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 // OrganizationPermissions flags
 const (
 	OrganizationPermissionsMember  = iota
@@ -10,11 +12,12 @@ const (
 // OrganizationMembership creates a relationship between Organizations and their employees.
 type OrganizationMembership struct {
 	Model
-	Active          bool  `json:"-"`               // controls whether or not the entity is active
-	UserID          int64 `json:"-"`               // the ID of the user being granted membership
-	OrganizationID  int64 `json:"-"`               // the ID of the organization the user is being granted access to
-	PermissionsFlag int   `json:"permissionsFlag"` // a flag which designates permissions the user has
-	InviterID       int64 `json:"inviterId"`       // the ID of the user who invited the member to the organization
+	Active          bool      `json:"-"`               // controls whether or not the entity is active
+	UserID          int64     `json:"-"`               // the ID of the user being granted membership
+	JoinedAt        time.Time `json:"joinedAt"`        // when the user joined the organization
+	OrganizationID  int64     `json:"-"`               // the ID of the organization the user is being granted access to
+	PermissionsFlag int       `json:"permissionsFlag"` // a flag which designates permissions the user has
+	InviterID       int64     `json:"inviterId"`       // the ID of the user who invited the member to the organization
 }
 
 // OrganizationMembershipRepository represents a repository of organization memberships.

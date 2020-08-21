@@ -1,6 +1,7 @@
 package organizations
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"time"
@@ -47,6 +48,12 @@ type Service interface {
 	// GetOrganizationMembership returns the membership level of a user in an organization.
 	// Returns an error if no membership is found.
 	GetOrganizationMembership(organizationID, userID int64) (int, error)
+	// GetOrganizationFromInvite gets an organization profile from an invite for UI use.
+	GetOrganizationFromInvite(ctx context.Context, organizationID int64, userID, inviteID int64, inviteKey string) (*OrganizationProfile, error)
+	// AcceptInvite accepts an invite.
+	AcceptInvite(ctx context.Context, organizationID int64, userID, inviteID int64, inviteKey string) error
+	// DeclineInvite declines an invite.
+	DeclineInvite(ctx context.Context, organizationID int64, userID, inviteID int64, inviteKey string) error
 }
 
 // service represents the internal implementation of the organizations Service.
@@ -472,4 +479,110 @@ func (s *service) GetOrganizationMembership(organizationID, userID int64) (int, 
 	}
 
 	return m.PermissionsFlag, nil
+}
+
+// GetOrganizationFromInvite gets an organization profile from an invite for UI use.
+func (s *service) GetOrganizationFromInvite(ctx context.Context, organizationID int64, userID, inviteID int64, inviteKey string) (*OrganizationProfile, error) {
+	// Get the invite by ID.
+	invite, err := s.organizationMembershipInviteRepository.FindByID(inviteID)
+	if err != nil {
+		return nil, NewErrInviteInvalid()
+	}
+
+	// Get the user by ID to check the email.
+	user, err := s.userRepository.FindByID(userID)
+	if err != nil {
+		return nil, NewErrInviteInvalid()
+	}
+
+	// Check if the invite is valid.
+	if invite.InviteeEmail != user.Email || invite.Key != inviteKey || invite.OrganizationID != organizationID {
+		return nil, NewErrInviteInvalid()
+	}
+
+	return s.getMinimumOrganizationProfile(invite.OrganizationID)
+}
+
+// AcceptInvite accepts an invite.
+func (s *service) AcceptInvite(ctx context.Context, organizationID int64, userID, inviteID int64, inviteKey string) error {
+	// Get the invite by ID.
+	invite, err := s.organizationMembershipInviteRepository.FindByID(inviteID)
+	if err != nil {
+		return NewErrInviteInvalid()
+	}
+
+	// Get the user by ID to check the email.
+	user, err := s.userRepository.FindByID(userID)
+	if err != nil {
+		return NewErrInviteInvalid()
+	}
+
+	// Check if the invite is valid.
+	if invite.InviteeEmail != user.Email || invite.Key != inviteKey || invite.OrganizationID != organizationID {
+		return NewErrInviteInvalid()
+	}
+
+	if err := s.createVolunteerMembership(ctx, invite.InviterID, invite.OrganizationID, userID); err != nil {
+		s.logger.Error().Err(err).Msg("Error creating volunteer membership")
+		return NewErrServerError()
+	}
+
+	if err := s.invalidateInvite(ctx, invite.ID); err != nil {
+		s.logger.Error().Err(err).Msg("Error invalidating invite")
+		return NewErrServerError()
+	}
+
+	return nil
+}
+
+// DeclineInvite declines an invite.
+func (s *service) DeclineInvite(ctx context.Context, organizationID int64, userID, inviteID int64, inviteKey string) error {
+	// Get the invite by ID.
+	invite, err := s.organizationMembershipInviteRepository.FindByID(inviteID)
+	if err != nil {
+		return NewErrInviteInvalid()
+	}
+
+	// Get the user by ID to check the email.
+	user, err := s.userRepository.FindByID(userID)
+	if err != nil {
+		return NewErrInviteInvalid()
+	}
+
+	// Check if the invite is valid.
+	if invite.InviteeEmail != user.Email || invite.Key != inviteKey || invite.OrganizationID != organizationID {
+		return NewErrInviteInvalid()
+	}
+
+	if err := s.createVolunteerMembership(ctx, invite.InviterID, invite.OrganizationID, userID); err != nil {
+		s.logger.Error().Err(err).Msg("Error creating volunteer membership")
+		return NewErrServerError()
+	}
+
+	if err := s.invalidateInvite(ctx, invite.ID); err != nil {
+		s.logger.Error().Err(err).Msg("Error invalidating invite")
+		return NewErrServerError()
+	}
+
+	return nil
+}
+
+// createVolunteerMembership creates a volunteer membership in an organization.
+func (s *service) createVolunteerMembership(ctx context.Context, inviterID int64, organizationID, userID int64) error {
+	membership := models.OrganizationMembership{}
+
+	membership.Active = true
+	membership.ID = s.snowflakeService.GenerateID()
+	membership.UserID = userID
+	membership.JoinedAt = time.Now()
+	membership.OrganizationID = organizationID
+	membership.PermissionsFlag = models.OpportunityPermissionsMember
+	membership.InviterID = inviterID
+
+	return s.organizationMembershipRepository.Create(membership)
+}
+
+// invalidateInvite invalidates an organization invite by ID.
+func (s *service) invalidateInvite(ctx context.Context, inviteID int64) error {
+	return s.organizationMembershipInviteRepository.DeleteByID(inviteID)
 }
