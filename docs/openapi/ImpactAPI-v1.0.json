@@ -2247,6 +2247,55 @@
                               }
                             }
                           }
+                        },
+                        "invited": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "accepted": {
+                                "type": "boolean",
+                                "example": false
+                              },
+                              "emailOnly": {
+                                "type": "boolean",
+                                "example": false,
+                                "description": "When true, it means that the user has not yet made an account, and should be displayed in a list with only the email."
+                              },
+                              "firstName": {
+                                "type": "string",
+                                "example": "tyler"
+                              },
+                              "id": {
+                                "type": "string",
+                                "example": "1273884565403865088"
+                              },
+                              "inviteeEmail": {
+                                "type": "string",
+                                "example": "tylerlafayette@gmail.com"
+                              },
+                              "inviteeId": {
+                                "type": "string",
+                                "example": "1273884565403865088"
+                              },
+                              "inviterId": {
+                                "type": "string",
+                                "example": "1273884565403865088"
+                              },
+                              "lastName": {
+                                "type": "string",
+                                "example": "Lafayette"
+                              },
+                              "opportunityId": {
+                                "type": "string",
+                                "example": "1282893821989883904"
+                              },
+                              "profilePicture": {
+                                "type": "string",
+                                "example": "https://cdn.joinimpact.org/profile-picture-1273884565403865088-1593076042.png"
+                              }
+                            }
+                          }
                         }
                       }
                     }
@@ -6336,6 +6385,448 @@
           },
           "404": {
             "description": "The request was not found."
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/invites/{inviteId}/validate": {
+      "post": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "(Volunteer) Checks if an invite is valid and returns an opportunity profile on success for the UI.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "description": "The ID of the organization.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "inviteId",
+            "description": "The ID of the invite.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "key"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "description": "The secret key of the invite (should be received as a get parameter).",
+                    "example": "ujcSbcAW1KW9DAbPQNHLsYGY"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success! An organization view will be returned from which a modal can be shown to the user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "required": [
+                        "creatorId",
+                        "description",
+                        "id",
+                        "name",
+                        "tags",
+                        "websiteUrl"
+                      ],
+                      "properties": {
+                        "creatorId": {
+                          "type": "string",
+                          "example": "1273884565403865088"
+                        },
+                        "description": {
+                          "type": "string",
+                          "example": "hi we watch bird"
+                        },
+                        "id": {
+                          "type": "string",
+                          "example": "1280407140296560640"
+                        },
+                        "name": {
+                          "type": "string",
+                          "example": "birdwatcher corp"
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "category": {
+                                "type": "number",
+                                "example": 0
+                              },
+                              "id": {
+                                "type": "string",
+                                "example": "1283918398189"
+                              },
+                              "name": {
+                                "type": "string",
+                                "example": "ant"
+                              }
+                            }
+                          }
+                        },
+                        "profile": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "example": "128391283"
+                              },
+                              "name": {
+                                "type": "string",
+                                "example": "company_type"
+                              },
+                              "organizationId": {
+                                "type": "string",
+                                "example": "1280407140296560640"
+                              },
+                              "value": {
+                                "type": "string",
+                                "example": "401(c) non-profit"
+                              }
+                            }
+                          }
+                        },
+                        "location": {
+                          "type": "object",
+                          "required": [
+                            "city",
+                            "state",
+                            "country"
+                          ],
+                          "properties": {
+                            "city": {
+                              "required": [
+                                "shortName",
+                                "longName"
+                              ],
+                              "properties": {
+                                "shortName": {
+                                  "type": "string",
+                                  "example": "Menlo Park"
+                                },
+                                "longName": {
+                                  "type": "string",
+                                  "example": "Menlo Park"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "state": {
+                              "required": [
+                                "shortName",
+                                "longName"
+                              ],
+                              "properties": {
+                                "shortName": {
+                                  "type": "string",
+                                  "example": "CA"
+                                },
+                                "longName": {
+                                  "type": "string",
+                                  "example": "California"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "country": {
+                              "required": [
+                                "shortName",
+                                "longName"
+                              ],
+                              "properties": {
+                                "shortName": {
+                                  "type": "string",
+                                  "example": "US"
+                                },
+                                "longName": {
+                                  "type": "string",
+                                  "example": "United States"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          }
+                        },
+                        "websiteURL": {
+                          "type": "string",
+                          "example": "http://birdwatcher.org"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The invite ID or key was incorrect, or the user's email doesn't match the one the invite is intended for, and the invite is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "errors"
+                  ],
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "number",
+                            "example": 20
+                          },
+                          "msg": {
+                            "type": "string",
+                            "example": "invite invalid"
+                          },
+                          "ref": {
+                            "type": "string",
+                            "example": "opportunities.invite_invalid"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/invites/{inviteId}/accept": {
+      "post": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "(Volunteer) Accepts an invite.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "description": "The ID of the organization.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "inviteId",
+            "description": "The ID of the invite.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "key"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "description": "The secret key of the invite (should be received as a get parameter).",
+                    "example": "ujcSbcAW1KW9DAbPQNHLsYGY"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success!",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The invite ID or key was incorrect, or the user's email doesn't match the one the invite is intended for, and the invite is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "errors"
+                  ],
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "number",
+                            "example": 20
+                          },
+                          "msg": {
+                            "type": "string",
+                            "example": "invite invalid"
+                          },
+                          "ref": {
+                            "type": "string",
+                            "example": "opportunities.invite_invalid"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/invites/{inviteId}/decline": {
+      "post": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "(Volunteer) Declines an invite and invalidates it.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "description": "The ID of the organization.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "inviteId",
+            "description": "The ID of the invite.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "key"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "description": "The secret key of the invite (should be received as a get parameter).",
+                    "example": "ujcSbcAW1KW9DAbPQNHLsYGY"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success!",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The invite ID or key was incorrect, or the user's email doesn't match the one the invite is intended for, and the invite is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "errors"
+                  ],
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "number",
+                            "example": 20
+                          },
+                          "msg": {
+                            "type": "string",
+                            "example": "invite invalid"
+                          },
+                          "ref": {
+                            "type": "string",
+                            "example": "opportunities.invite_invalid"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "500": {
             "description": "Server error, please try again."

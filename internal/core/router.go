@@ -116,7 +116,19 @@ func (app *App) Router() *chi.Mux {
 
 				r.With(permissions.Require(scopes.ScopeAdmin)).Post("/profile-picture", organizations.UploadProfilePicture(app.organizationsService))
 				r.With(permissions.Require(scopes.ScopeAdmin)).Post("/invite", organizations.PostInvite(app.organizationsService))
-				r.With(permissions.Require(scopes.ScopeAdmin)).Post("/invites", organizations.PostInvite(app.organizationsService))
+
+				r.Route("/invites", func(r chi.Router) {
+					r.With(permissions.Require(scopes.ScopeAdmin)).Post("/", organizations.PostInvite(app.organizationsService))
+
+					r.Route("/{inviteID}", func(r chi.Router) {
+						r.Use(permissions.Require(scopes.ScopeAuthenticated))
+						r.Use(idctx.Prepare("inviteID"))
+
+						r.Post("/validate", organizations.InviteValidatePost(app.organizationsService))
+						r.Post("/accept", organizations.InviteAcceptPost(app.organizationsService))
+						r.Post("/decline", organizations.InviteDeclinePost(app.organizationsService))
+					})
+				})
 
 				r.With(permissions.Require(scopes.ScopeManager)).Get("/members", organizations.MembersGet(app.organizationsService, app.usersService))
 

@@ -511,8 +511,14 @@ func MembersGet(organizationsService organizations.Service, usersService users.S
 		models.OrganizationMembership
 		users.UserProfile
 	}
+	type invitedMember struct {
+		EmailOnly bool `json:"emailOnly"`
+		models.OrganizationMembershipInvite
+		users.UserProfile
+	}
 	type response struct {
-		Members []membership `json:"members"`
+		Members []membership    `json:"members"`
+		Invited []invitedMember `json:"invited"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		organizationIDString := chi.URLParam(r, "organizationID")
@@ -527,7 +533,7 @@ func MembersGet(organizationsService organizations.Service, usersService users.S
 			resp.ServerError(w, r, resp.ErrorRef(500, "error getting members", "generic.server_error", nil))
 		}
 
-		users := []membership{}
+		members := []membership{}
 		for _, member := range memberships {
 			user, err := usersService.GetMinimalUserProfile(member.UserID)
 			if err != nil {
@@ -535,9 +541,172 @@ func MembersGet(organizationsService organizations.Service, usersService users.S
 				return
 			}
 
-			users = append(users, membership{member, *user})
+			members = append(members, membership{member, *user})
 		}
 
-		resp.OK(w, r, response{users})
+		invites, err := organizationsService.GetOrganizationInvitedVolunteers(r.Context(), organizationID)
+		if err != nil {
+			resp.ServerError(w, r, resp.ErrorRef(500, "error getting members", "generic.server_error", nil))
+		}
+
+		invitedMembers := []invitedMember{}
+		for _, invite := range invites {
+			user, err := usersService.GetMinimalUserProfile(invite.InviteeID)
+			if err != nil {
+				invitedMembers = append(invitedMembers, invitedMember{true, invite, users.UserProfile{}})
+				continue
+			}
+
+			invitedMembers = append(invitedMembers, invitedMember{false, invite, *user})
+		}
+
+		resp.OK(w, r, response{members, invitedMembers})
+	}
+}
+
+// InviteValidatePost validates an invite and returns an organization profile on success.
+func InviteValidatePost(organizationsService organizations.Service) http.HandlerFunc {
+	type request struct {
+		Key string `json:"key" validate:"min=8,max=128"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := ctx.Value(auth.KeyUserID).(int64)
+		if !ok {
+			resp.ServerError(w, r, resp.UnknownError)
+			return
+		}
+
+		organizationID, err := idctx.Get(r, "organizationID")
+		if err != nil {
+			return
+		}
+
+		inviteID, err := idctx.Get(r, "inviteID")
+		if err != nil {
+			return
+		}
+
+		req := request{}
+		err = parse.POST(w, r, &req)
+		if err != nil {
+			return
+		}
+
+		res, err := organizationsService.GetOrganizationFromInvite(ctx, organizationID, userID, inviteID, req.Key)
+		if err != nil {
+			switch err.(type) {
+			case *organizations.ErrInviteInvalid:
+				resp.NotFound(w, r, resp.APIError(err, nil))
+			case *organizations.ErrServerError:
+				resp.ServerError(w, r, resp.APIError(err, nil))
+			default:
+				resp.ServerError(w, r, resp.UnknownError)
+			}
+			return
+		}
+
+		resp.OK(w, r, res)
+	}
+}
+
+// InviteAcceptPost attempts to accept an invite.
+func InviteAcceptPost(organizationsService organizations.Service) http.HandlerFunc {
+	type request struct {
+		Key string `json:"key" validate:"min=8,max=128"`
+	}
+	type response struct {
+		Success bool `json:"success"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := ctx.Value(auth.KeyUserID).(int64)
+		if !ok {
+			resp.ServerError(w, r, resp.UnknownError)
+			return
+		}
+
+		organizationID, err := idctx.Get(r, "organizationID")
+		if err != nil {
+			return
+		}
+
+		inviteID, err := idctx.Get(r, "inviteID")
+		if err != nil {
+			return
+		}
+
+		req := request{}
+		err = parse.POST(w, r, &req)
+		if err != nil {
+			return
+		}
+
+		err = organizationsService.AcceptInvite(ctx, organizationID, userID, inviteID, req.Key)
+		if err != nil {
+			switch err.(type) {
+			case *organizations.ErrInviteInvalid:
+				resp.NotFound(w, r, resp.APIError(err, nil))
+			case *organizations.ErrServerError:
+				resp.ServerError(w, r, resp.APIError(err, nil))
+			default:
+				resp.ServerError(w, r, resp.UnknownError)
+			}
+			return
+		}
+
+		resp.OK(w, r, response{true})
+	}
+}
+
+// InviteDeclinePost attempts to decline an invite.
+func InviteDeclinePost(organizationsService organizations.Service) http.HandlerFunc {
+	type request struct {
+		Key string `json:"key" validate:"min=8,max=128"`
+	}
+	type response struct {
+		Success bool `json:"success"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := ctx.Value(auth.KeyUserID).(int64)
+		if !ok {
+			resp.ServerError(w, r, resp.UnknownError)
+			return
+		}
+
+		organizationID, err := idctx.Get(r, "organizationID")
+		if err != nil {
+			return
+		}
+
+		inviteID, err := idctx.Get(r, "inviteID")
+		if err != nil {
+			return
+		}
+
+		req := request{}
+		err = parse.POST(w, r, &req)
+		if err != nil {
+			return
+		}
+
+		err = organizationsService.DeclineInvite(ctx, organizationID, userID, inviteID, req.Key)
+		if err != nil {
+			switch err.(type) {
+			case *organizations.ErrInviteInvalid:
+				resp.NotFound(w, r, resp.APIError(err, nil))
+			case *organizations.ErrServerError:
+				resp.ServerError(w, r, resp.APIError(err, nil))
+			default:
+				resp.ServerError(w, r, resp.UnknownError)
+			}
+			return
+		}
+
+		resp.OK(w, r, response{true})
 	}
 }
