@@ -599,3 +599,8 @@ func (s *service) createVolunteerMembership(ctx context.Context, inviterID int64
 func (s *service) invalidateInvite(ctx context.Context, inviteID int64) error {
 	return s.organizationMembershipInviteRepository.DeleteByID(inviteID)
 }
+
+// GetOrganizationVolunteers gets all volunteers from a specified organization.
+func (s *service) GetOrganizationVolunteers(ctx context.Context, organizationID int64) error {
+	return nil
+}

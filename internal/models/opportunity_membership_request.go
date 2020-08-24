@@ -18,6 +18,8 @@ type OpportunityMembershipRequestRepository interface {
 	FindByVolunteerID(volunteerID int64) ([]OpportunityMembershipRequest, error)
 	// FindByOpportunityID finds multiple entities by the opportunity ID.
 	FindByOpportunityID(opportunityID int64) ([]OpportunityMembershipRequest, error)
+	// FindByOpportunityIDs finds multiple entities by multiple opportunity IDs.
+	FindByOpportunityIDs(ids []int64) ([]OpportunityMembershipRequest, error)
 	// FindInOpportunityByVolunteerID finds a single entity by opportunity and volunteer ID.
 	FindInOpportunityByVolunteerID(opportunityID, volunteerID int64) (*OpportunityMembershipRequest, error)
 	// Create creates a new entity.

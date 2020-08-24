@@ -6833,6 +6833,210 @@
           }
         }
       }
+    },
+    "/organizations/{organizationId}/volunteers": {
+      "get": {
+        "tags": [
+          "Organizations"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "description": "The ID of the organization.",
+            "schema": {
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "summary": "Gets all volunteers in all of an organization's opportunities by organization ID. Requires manager status of organization.",
+        "responses": {
+          "200": {
+            "description": "Success! Volunteers will be returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "required": [
+                        "pending",
+                        "volunteers"
+                      ],
+                      "properties": {
+                        "pending": {
+                          "type": "array",
+                          "description": "Volunteers with pending requests to join.",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "accepted": {
+                                "type": "boolean",
+                                "example": false
+                              },
+                              "firstName": {
+                                "type": "string",
+                                "example": "Ky"
+                              },
+                              "id": {
+                                "type": "string",
+                                "example": "18239123"
+                              },
+                              "lastName": {
+                                "type": "string",
+                                "example": "Foog"
+                              },
+                              "opportunityId": {
+                                "type": "string",
+                                "example": "1280766037612040192"
+                              },
+                              "volunteerID": {
+                                "type": "string",
+                                "example": "1275334727808585728"
+                              },
+                              "opportunity": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "example": "1282893821989883904"
+                                  },
+                                  "name": {
+                                    "type": "string",
+                                    "example": "Help watch birds!"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "volunteers": {
+                          "type": "array",
+                          "description": "Currently enrolled volunteers.",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "firstName": {
+                                "type": "string",
+                                "example": "tyler"
+                              },
+                              "id": {
+                                "type": "string",
+                                "example": "19827378"
+                              },
+                              "inviterId": {
+                                "type": "string",
+                                "example": "1280766037612040192"
+                              },
+                              "lastName": {
+                                "type": "string",
+                                "example": "Lafayette"
+                              },
+                              "permissionsFlag": {
+                                "type": "number",
+                                "example": 0
+                              },
+                              "profilePicture": {
+                                "type": "string",
+                                "example": "https://cdn.joinimpact.org/profile-picture-1273884565403865088-1593076042.png"
+                              },
+                              "opportunity": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "example": "1282893821989883904"
+                                  },
+                                  "name": {
+                                    "type": "string",
+                                    "example": "Help watch birds!"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "invited": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "accepted": {
+                                "type": "boolean",
+                                "example": false
+                              },
+                              "emailOnly": {
+                                "type": "boolean",
+                                "example": false,
+                                "description": "When true, it means that the user has not yet made an account, and should be displayed in a list with only the email."
+                              },
+                              "firstName": {
+                                "type": "string",
+                                "example": "tyler"
+                              },
+                              "id": {
+                                "type": "string",
+                                "example": "1273884565403865088"
+                              },
+                              "inviteeEmail": {
+                                "type": "string",
+                                "example": "tylerlafayette@gmail.com"
+                              },
+                              "inviteeId": {
+                                "type": "string",
+                                "example": "1273884565403865088"
+                              },
+                              "inviterId": {
+                                "type": "string",
+                                "example": "1273884565403865088"
+                              },
+                              "lastName": {
+                                "type": "string",
+                                "example": "Lafayette"
+                              },
+                              "opportunityId": {
+                                "type": "string",
+                                "example": "1282893821989883904"
+                              },
+                              "profilePicture": {
+                                "type": "string",
+                                "example": "https://cdn.joinimpact.org/profile-picture-1273884565403865088-1593076042.png"
+                              },
+                              "opportunity": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "example": "1282893821989883904"
+                                  },
+                                  "name": {
+                                    "type": "string",
+                                    "example": "Help watch birds!"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Opportunity not found."
+          },
+          "500": {
+            "description": "Server error, please try again."
+          }
+        }
+      }
     }
   }
 }
