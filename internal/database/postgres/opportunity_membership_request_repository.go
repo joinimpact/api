@@ -47,6 +47,15 @@ func (r *opportunityMembershipRequestRepository) FindByOpportunityID(opportunity
 	return opportunityMembershipRequests, nil
 }
 
+// FindByOpportunityIDs finds multiple entities by multiple opportunity IDs.
+func (r *opportunityMembershipRequestRepository) FindByOpportunityIDs(ids []int64) ([]models.OpportunityMembershipRequest, error) {
+	var opportunityMembershipRequests []models.OpportunityMembershipRequest
+	if err := r.db.Preload("Opportunity").Where("opportunity_id in (?) AND accepted = False", ids).Find(&opportunityMembershipRequests).Error; err != nil {
+		return opportunityMembershipRequests, err
+	}
+	return opportunityMembershipRequests, nil
+}
+
 // FindInOpportunityByVolunteerID finds a single entity by opportunity and volunteer ID.
 func (r *opportunityMembershipRequestRepository) FindInOpportunityByVolunteerID(opportunityID, volunteerID int64) (*models.OpportunityMembershipRequest, error) {
 	var opportunityMembership models.OpportunityMembershipRequest

@@ -82,6 +82,12 @@ type Service interface {
 	Search(ctx context.Context, query opportunitiesSearch.Query) (*SearchResponse, error)
 	// GetRecommendations gets a list of browse rows for a specific user based on recommendations made using a random number seeded by the current date.
 	GetRecommendations(ctx context.Context, userID int64) ([]Section, error)
+	// GetOrganizationOpportunityVolunteers gets all volunteers in all opportunities of a specified organization.
+	GetOrganizationOpportunityVolunteers(ctx context.Context, organizationID int64) ([]models.OpportunityMembership, error)
+	// GetOrganizationOpportunityInvitedVolunteers gets all invited volunteers in all opportunities of a specified organization.
+	GetOrganizationOpportunityInvitedVolunteers(ctx context.Context, organizationID int64) ([]models.OpportunityMembershipInvite, error)
+	// GetOrganizationOpportunityRequestedVolunteers gets all invited volunteers in all opportunities of a specified organization.
+	GetOrganizationOpportunityRequestedVolunteers(ctx context.Context, organizationID int64) ([]models.OpportunityMembershipRequest, error)
 }
 
 // service represents the intenral implementation of the opportunities Service.
@@ -1017,4 +1023,64 @@ func (s *service) GetRecommendations(ctx context.Context, userID int64) ([]Secti
 	}
 
 	return sections, nil
+}
+
+// GetOrganizationOpportunityVolunteers gets all volunteers in all opportunities of a specified organization.
+func (s *service) GetOrganizationOpportunityVolunteers(ctx context.Context, organizationID int64) ([]models.OpportunityMembership, error) {
+	opportunities, err := s.opportunityRepository.FindByOrganizationID(ctx, organizationID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	ids := []int64{}
+	for _, opportunity := range opportunities {
+		ids = append(ids, opportunity.ID)
+	}
+
+	opportunityMemberships, err := s.opportunityMembershipRepository.FindByOpportunityIDs(ctx, ids)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	return opportunityMemberships, nil
+}
+
+// GetOrganizationOpportunityInvitedVolunteers gets all invited volunteers in all opportunities of a specified organization.
+func (s *service) GetOrganizationOpportunityInvitedVolunteers(ctx context.Context, organizationID int64) ([]models.OpportunityMembershipInvite, error) {
+	opportunities, err := s.opportunityRepository.FindByOrganizationID(ctx, organizationID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	ids := []int64{}
+	for _, opportunity := range opportunities {
+		ids = append(ids, opportunity.ID)
+	}
+
+	opportunityMemberships, err := s.opportunityMembershipInviteRepository.FindByOpportunityIDs(ids)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	return opportunityMemberships, nil
+}
+
+// GetOrganizationOpportunityRequestedVolunteers gets all invited volunteers in all opportunities of a specified organization.
+func (s *service) GetOrganizationOpportunityRequestedVolunteers(ctx context.Context, organizationID int64) ([]models.OpportunityMembershipRequest, error) {
+	opportunities, err := s.opportunityRepository.FindByOrganizationID(ctx, organizationID)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	ids := []int64{}
+	for _, opportunity := range opportunities {
+		ids = append(ids, opportunity.ID)
+	}
+
+	opportunityMemberships, err := s.opportunityMembershipRequestRepository.FindByOpportunityIDs(ids)
+	if err != nil {
+		return nil, NewErrServerError()
+	}
+
+	return opportunityMemberships, nil
 }

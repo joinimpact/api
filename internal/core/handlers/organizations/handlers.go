@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/joinimpact/api/internal/core/middleware/auth"
 	"github.com/joinimpact/api/internal/models"
+	"github.com/joinimpact/api/internal/opportunities"
 	"github.com/joinimpact/api/internal/organizations"
 	"github.com/joinimpact/api/internal/users"
 	"github.com/joinimpact/api/pkg/idctx"
@@ -708,5 +709,148 @@ func InviteDeclinePost(organizationsService organizations.Service) http.HandlerF
 		}
 
 		resp.OK(w, r, response{true})
+	}
+}
+
+// OrganizationVolunteersGet gets all volunteers in all opportunities inside an organization.
+func OrganizationVolunteersGet(opportunitiesService opportunities.Service, usersService users.Service) http.HandlerFunc {
+	type OpportunitySummary struct {
+		ID    int64  `json:"id"`
+		Title string `json:"title"`
+	}
+	// OpportunityVolunteer represents a volunteer in an opportunity.
+	type OpportunityVolunteer struct {
+		OpportunitySummary OpportunitySummary `json:"opportunity"`
+		models.OpportunityMembership
+		users.UserProfile
+	}
+	// OpportunityPendingVolunteer represents a pending volunteer in an opportunity.
+	type OpportunityPendingVolunteer struct {
+		OpportunitySummary OpportunitySummary `json:"opportunity"`
+		models.OpportunityMembershipRequest
+		users.UserProfile
+	}
+	// OpportunityInvitedVolunteer represents a pending volunteer in an opportunity.
+	type OpportunityInvitedVolunteer struct {
+		OpportunitySummary OpportunitySummary `json:"opportunity"`
+		EmailOnly          bool               `json:"emailOnly"`
+		models.OpportunityMembershipInvite
+		users.UserProfile
+	}
+	type response struct {
+		Volunteers []OpportunityVolunteer        `json:"volunteers"`
+		Pending    []OpportunityPendingVolunteer `json:"pending"`
+		Invited    []OpportunityInvitedVolunteer `json:"invited"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		organizationID, err := idctx.Get(r, "organizationID")
+		if err != nil {
+			return
+		}
+
+		memberships, err := opportunitiesService.GetOrganizationOpportunityVolunteers(ctx, organizationID)
+		if err != nil {
+			switch err.(type) {
+			case *opportunities.ErrRequestNotFound:
+				resp.NotFound(w, r, resp.APIError(err, nil))
+			case *opportunities.ErrServerError:
+				resp.ServerError(w, r, resp.APIError(err, nil))
+			default:
+				resp.ServerError(w, r, resp.UnknownError)
+			}
+			return
+		}
+
+		volunteers := []OpportunityVolunteer{}
+
+		for _, membership := range memberships {
+			profile, err := usersService.GetMinimalUserProfile(membership.UserID)
+			if err != nil {
+				switch err.(type) {
+				case *users.ErrUserNotFound:
+					resp.NotFound(w, r, resp.Error(404, err.Error()))
+				case *users.ErrServerError:
+					resp.ServerError(w, r, resp.Error(500, err.Error()))
+				default:
+					resp.ServerError(w, r, resp.UnknownError)
+				}
+				return
+			}
+
+			volunteers = append(volunteers, OpportunityVolunteer{OpportunitySummary{membership.Opportunity.ID, membership.Opportunity.Title}, membership, *profile})
+		}
+
+		invited, err := opportunitiesService.GetOrganizationOpportunityInvitedVolunteers(ctx, organizationID)
+		if err != nil {
+			switch err.(type) {
+			case *opportunities.ErrRequestNotFound:
+				resp.NotFound(w, r, resp.APIError(err, nil))
+			case *opportunities.ErrServerError:
+				resp.ServerError(w, r, resp.APIError(err, nil))
+			default:
+				resp.ServerError(w, r, resp.UnknownError)
+			}
+			return
+		}
+
+		invitedVolunteers := []OpportunityInvitedVolunteer{}
+
+		for _, membership := range invited {
+			profile, err := usersService.GetMinimalUserProfile(membership.InviteeID)
+			if err != nil {
+				switch err.(type) {
+				case *users.ErrUserNotFound:
+					resp.NotFound(w, r, resp.Error(404, err.Error()))
+				case *users.ErrServerError:
+					resp.ServerError(w, r, resp.Error(500, err.Error()))
+				default:
+					resp.ServerError(w, r, resp.UnknownError)
+				}
+				return
+			}
+
+			if profile == nil {
+				invitedVolunteers = append(invitedVolunteers, OpportunityInvitedVolunteer{OpportunitySummary{membership.Opportunity.ID, membership.Opportunity.Title}, false, membership, users.UserProfile{}})
+				continue
+			}
+			invitedVolunteers = append(invitedVolunteers, OpportunityInvitedVolunteer{OpportunitySummary{membership.Opportunity.ID, membership.Opportunity.Title}, true, membership, *profile})
+		}
+
+		pending, err := opportunitiesService.GetOrganizationOpportunityRequestedVolunteers(ctx, organizationID)
+		if err != nil {
+			switch err.(type) {
+			case *opportunities.ErrRequestNotFound:
+				resp.NotFound(w, r, resp.APIError(err, nil))
+			case *opportunities.ErrServerError:
+				resp.ServerError(w, r, resp.APIError(err, nil))
+			default:
+				resp.ServerError(w, r, resp.UnknownError)
+			}
+			return
+		}
+
+		pendingVolunteers := []OpportunityPendingVolunteer{}
+
+		for _, membership := range pending {
+			profile, err := usersService.GetMinimalUserProfile(membership.VolunteerID)
+			if err != nil {
+				switch err.(type) {
+				case *users.ErrUserNotFound:
+					resp.NotFound(w, r, resp.Error(404, err.Error()))
+				case *users.ErrServerError:
+					resp.ServerError(w, r, resp.Error(500, err.Error()))
+				default:
+					resp.ServerError(w, r, resp.UnknownError)
+				}
+				return
+			}
+
+			pendingVolunteers = append(pendingVolunteers, OpportunityPendingVolunteer{OpportunitySummary{membership.Opportunity.ID, membership.Opportunity.Title}, membership, *profile})
+		}
+
+		resp.OK(w, r, response{volunteers, pendingVolunteers, invitedVolunteers})
 	}
 }

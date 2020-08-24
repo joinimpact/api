@@ -52,6 +52,15 @@ func (r *opportunityMembershipRepository) FindByOpportunityID(ctx context.Contex
 	return opportunityMemberships, nil
 }
 
+// FindByOpportunityIDs finds multiple entities by multiple opportunity IDs.
+func (r *opportunityMembershipRepository) FindByOpportunityIDs(ctx context.Context, ids []int64) ([]models.OpportunityMembership, error) {
+	var opportunityMemberships []models.OpportunityMembership
+	if err := r.db.Where("opportunity_id in (?) AND active = True", ids).Find(&opportunityMemberships).Error; err != nil {
+		return opportunityMemberships, err
+	}
+	return opportunityMemberships, nil
+}
+
 // FindUserInOpportunity finds a user's membership in a specific opportunity.
 func (r *opportunityMembershipRepository) FindUserInOpportunity(ctx context.Context, opportunityID, userID int64) (*models.OpportunityMembership, error) {
 	var opportunityMembership models.OpportunityMembership

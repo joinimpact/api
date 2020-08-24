@@ -28,6 +28,8 @@ type OpportunityMembershipInviteRepository interface {
 	FindInOpportunityByEmail(opportunityID int64, email string) (*OpportunityMembershipInvite, error)
 	// FindByOpportunityID finds multiple entities by the opportunity ID.
 	FindByOpportunityID(opportunityID int64) ([]OpportunityMembershipInvite, error)
+	// FindByOpportunityIDs finds multiple entities by multiple opportunity IDs.
+	FindByOpportunityIDs(ids []int64) ([]OpportunityMembershipInvite, error)
 	// Create creates a new entity.
 	Create(opportunityMembershipInvite OpportunityMembershipInvite) error
 	// Update updates an entity with the ID in the provided entity.
