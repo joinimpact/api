@@ -539,7 +539,7 @@ func MembersGet(organizationsService organizations.Service, usersService users.S
 			user, err := usersService.GetMinimalUserProfile(member.UserID)
 			if err != nil {
 				resp.ServerError(w, r, resp.ErrorRef(500, "error getting user", "generic.server_error", nil))
-				return
+				continue
 			}
 
 			members = append(members, membership{member, *user})
