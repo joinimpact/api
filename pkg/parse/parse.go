@@ -60,6 +60,7 @@ func POST(w http.ResponseWriter, r *http.Request, s interface{}) error {
 	validate := validator.New()
 	validate.RegisterValidation("minAge", validators.MinAge)
 	validate.RegisterValidation("maxAge", validators.MaxAge)
+	validate.RegisterValidation("url", validators.URL)
 
 	err := validate.Struct(s)
 	if err == nil {

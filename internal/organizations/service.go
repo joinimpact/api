@@ -195,7 +195,7 @@ func (s *service) UpdateOrganizationProfile(organizationID int64, profile Organi
 		},
 		Name:        profile.Name,
 		Description: profile.Description,
-		WebsiteURL:  profile.WebsiteURL,
+		WebsiteURL:  formatURL(profile.WebsiteURL),
 	})
 }
 
