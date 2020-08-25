@@ -538,8 +538,8 @@ func MembersGet(organizationsService organizations.Service, usersService users.S
 		for _, member := range memberships {
 			user, err := usersService.GetMinimalUserProfile(member.UserID)
 			if err != nil {
-				resp.ServerError(w, r, resp.ErrorRef(500, "error getting user", "generic.server_error", nil))
-				return
+				// resp.ServerError(w, r, resp.ErrorRef(500, "error getting user", "generic.server_error", nil))
+				continue
 			}
 
 			members = append(members, membership{member, *user})
