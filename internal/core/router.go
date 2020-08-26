@@ -65,6 +65,7 @@ func (app *App) Router() *chi.Mux {
 				r.Use(scopes.Middleware(users.ScopeProviderUsers()))
 
 				r.Get("/", users.GetUserProfile(app.usersService))
+				r.With(permissions.Require(scopes.ScopeOwner)).Delete("/", users.DeletePost(app.usersService))
 				r.With(permissions.Require(scopes.ScopeOwner)).Patch("/", users.UpdateUserProfile(app.usersService))
 
 				r.Get("/tags", users.GetUserTags(app.usersService))
@@ -74,7 +75,7 @@ func (app *App) Router() *chi.Mux {
 				r.With(permissions.Require(scopes.ScopeOwner)).Post("/profile-picture", users.UploadProfilePicture(app.usersService))
 
 				r.With(permissions.Require(scopes.ScopeOwner)).Get("/organizations", organizations.GetUserOrganizations(app.organizationsService))
-				r.With(permissions.Require(scopes.ScopeOwner)).Get("/opportunities", opportunities.GetByVolunteer(app.opportunitiesService))
+				r.Get("/opportunities", opportunities.GetByVolunteer(app.opportunitiesService))
 				r.With(permissions.Require(scopes.ScopeOwner)).Get("/events", events.GetByVolunteer(app.eventsService))
 
 				r.Route("/conversations", func(r chi.Router) {
