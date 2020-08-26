@@ -75,7 +75,7 @@ func (app *App) Router() *chi.Mux {
 				r.With(permissions.Require(scopes.ScopeOwner)).Post("/profile-picture", users.UploadProfilePicture(app.usersService))
 
 				r.With(permissions.Require(scopes.ScopeOwner)).Get("/organizations", organizations.GetUserOrganizations(app.organizationsService))
-				r.With(permissions.Require(scopes.ScopeOwner)).Get("/opportunities", opportunities.GetByVolunteer(app.opportunitiesService))
+				r.Get("/opportunities", opportunities.GetByVolunteer(app.opportunitiesService))
 				r.With(permissions.Require(scopes.ScopeOwner)).Get("/events", events.GetByVolunteer(app.eventsService))
 
 				r.Route("/conversations", func(r chi.Router) {
