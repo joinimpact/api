@@ -65,6 +65,7 @@ func (app *App) Router() *chi.Mux {
 				r.Use(scopes.Middleware(users.ScopeProviderUsers()))
 
 				r.Get("/", users.GetUserProfile(app.usersService))
+				r.With(permissions.Require(scopes.ScopeOwner)).Delete("/", users.DeletePost(app.usersService))
 				r.With(permissions.Require(scopes.ScopeOwner)).Patch("/", users.UpdateUserProfile(app.usersService))
 
 				r.Get("/tags", users.GetUserTags(app.usersService))

@@ -1,6 +1,7 @@
 package users
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"time"
@@ -33,6 +34,8 @@ type Service interface {
 	SetUserProfileField(userID int64, profileField models.UserProfileField) error
 	// UploadProfilePicture uploads a profile picture to the CDN and adds it to the user.
 	UploadProfilePicture(userID int64, fileReader io.Reader) (string, error)
+	// DeleteUser deletes a user's account by ID.
+	DeleteUser(ctx context.Context, userID int64) error
 }
 
 // service represents the internal implementation of the Service interface.
@@ -287,4 +290,13 @@ func (s *service) UploadProfilePicture(userID int64, fileReader io.Reader) (stri
 		},
 		ProfilePicture: url,
 	})
+}
+
+// DeleteUser deletes a user by ID.
+func (s *service) DeleteUser(ctx context.Context, userID int64) error {
+	if err := s.userRepository.DeleteByID(userID); err != nil {
+		return NewErrServerError()
+	}
+
+	return nil
 }
