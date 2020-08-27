@@ -509,7 +509,7 @@ func (s *service) GetOrganizationFromInvite(ctx context.Context, organizationID 
 	}
 
 	// Check if the invite is valid.
-	if invite.InviteeEmail != user.Email || invite.Key != inviteKey || invite.OrganizationID != organizationID {
+	if (invite.InviteeEmail != user.Email && invite.InviteeID != user.ID) || invite.Key != inviteKey || invite.OrganizationID != organizationID {
 		return nil, NewErrInviteInvalid()
 	}
 
@@ -531,7 +531,7 @@ func (s *service) AcceptInvite(ctx context.Context, organizationID int64, userID
 	}
 
 	// Check if the invite is valid.
-	if invite.InviteeEmail != user.Email || invite.Key != inviteKey || invite.OrganizationID != organizationID {
+	if (invite.InviteeEmail != user.Email && invite.InviteeID != user.ID) || invite.Key != inviteKey || invite.OrganizationID != organizationID {
 		return NewErrInviteInvalid()
 	}
 
@@ -563,7 +563,7 @@ func (s *service) DeclineInvite(ctx context.Context, organizationID int64, userI
 	}
 
 	// Check if the invite is valid.
-	if invite.InviteeEmail != user.Email || invite.Key != inviteKey || invite.OrganizationID != organizationID {
+	if (invite.InviteeEmail != user.Email && invite.InviteeID != user.ID) || invite.Key != inviteKey || invite.OrganizationID != organizationID {
 		return NewErrInviteInvalid()
 	}
 
