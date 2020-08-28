@@ -16,15 +16,23 @@ type ConversationView struct {
 
 // MessageView represents a view of a message.
 type MessageView struct {
-	ID                int64       `json:"id"`
-	ConversationID    int64       `json:"conversationId"`
-	SenderID          int64       `json:"senderId"`
-	SenderPerspective uint        `json:"senderPerspective"`
-	Timestamp         time.Time   `json:"timestamp"`
-	Type              string      `json:"type"`
-	Edited            bool        `json:"edited"`
-	EditedTimestamp   time.Time   `json:"editedTimestamp"`
-	Body              interface{} `json:"body"`
+	ID                int64              `json:"id"`
+	ConversationID    int64              `json:"conversationId"`
+	SenderID          int64              `json:"senderId"`
+	SenderPerspective uint               `json:"senderPerspective"`
+	Timestamp         time.Time          `json:"timestamp"`
+	Type              string             `json:"type"`
+	Edited            bool               `json:"edited"`
+	EditedTimestamp   time.Time          `json:"editedTimestamp"`
+	Body              interface{}        `json:"body"`
+	Sender            *MessageSenderView `json:"sender"`
+}
+
+// MessageSenderView represents the sender of a message.
+type MessageSenderView struct {
+	FirstName      string `json:"firstName"`
+	LastName       string `json:"lastName"`
+	ProfilePicture string `json:"profilePicture"`
 }
 
 // MessageVolunteerRequestProfileView represents a view of a message containing a user's profile.
