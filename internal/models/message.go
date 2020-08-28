@@ -29,6 +29,7 @@ type Message struct {
 	Model
 	Timestamp         time.Time      `json:"timestamp"`
 	ConversationID    int64          `json:"conversationId"`
+	Sender            *User          `json:"-" gorm:"foreignkey:SenderID"`
 	SenderID          int64          `json:"senderId"`
 	SenderPerspective *uint          `json:"senderPerspective"`
 	Type              string         `json:"type"`

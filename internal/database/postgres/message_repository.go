@@ -36,6 +36,7 @@ func (r *messageRepository) FindByConversationID(ctx context.Context, conversati
 	dbctx := dbctx.Get(ctx)
 
 	db := r.db.
+		Preload("Sender").
 		Model(&models.Message{}).
 		Limit(dbctx.Limit).
 		Where("conversation_id = ?", conversationID).Order("timestamp DESC", true).
@@ -63,6 +64,7 @@ func (r *messageRepository) FindBySenderID(ctx context.Context, senderID int64) 
 	dbctx := dbctx.Get(ctx)
 
 	db := r.db.
+		Preload("Sender").
 		Model(&models.Message{}).
 		Limit(dbctx.Limit).
 		Where("sender_id = ?", senderID).Order("timestamp DESC", true).
@@ -89,6 +91,7 @@ func (r *messageRepository) FindInConversationBySenderID(ctx context.Context, co
 	dbctx := dbctx.Get(ctx)
 
 	db := r.db.
+		Preload("Sender").
 		Model(&models.Message{}).
 		Limit(dbctx.Limit).
 		Where("conversation_id = ? AND sender_id = ?", conversationID, senderID).Order("timestamp DESC", true).

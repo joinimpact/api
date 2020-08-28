@@ -443,15 +443,29 @@ func (s *service) messageToView(ctx context.Context, message models.Message) (*M
 		return nil, err
 	}
 
+	if message.SenderPerspective == nil {
+		perspective := models.MessageSenderPerspectiveVolunteer
+		message.SenderPerspective = &perspective
+	}
+
 	view := &MessageView{
-		ID:              message.ID,
-		ConversationID:  message.ConversationID,
-		SenderID:        message.SenderID,
-		Timestamp:       message.Timestamp,
-		Type:            message.Type,
-		Edited:          message.Edited,
-		EditedTimestamp: message.EditedTimestamp,
-		Body:            body,
+		ID:                message.ID,
+		ConversationID:    message.ConversationID,
+		SenderID:          message.SenderID,
+		SenderPerspective: *message.SenderPerspective,
+		Timestamp:         message.Timestamp,
+		Type:              message.Type,
+		Edited:            message.Edited,
+		EditedTimestamp:   message.EditedTimestamp,
+		Body:              body,
+	}
+
+	if message.Sender != nil {
+		view.Sender = &MessageSenderView{
+			FirstName:      message.Sender.FirstName,
+			LastName:       message.Sender.LastName,
+			ProfilePicture: message.Sender.ProfilePicture,
+		}
 	}
 
 	return view, nil
