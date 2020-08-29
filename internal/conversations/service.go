@@ -22,7 +22,9 @@ var stream = pubsub.Stream("impact.users")
 
 // Events
 const (
-	MessageSent = "messages.MESSAGE_SENT"
+	EventMessageSent                   = "messages.MESSAGE_SENT"
+	EventConversationMembershipCreated = "conversations.CONVERSATION_MEMBERSHIP_CREATED"
+	EventConversationMembershipDeleted = "conversations.CONVERSATION_MEMBERSHIP_DELETED"
 )
 
 // Service defines methods for interacting with conversations and messages.
@@ -101,33 +103,8 @@ func NewService(conversationRepository models.ConversationRepository, conversati
 
 // CreateOpportunityMembershipRequestConversation creates an opportunity membership request conversation and adds a message to it. Returns conversation ID on success.
 func (s *service) CreateOpportunityMembershipRequestConversation(ctx context.Context, organizationID, opportunityID, opportunityMembershipRequestID, volunteerID int64, messageStr string) (int64, error) {
-	// Conversation
-	var conversationID int64
-	if conversation, err := s.conversationRepository.FindUserOrganizationConversation(ctx, volunteerID, organizationID); err == nil {
-		conversationID = conversation.ID
-	} else {
-		conversation := models.Conversation{}
-		conversation.ID = s.snowflakeService.GenerateID()
-		conversation.Active = true
-		conversation.OrganizationID = organizationID
-		conversation.Type = 1 // TODO: make this a constant in the models package
-
-		if err := s.conversationRepository.Create(conversation); err != nil {
-			return 0, NewErrServerError()
-		}
-
-		conversationID = conversation.ID
-	}
-
-	// ConversationMembership
-	conversationMembership := models.ConversationMembership{}
-	conversationMembership.ID = s.snowflakeService.GenerateID()
-	conversationMembership.Active = true
-	conversationMembership.ConversationID = conversationID
-	conversationMembership.UserID = volunteerID
-	conversationMembership.Role = 0 // TODO: make this a constant in the models package
-
-	if err := s.conversationMembershipRepository.Create(conversationMembership); err != nil {
+	conversationID, err := s.createOrganizationVolunteerConversation(ctx, volunteerID, organizationID)
+	if err != nil {
 		return 0, NewErrServerError()
 	}
 
@@ -169,6 +146,40 @@ func (s *service) CreateOpportunityMembershipRequestConversation(ctx context.Con
 	}
 
 	return conversationID, nil
+}
+
+// createOrganizationVolunteerConversation creates a conversation between an organization and a volunteer if one does not already exists, and returns the id of the newly created or already existing conversation.
+func (s *service) createOrganizationVolunteerConversation(ctx context.Context, volunteerID, organizationID int64) (int64, error) {
+	// Check to see if a conversation already exists between the volunteer and the organization.
+	if conversation, err := s.conversationRepository.FindUserOrganizationConversation(ctx, volunteerID, organizationID); err == nil {
+		return conversation.ID, nil
+	}
+
+	conversation := models.Conversation{}
+	conversation.ID = s.snowflakeService.GenerateID()
+	conversation.Active = true
+	conversation.OrganizationID = organizationID
+	conversation.Type = 1 // TODO: make this a constant in the models package
+
+	if err := s.conversationRepository.Create(conversation); err != nil {
+		return 0, NewErrServerError()
+	}
+
+	// ConversationMembership
+	conversationMembership := models.ConversationMembership{}
+	conversationMembership.ID = s.snowflakeService.GenerateID()
+	conversationMembership.Active = true
+	conversationMembership.ConversationID = conversation.ID
+	conversationMembership.UserID = volunteerID
+	conversationMembership.Role = 0 // TODO: make this a constant in the models package
+
+	if err := s.conversationMembershipRepository.Create(conversationMembership); err != nil {
+		return 0, NewErrServerError()
+	}
+
+	go s.brokerPublishEventConversationMembershipCreated(conversationMembership)
+
+	return conversation.ID, nil
 }
 
 // GetUserConversationMemberships gets a user's volunteer conversation memberships.
@@ -376,22 +387,36 @@ func (s *service) sendMessage(ctx context.Context, message models.Message) error
 		return err
 	}
 
-	go s.brokerPublishMessageSent(message)
+	go s.brokerPublishEventMessageSent(message)
 
 	return nil
 }
 
-// brokerPublishMessageSent publishes a message as a MessageSent event.
+// brokerPublishEventMessageSent publishes a message as a EventMessageSent event.
 // Should be called asynchronously/spawned as a goroutine.
-func (s *service) brokerPublishMessageSent(message models.Message) error {
+func (s *service) brokerPublishEventMessageSent(message models.Message) error {
 	view, err := s.messageToView(context.Background(), message)
 	if err != nil {
 		return err
 	}
 
 	if err := s.broker.Publish(stream, pubsub.Event{
-		EventName: MessageSent,
+		EventName: EventMessageSent,
 		Payload:   *view,
+	}); err != nil {
+		s.logger.Error().Err(err).Msg("Error publishing message to pub/sub")
+		return err
+	}
+
+	return nil
+}
+
+// brokerPublishEventConversationMembershipCreated publishes a message as an EventConversationMembershipCreated event.
+// Should be called asynchronously/spawned as a goroutine.
+func (s *service) brokerPublishEventConversationMembershipCreated(conversationMembership models.ConversationMembership) error {
+	if err := s.broker.Publish(stream, pubsub.Event{
+		EventName: EventConversationMembershipCreated,
+		Payload:   conversationMembership,
 	}); err != nil {
 		s.logger.Error().Err(err).Msg("Error publishing message to pub/sub")
 		return err
