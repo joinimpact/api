@@ -1,5 +1,7 @@
 package models
 
+import "context"
+
 // ConversationMembership represents a user's relation to a conversation.
 type ConversationMembership struct {
 	Model
@@ -18,6 +20,8 @@ type ConversationMembershipRepository interface {
 	FindByConversationID(conversationID int64) ([]ConversationMembership, error)
 	// FindByUserID finds multiple entities by the user ID.
 	FindByUserID(userID int64) ([]ConversationMembership, error)
+	// FindByUserIDAndConversationID finds a single entity by user ID and conversation ID.
+	FindByUserIDAndConversationID(ctx context.Context, userID, conversationID int64) (*ConversationMembership, error)
 	// Create creates a new entity.
 	Create(conversationMembership ConversationMembership) error
 	// Update updates an entity with the ID in the provided entity.

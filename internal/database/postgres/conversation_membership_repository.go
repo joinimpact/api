@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"context"
+
 	"github.com/jinzhu/gorm"
 	"github.com/joinimpact/api/internal/models"
 	"github.com/rs/zerolog"
@@ -28,20 +30,30 @@ func (r *conversationMembershipRepository) FindByID(id int64) (*models.Conversat
 
 // FindByConversationID finds multiple entities by the conversation ID.
 func (r *conversationMembershipRepository) FindByConversationID(conversationID int64) ([]models.ConversationMembership, error) {
-	var opportunities []models.ConversationMembership
-	if err := r.db.Preload("User").Where("conversation_id = ? AND active = True", conversationID).Find(&opportunities).Error; err != nil {
-		return opportunities, err
+	var conversationMemberships []models.ConversationMembership
+	if err := r.db.Preload("User").Where("conversation_id = ? AND active = True", conversationID).Find(&conversationMemberships).Error; err != nil {
+		return conversationMemberships, err
 	}
-	return opportunities, nil
+	return conversationMemberships, nil
 }
 
 // FindByUserID finds multiple entities by the creator ID.
 func (r *conversationMembershipRepository) FindByUserID(userID int64) ([]models.ConversationMembership, error) {
-	var opportunities []models.ConversationMembership
-	if err := r.db.Where("user_id = ? AND active = True", userID).Find(&opportunities).Error; err != nil {
-		return opportunities, err
+	var conversationMemberships []models.ConversationMembership
+	if err := r.db.Where("user_id = ? AND active = True", userID).Find(&conversationMemberships).Error; err != nil {
+		return conversationMemberships, err
 	}
-	return opportunities, nil
+	return conversationMemberships, nil
+}
+
+// FindByUserIDAndConversationID finds a single entity by user ID and conversation ID.
+func (r *conversationMembershipRepository) FindByUserIDAndConversationID(ctx context.Context, userID, conversationID int64) (*models.ConversationMembership, error) {
+	var conversationMembership models.ConversationMembership
+	if err := r.db.Where("user_id = ? AND conversation_id = ? AND active = True", userID, conversationID).First(&conversationMembership).Error; err != nil {
+		return &conversationMembership, err
+	}
+	return &conversationMembership, nil
+
 }
 
 // Create creates a new User.

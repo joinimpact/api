@@ -37,6 +37,9 @@ type Service interface {
 	GetUserConversations(ctx context.Context, userID int64) (*ConversationsResponse, error)
 	// GetUserConversation gets a single conversation from a user perspective.
 	GetUserConversation(ctx context.Context, conversationID int64) (*ConversationView, error)
+	// GetUserConversationMembership gets a user's ConversationMembership by userID and conversationID for authentication scope use.
+	// Returns an error when a membership is not found.
+	GetUserConversationMembership(ctx context.Context, userID, conversationID int64) (*models.ConversationMembership, error)
 	// GetOrganizationConversations gets an organization's internal conversations.
 	GetOrganizationConversations(ctx context.Context, organizationID int64) (*ConversationsResponse, error)
 	// GetOrganizationConversation gets a single conversation from a conversation perspective.
@@ -271,6 +274,17 @@ func (s *service) GetUserConversation(ctx context.Context, conversationID int64)
 	}
 
 	return view, nil
+}
+
+// GetUserConversationMembership gets a user's ConversationMembership by userID and conversationID for authentication scope use.
+// Returns an error when a membership is not found.
+func (s *service) GetUserConversationMembership(ctx context.Context, userID, conversationID int64) (*models.ConversationMembership, error) {
+	membership, err := s.conversationMembershipRepository.FindByUserIDAndConversationID(ctx, userID, conversationID)
+	if err != nil {
+		return nil, NewErrUserNotInConversation()
+	}
+
+	return membership, nil
 }
 
 // GetOrganizationConversations gets an organization's internal conversations.

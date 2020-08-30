@@ -41,3 +41,22 @@ func NewErrServerError() error {
 func (e *ErrServerError) Error() string {
 	return "internal error processing request, please try again"
 }
+
+// ErrUserNotInConversation is thrown when a user does not have a membership in a particular conversation.
+type ErrUserNotInConversation struct {
+}
+
+// NewErrUserNotInConversation creates and returns a ErrUserNotInConversation.
+func NewErrUserNotInConversation() error {
+	return &ErrUserNotInConversation{}
+}
+
+// Error provides a string representation of the error.
+func (e *ErrUserNotInConversation) Error() string {
+	return "user not found in conversation"
+}
+
+// Ref provides a string representation of the error.
+func (e *ErrUserNotInConversation) Ref() string {
+	return "conversations.user_not_in_conversation"
+}
