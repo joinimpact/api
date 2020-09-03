@@ -84,6 +84,8 @@ func (app *App) Router() *chi.Mux {
 
 					r.Route("/{conversationID}", func(r chi.Router) {
 						r.Use(idctx.Prepare("conversationID"))
+						r.Use(scopes.Middleware(conversations.ScopeProviderConversations(app.conversationsService)))
+						r.Use(permissions.Require(scopes.ScopeCollaborator))
 						r.Get("/", conversations.Get(app.conversationsService, false))
 
 						r.Route("/messages", func(r chi.Router) {
