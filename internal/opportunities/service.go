@@ -92,33 +92,35 @@ type Service interface {
 
 // service represents the intenral implementation of the opportunities Service.
 type service struct {
-	opportunityRepository                  models.OpportunityRepository
-	opportunityRequirementsRepository      models.OpportunityRequirementsRepository
-	opportunityLimitsRepository            models.OpportunityLimitsRepository
-	opportunityTagRepository               models.OpportunityTagRepository
-	opportunityMembershipRepository        models.OpportunityMembershipRepository
-	opportunityMembershipRequestRepository models.OpportunityMembershipRequestRepository
-	opportunityMembershipInviteRepository  models.OpportunityMembershipInviteRepository
-	tagRepository                          models.TagRepository
-	userRepository                         models.UserRepository
-	userTagRepository                      models.UserTagRepository
-	organizationRepository                 models.OrganizationRepository
-	config                                 *config.Config
-	logger                                 *zerolog.Logger
-	snowflakeService                       snowflakes.SnowflakeService
-	emailService                           email.Service
-	cdnClient                              *cdn.Client
-	searchStore                            opportunitiesSearch.Store
-	locationService                        location.Service
+	opportunityRepository                    models.OpportunityRepository
+	opportunityRequirementsRepository        models.OpportunityRequirementsRepository
+	opportunityLimitsRepository              models.OpportunityLimitsRepository
+	opportunityTagRepository                 models.OpportunityTagRepository
+	opportunityApplicationQuestionRepository models.OpportunityApplicationQuestionRepository
+	opportunityMembershipRepository          models.OpportunityMembershipRepository
+	opportunityMembershipRequestRepository   models.OpportunityMembershipRequestRepository
+	opportunityMembershipInviteRepository    models.OpportunityMembershipInviteRepository
+	tagRepository                            models.TagRepository
+	userRepository                           models.UserRepository
+	userTagRepository                        models.UserTagRepository
+	organizationRepository                   models.OrganizationRepository
+	config                                   *config.Config
+	logger                                   *zerolog.Logger
+	snowflakeService                         snowflakes.SnowflakeService
+	emailService                             email.Service
+	cdnClient                                *cdn.Client
+	searchStore                              opportunitiesSearch.Store
+	locationService                          location.Service
 }
 
 // NewService creates and returns a new Opportunities service with the provifded dependencies.
-func NewService(opportunityRepository models.OpportunityRepository, opportunityRequirementsRepository models.OpportunityRequirementsRepository, opportunityLimitsRepository models.OpportunityLimitsRepository, opportunityTagRepository models.OpportunityTagRepository, opportunityMembershipRepository models.OpportunityMembershipRepository, opportunityMembershipRequestRepository models.OpportunityMembershipRequestRepository, opportunityMembershipInviteRepository models.OpportunityMembershipInviteRepository, tagRepository models.TagRepository, userRepository models.UserRepository, userTagRepository models.UserTagRepository, organizationRepository models.OrganizationRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service, searchStore opportunitiesSearch.Store, locationService location.Service) Service {
+func NewService(opportunityRepository models.OpportunityRepository, opportunityRequirementsRepository models.OpportunityRequirementsRepository, opportunityLimitsRepository models.OpportunityLimitsRepository, opportunityTagRepository models.OpportunityTagRepository, opportunityApplicationQuestionRepository models.OpportunityApplicationQuestionRepository, opportunityMembershipRepository models.OpportunityMembershipRepository, opportunityMembershipRequestRepository models.OpportunityMembershipRequestRepository, opportunityMembershipInviteRepository models.OpportunityMembershipInviteRepository, tagRepository models.TagRepository, userRepository models.UserRepository, userTagRepository models.UserTagRepository, organizationRepository models.OrganizationRepository, config *config.Config, logger *zerolog.Logger, snowflakeService snowflakes.SnowflakeService, emailService email.Service, searchStore opportunitiesSearch.Store, locationService location.Service) Service {
 	return &service{
 		opportunityRepository,
 		opportunityRequirementsRepository,
 		opportunityLimitsRepository,
 		opportunityTagRepository,
+		opportunityApplicationQuestionRepository,
 		opportunityMembershipRepository,
 		opportunityMembershipRequestRepository,
 		opportunityMembershipInviteRepository,
