@@ -1033,13 +1033,24 @@ func (s *service) GetOrganizationOpportunityVolunteers(ctx context.Context, orga
 	}
 
 	ids := []int64{}
+	opportunitiesMap := map[int64]models.Opportunity{}
 	for _, opportunity := range opportunities {
 		ids = append(ids, opportunity.ID)
+		opportunitiesMap[opportunity.ID] = opportunity
 	}
 
 	opportunityMemberships, err := s.opportunityMembershipRepository.FindByOpportunityIDs(ctx, ids)
 	if err != nil {
 		return nil, NewErrServerError()
+	}
+
+	for i := 0; i < len(opportunityMemberships); i++ {
+		opportunity, ok := opportunitiesMap[opportunityMemberships[i].OpportunityID]
+		if !ok {
+			continue
+		}
+
+		opportunityMemberships[i].Opportunity = opportunity
 	}
 
 	return opportunityMemberships, nil
