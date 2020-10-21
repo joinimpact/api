@@ -1,5 +1,5 @@
 # ![Impact API](docs/static/img/impact-api-logo-512.png)
-Impact's API, written in Go.
+Impact's API, written in Go
 ## Installation and running
 Coming soon.
 ## Directory structure
