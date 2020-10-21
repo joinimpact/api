@@ -1,0 +1,19 @@
+name: Continuous Integration
+
+on: [pull_request]
+
+jobs:
+  lint:
+    name: Lint 
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name:  Install golint
+        run: go get -u golang.org/x/lint/golint
+
+      - name: Run golint
+        run: |
+          export PATH="$PATH:$(dirname $(go list -f {{.Target}} golang.org/x/lint/golint))"
+          make lint
+
