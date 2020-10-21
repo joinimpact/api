@@ -10,166 +10,166 @@ on:
       - master
       - develop
 
-    jobs:
-      lint:
-        name: Lint
-        runs-on: ubuntu-latest
-        steps:
-          - uses: actions/checkout@v2
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
 
-          - name: Install golint
-            run: go get -u golang.org/x/lint/golint
+      - name: Install golint
+        run: go get -u golang.org/x/lint/golint
 
-          - name: Run golint
-            run: |
-              export PATH="$PATH:$(dirname $(go list -f {{.Target}} golang.org/x/lint/golint))"
-              make lint
+      - name: Run golint
+        run: |
+          export PATH="$PATH:$(dirname $(go list -f {{.Target}} golang.org/x/lint/golint))"
+          make lint
 
-      build-push:
-        runs-on: ubuntu-latest
-        needs: test
-        if: contains('
-          refs/heads/master
-          refs/heads/develop
-          refs/heads/devops'
-          , github.ref)
+  build-push:
+    runs-on: ubuntu-latest
+    needs: test
+    if: contains('
+      refs/heads/master
+      refs/heads/develop
+      refs/heads/devops'
+      , github.ref)
 
-        steps:
-          - uses: actions/checkout@v2
+    steps:
+      - uses: actions/checkout@v2
 
-          - name: log into registry
-            run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+      - name: log into registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
 
-          - name: Build image
-            run: docker build . --pull --file Dockerfile --tag $CI_IMAGE_NAME
+      - name: Build image
+        run: docker build . --pull --file Dockerfile --tag $CI_IMAGE_NAME
 
-          - name: Push image
-            run: |
-              CI_REGISTRY_IMAGE=$(echo "docker.pkg.github.com/${{ github.repository }}/$CI_IMAGE_NAME" | tr '[A-Z]' '[a-z]')
-              CI_COMMIT_REF=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,' | tr '[A-Z]' '[a-z]')
+      - name: Push image
+        run: |
+          CI_REGISTRY_IMAGE=$(echo "docker.pkg.github.com/${{ github.repository }}/$CI_IMAGE_NAME" | tr '[A-Z]' '[a-z]')
+          CI_COMMIT_REF=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,' | tr '[A-Z]' '[a-z]')
 
-              echo CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE
-              echo CI_COMMIT_REF=$CI_COMMIT_REF
+          echo CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE
+          echo CI_COMMIT_REF=$CI_COMMIT_REF
 
-              #[[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
-              #[ "$LATEST" == "master" ] && LATEST=latest
+          #[[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+          #[ "$LATEST" == "master" ] && LATEST=latest
 
-              docker tag $CI_IMAGE_NAME $CI_REGISTRY_IMAGE:$CI_COMMIT_REF
-              docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF
+          docker tag $CI_IMAGE_NAME $CI_REGISTRY_IMAGE:$CI_COMMIT_REF
+          docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF
 
-      deploy-dev:
-        runs-on: ubuntu-latest
-        needs: build-push
-        if: contains('
-          refs/heads/develop'
-          , github.ref)
+  deploy-dev:
+    runs-on: ubuntu-latest
+    needs: build-push
+    if: contains('
+      refs/heads/develop'
+      , github.ref)
 
-        steps:
-          - name: Add ssh key
-            run: |
-              printf ${{ secrets.DEV_SSH_KEY }} | base64 -d > /tmp/dev_ssh_key
-              chmod 400 /tmp/dev_ssh_key
-              cat /tmp/dev_ssh_key
+    steps:
+      - name: Add ssh key
+        run: |
+          printf ${{ secrets.DEV_SSH_KEY }} | base64 -d > /tmp/dev_ssh_key
+          chmod 400 /tmp/dev_ssh_key
+          cat /tmp/dev_ssh_key
 
-          # Before use add 'AcceptEnv CI_*' into /etc/ssh/sshd_config an restart sshd
+      # Before use add 'AcceptEnv CI_*' into /etc/ssh/sshd_config an restart sshd
 
-          - name: Pull from repo
-            run: |
-              export CI_REGISTRY_IMAGE=$(echo "docker.pkg.github.com/${{ github.repository }}/$CI_IMAGE_NAME" | tr '[A-Z]' '[a-z]') \
-              export CI_COMMIT_REF=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,') && \
-              printf "bash -x -c 'cd $CI_DEV_API_PATH \
-                && git checkout $CI_COMMIT_REF \
-                && git pull origin $CI_COMMIT_REF'" \
-              | ssh -T -o SendEnv="CI_*" \
-              -o StrictHostKeyChecking=no \
-              -o ConnectTimeout=30 \
-              -o BatchMode=yes \
-              -i /tmp/dev_ssh_key \
-              -l ${{ secrets.DEV_SSH_USER }} \
-              -p ${{ secrets.DEV_SSH_PORT }} \
-              ${{ secrets.DEV_SSH_HOST }}
+      - name: Pull from repo
+        run: |
+          export CI_REGISTRY_IMAGE=$(echo "docker.pkg.github.com/${{ github.repository }}/$CI_IMAGE_NAME" | tr '[A-Z]' '[a-z]') \
+          export CI_COMMIT_REF=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,') && \
+          printf "bash -x -c 'cd $CI_DEV_API_PATH \
+            && git checkout $CI_COMMIT_REF \
+            && git pull origin $CI_COMMIT_REF'" \
+          | ssh -T -o SendEnv="CI_*" \
+          -o StrictHostKeyChecking=no \
+          -o ConnectTimeout=30 \
+          -o BatchMode=yes \
+          -i /tmp/dev_ssh_key \
+          -l ${{ secrets.DEV_SSH_USER }} \
+          -p ${{ secrets.DEV_SSH_PORT }} \
+          ${{ secrets.DEV_SSH_HOST }}
 
-          # Before use do docker login docker.pkg.github.com -u token
+      # Before use do docker login docker.pkg.github.com -u token
 
-          - name: Deploy api
-            run: |
-              export CI_REGISTRY_IMAGE=$(echo "docker.pkg.github.com/${{ github.repository }}/$CI_IMAGE_NAME" | tr '[A-Z]' '[a-z]') \
-              export CI_COMMIT_REF=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,') && \
-              printf "bash -x -c 'cd $CI_DEV_API_PATH \
-                && docker-compose stop \
-                  $CI_IMAGE_NAME \
-                && docker-compose rm -f \
-                  $CI_IMAGE_NAME \
-                && docker-compose pull -q \
-                  $CI_IMAGE_NAME \
-                && docker-compose up --no-start \
-                  $CI_IMAGE_NAME \
-                && docker-compose start \
-                  $CI_IMAGE_NAME'" \
-              | ssh -T -o SendEnv="CI_*" \
-              -o StrictHostKeyChecking=no \
-              -o ConnectTimeout=30 \
-              -o BatchMode=yes \
-              -i /tmp/dev_ssh_key \
-              -l ${{ secrets.DEV_SSH_USER }} \
-              -p ${{ secrets.DEV_SSH_PORT }} \
-              ${{ secrets.DEV_SSH_HOST }}
+      - name: Deploy api
+        run: |
+          export CI_REGISTRY_IMAGE=$(echo "docker.pkg.github.com/${{ github.repository }}/$CI_IMAGE_NAME" | tr '[A-Z]' '[a-z]') \
+          export CI_COMMIT_REF=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,') && \
+          printf "bash -x -c 'cd $CI_DEV_API_PATH \
+            && docker-compose stop \
+              $CI_IMAGE_NAME \
+            && docker-compose rm -f \
+              $CI_IMAGE_NAME \
+            && docker-compose pull -q \
+              $CI_IMAGE_NAME \
+            && docker-compose up --no-start \
+              $CI_IMAGE_NAME \
+            && docker-compose start \
+              $CI_IMAGE_NAME'" \
+          | ssh -T -o SendEnv="CI_*" \
+          -o StrictHostKeyChecking=no \
+          -o ConnectTimeout=30 \
+          -o BatchMode=yes \
+          -i /tmp/dev_ssh_key \
+          -l ${{ secrets.DEV_SSH_USER }} \
+          -p ${{ secrets.DEV_SSH_PORT }} \
+          ${{ secrets.DEV_SSH_HOST }}
 
-      deploy:
-        runs-on: ubuntu-latest
-        needs: build-push
-        if: contains('
-          refs/heads/master
-          refs/heads/devops'
-          , github.ref)
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-push
+    if: contains('
+      refs/heads/master
+      refs/heads/devops'
+      , github.ref)
 
-        steps:
-          - name: Add ssh key
-            run: |
-              printf ${{ secrets.PROD_SSH_KEY }} | base64 -d > /tmp/dev_ssh_key
-              chmod 400 /tmp/dev_ssh_key
-              cat /tmp/dev_ssh_key
+    steps:
+      - name: Add ssh key
+        run: |
+          printf ${{ secrets.PROD_SSH_KEY }} | base64 -d > /tmp/dev_ssh_key
+          chmod 400 /tmp/dev_ssh_key
+          cat /tmp/dev_ssh_key
 
-          # Before use add 'AcceptEnv CI_*' into /etc/ssh/sshd_config an restart sshd
+      # Before use add 'AcceptEnv CI_*' into /etc/ssh/sshd_config an restart sshd
 
-          - name: Pull from repo
-            run: |
-              export CI_REGISTRY_IMAGE=$(echo "docker.pkg.github.com/${{ github.repository }}/$CI_IMAGE_NAME" | tr '[A-Z]' '[a-z]') \
-              export CI_COMMIT_REF=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,') && \
-              printf "bash -x -c 'cd $CI_DEV_API_PATH \
-                && git checkout $CI_COMMIT_REF \
-                && git pull origin $CI_COMMIT_REF'" \
-              | ssh -T -o SendEnv="CI_*" \
-              -o StrictHostKeyChecking=no \
-              -o ConnectTimeout=30 \
-              -o BatchMode=yes \
-              -i /tmp/dev_ssh_key \
-              -l ${{ secrets.PROD_SSH_USER }} \
-              -p ${{ secrets.PROD_SSH_PORT }} \
-              ${{ secrets.PROD_SSH_HOST }}
+      - name: Pull from repo
+        run: |
+          export CI_REGISTRY_IMAGE=$(echo "docker.pkg.github.com/${{ github.repository }}/$CI_IMAGE_NAME" | tr '[A-Z]' '[a-z]') \
+          export CI_COMMIT_REF=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,') && \
+          printf "bash -x -c 'cd $CI_DEV_API_PATH \
+            && git checkout $CI_COMMIT_REF \
+            && git pull origin $CI_COMMIT_REF'" \
+          | ssh -T -o SendEnv="CI_*" \
+          -o StrictHostKeyChecking=no \
+          -o ConnectTimeout=30 \
+          -o BatchMode=yes \
+          -i /tmp/dev_ssh_key \
+          -l ${{ secrets.PROD_SSH_USER }} \
+          -p ${{ secrets.PROD_SSH_PORT }} \
+          ${{ secrets.PROD_SSH_HOST }}
 
-          # Before use do docker login docker.pkg.github.com -u token
+      # Before use do docker login docker.pkg.github.com -u token
 
-          - name: Deploy api
-            run: |
-              export CI_REGISTRY_IMAGE=$(echo "docker.pkg.github.com/${{ github.repository }}/$CI_IMAGE_NAME" | tr '[A-Z]' '[a-z]') \
-              export CI_COMMIT_REF=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,') && \
-              printf "bash -x -c 'cd $CI_DEV_API_PATH \
-                && docker-compose stop \
-                  $CI_IMAGE_NAME \
-                && docker-compose rm -f \
-                  $CI_IMAGE_NAME \
-                && docker-compose pull -q \
-                  $CI_IMAGE_NAME \
-                && docker-compose up --no-start \
-                  $CI_IMAGE_NAME \
-                && docker-compose start \
-                  $CI_IMAGE_NAME'" \
-              | ssh -T -o SendEnv="CI_*" \
-              -o StrictHostKeyChecking=no \
-              -o ConnectTimeout=30 \
-              -o BatchMode=yes \
-              -i /tmp/dev_ssh_key \
-              -l ${{ secrets.PROD_SSH_USER }} \
-              -p ${{ secrets.PROD_SSH_PORT }} \
-              ${{ secrets.PROD_SSH_HOST }}
+      - name: Deploy api
+        run: |
+          export CI_REGISTRY_IMAGE=$(echo "docker.pkg.github.com/${{ github.repository }}/$CI_IMAGE_NAME" | tr '[A-Z]' '[a-z]') \
+          export CI_COMMIT_REF=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,') && \
+          printf "bash -x -c 'cd $CI_DEV_API_PATH \
+            && docker-compose stop \
+              $CI_IMAGE_NAME \
+            && docker-compose rm -f \
+              $CI_IMAGE_NAME \
+            && docker-compose pull -q \
+              $CI_IMAGE_NAME \
+            && docker-compose up --no-start \
+              $CI_IMAGE_NAME \
+            && docker-compose start \
+              $CI_IMAGE_NAME'" \
+          | ssh -T -o SendEnv="CI_*" \
+          -o StrictHostKeyChecking=no \
+          -o ConnectTimeout=30 \
+          -o BatchMode=yes \
+          -i /tmp/dev_ssh_key \
+          -l ${{ secrets.PROD_SSH_USER }} \
+          -p ${{ secrets.PROD_SSH_PORT }} \
+          ${{ secrets.PROD_SSH_HOST }}
