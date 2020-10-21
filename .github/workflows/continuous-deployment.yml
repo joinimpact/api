@@ -27,7 +27,7 @@ jobs:
 
   build-push:
     runs-on: ubuntu-latest
-    needs: test
+    needs: lint
     if: contains('
       refs/heads/master
       refs/heads/develop
